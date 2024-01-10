@@ -1,5 +1,6 @@
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using API.Entities.Enums;
 
 namespace API.Services.Tasks.Scanner.Parser;
@@ -34,6 +35,7 @@ public class DefaultParser : IDefaultParser
     public ParserInfo? Parse(string filePath, string rootPath, LibraryType type = LibraryType.Manga)
     {
         var fileName = _directoryService.FileSystem.Path.GetFileNameWithoutExtension(filePath);
+        var directoryName = Path.GetFileName(rootPath);
         // TODO: Potential Bug: This will return null, but on Image libraries, if all images, we would want to include this.
         if (type != LibraryType.Image && Parser.IsCoverImage(_directoryService.FileSystem.Path.GetFileName(filePath))) return null;
 
@@ -111,6 +113,16 @@ public class DefaultParser : IDefaultParser
         if (Parser.IsPdf(filePath) && ret.Series.ToLower().EndsWith(".pdf"))
         {
             ret.Series = ret.Series.Substring(0, ret.Series.Length - ".pdf".Length);
+        }
+
+        if (ret.Series.StartsWith('(') || ret.Series.StartsWith('[') || ret.Series.StartsWith('{'))
+        {
+            var matches = new Regex(@"(?<=(\)|\]))\s(?<Series>[^\[\]\(\)\{\}]{2,})\s").Matches(directoryName);
+            var group = matches
+                .Select(match => match.Groups["Series"])
+                .FirstOrDefault(group => group.Success && group != Match.Empty);
+            if (group != null) ret.Series = Parser.CleanTitle(group.Value);
+            if (string.IsNullOrEmpty(ret.Series) || ret.Series.Length == 1) ret.Series = Parser.CleanTitle(directoryName);
         }
 
         return ret.Series == string.Empty ? null : ret;
