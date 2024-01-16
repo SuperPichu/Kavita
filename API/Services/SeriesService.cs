@@ -215,7 +215,7 @@ public class SeriesService : ISeriesService
                 PersonHelper.UpdatePeopleList(PersonRole.CoverArtist, updateChapterMetadataDto.ChapterMetadata.CoverArtists, chapter, allCoverArtists.AsReadOnly(),
                     HandleAddPerson, () => { });
             }
-
+            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
             if (!_unitOfWork.HasChanges())
             {
                 return true;
@@ -232,7 +232,7 @@ public class SeriesService : ISeriesService
             {
                 _logger.LogError(ex, "There was an issue cleaning up DB entries. This may happen if Komf is spamming updates. Nightly cleanup will work");
             }
-            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
+
             return true;
         }
         catch (Exception ex)
