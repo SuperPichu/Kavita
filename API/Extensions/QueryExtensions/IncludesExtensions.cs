@@ -35,6 +35,7 @@ public static class IncludesExtensions
             queryable = queryable
                 .Include(c => c.Files);
         }
+        queryable = queryable.Include(c => c.People).Include(c => c.Tags);
 
 
         return queryable.AsSplitQuery();

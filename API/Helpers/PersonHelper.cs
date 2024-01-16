@@ -175,19 +175,19 @@ public static class PersonHelper
     /// <param name="allPeople"></param>
     /// <param name="handleAdd">This will call with an existing or new tag, but the method does not update the series Metadata</param>
     /// <param name="onModified"></param>
-    public static void UpdatePeopleList(PersonRole role, ICollection<PersonDto>? people, Chapter series, IReadOnlyCollection<Person> allPeople,
+    public static void UpdatePeopleList(PersonRole role, ICollection<PersonDto>? people, Chapter chapter, IReadOnlyCollection<Person> allPeople,
         Action<Person> handleAdd, Action onModified)
     {
         if (people == null) return;
         var isModified = false;
         // I want a union of these 2 lists. Return only elements that are in both lists, but the list types are different
-        var existingTags = series.People.Where(p => p.Role == role).ToList();
+        var existingTags = chapter.People.Where(p => p.Role == role).ToList();
         foreach (var existing in existingTags)
         {
             if (people.SingleOrDefault(t => t.Id == existing.Id) == null) // This needs to check against role
             {
                 // Remove tag
-                series.People.Remove(existing);
+                chapter.People.Remove(existing);
                 isModified = true;
             }
         }
@@ -198,7 +198,7 @@ public static class PersonHelper
             var existingTag = allPeople.FirstOrDefault(t => t.Name == tag.Name && t.Role == tag.Role);
             if (existingTag != null)
             {
-                if (series.People.Where(t => t.Role == tag.Role).All(t => t.Name != null && !t.Name.Equals(tag.Name)))
+                if (chapter.People.Where(t => t.Role == tag.Role).All(t => t.Name != null && !t.Name.Equals(tag.Name)))
                 {
                     handleAdd(existingTag);
                     isModified = true;
