@@ -27,9 +27,11 @@ public interface IChapterRepository
 {
     void Update(Chapter chapter);
     Task<IEnumerable<Chapter>> GetChaptersByIdsAsync(IList<int> chapterIds, ChapterIncludes includes = ChapterIncludes.None);
+    Task<Chapter> GetChapterByIdAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.None);
     Task<IChapterInfoDto?> GetChapterInfoDtoAsync(int chapterId);
     Task<int> GetChapterTotalPagesAsync(int chapterId);
     Task<Chapter?> GetChapterAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.Files);
+    Task<IEnumerable<ChapterDto?>> GetChapterDtosAsync(ChapterIncludes includes = ChapterIncludes.Files);
     Task<ChapterDto?> GetChapterDtoAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.Files);
     Task<ChapterMetadataDto?> GetChapterMetadataDtoAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.Files);
     Task<IList<MangaFile>> GetFilesForChapterAsync(int chapterId);
@@ -58,6 +60,18 @@ public class ChapterRepository : IChapterRepository
         _context.Entry(chapter).State = EntityState.Modified;
     }
 
+    public async Task<IEnumerable<ChapterDto?>> GetChapterDtosAsync(ChapterIncludes includes = ChapterIncludes.Files)
+    {
+        var chapter = await _context.Chapter
+            .Includes(includes)
+            .ProjectTo<ChapterDto>(_mapper.ConfigurationProvider)
+            .AsNoTracking()
+            .AsSplitQuery()
+            .ToListAsync();
+
+        return chapter;
+    }
+
     public async Task<IEnumerable<Chapter>> GetChaptersByIdsAsync(IList<int> chapterIds, ChapterIncludes includes = ChapterIncludes.None)
     {
         return await _context.Chapter
@@ -65,6 +79,14 @@ public class ChapterRepository : IChapterRepository
             .Includes(includes)
             .AsSplitQuery()
             .ToListAsync();
+    }
+
+    public async Task<Chapter> GetChapterByIdAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.None)
+    {
+        return await _context.Chapter
+            .Where(c => c.Id == chapterId)
+            .Includes(includes)
+            .SingleOrDefaultAsync();
     }
 
     /// <summary>
@@ -214,7 +236,7 @@ public class ChapterRepository : IChapterRepository
     {
         var extension = format.GetExtension();
         return await _context.Chapter
-            .Where(c => !string.IsNullOrEmpty(c.CoverImage)  && !c.CoverImage.EndsWith(extension))
+            .Where(c => !string.IsNullOrEmpty(c.CoverImage) && !c.CoverImage.EndsWith(extension))
             .ToListAsync();
     }
 
@@ -252,7 +274,7 @@ public class ChapterRepository : IChapterRepository
             .FirstOrDefaultAsync();
         if (progress != null)
         {
-            chapter.PagesRead = progress.PagesRead ;
+            chapter.PagesRead = progress.PagesRead;
             chapter.LastReadingProgressUtc = progress.LastModifiedUtc;
             chapter.LastReadingProgress = progress.LastModified;
         }

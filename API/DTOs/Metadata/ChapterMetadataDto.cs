@@ -52,5 +52,9 @@ public class ChapterMetadataDto
     /// Number of Words for this chapter. Only applies to Epub
     /// </summary>
     public long WordCount { get; set; }
+    /// <summary>
+    /// Comma-separated link of urls to external services that have some relation to the Chapter
+    /// </summary>
+    public string WebLinks { get; set; } = string.Empty;
 
 }

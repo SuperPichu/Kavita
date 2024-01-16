@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using API.DTOs;
+using API.DTOs.Metadata;
 using API.Entities;
 using API.Entities.Enums;
 using API.Extensions;
@@ -165,6 +166,58 @@ public static class PersonHelper
         }
     }
 
+    /// <summary>
+    /// For a given role and people dtos, update a chapter
+    /// </summary>
+    /// <param name="role"></param>
+    /// <param name="people"></param>
+    /// <param name="chapter"></param>
+    /// <param name="allPeople"></param>
+    /// <param name="handleAdd">This will call with an existing or new tag, but the method does not update the series Metadata</param>
+    /// <param name="onModified"></param>
+    public static void UpdatePeopleList(PersonRole role, ICollection<PersonDto>? people, Chapter series, IReadOnlyCollection<Person> allPeople,
+        Action<Person> handleAdd, Action onModified)
+    {
+        if (people == null) return;
+        var isModified = false;
+        // I want a union of these 2 lists. Return only elements that are in both lists, but the list types are different
+        var existingTags = series.People.Where(p => p.Role == role).ToList();
+        foreach (var existing in existingTags)
+        {
+            if (people.SingleOrDefault(t => t.Id == existing.Id) == null) // This needs to check against role
+            {
+                // Remove tag
+                series.People.Remove(existing);
+                isModified = true;
+            }
+        }
+
+        // At this point, all tags that aren't in dto have been removed.
+        foreach (var tag in people)
+        {
+            var existingTag = allPeople.FirstOrDefault(t => t.Name == tag.Name && t.Role == tag.Role);
+            if (existingTag != null)
+            {
+                if (series.People.Where(t => t.Role == tag.Role).All(t => t.Name != null && !t.Name.Equals(tag.Name)))
+                {
+                    handleAdd(existingTag);
+                    isModified = true;
+                }
+            }
+            else
+            {
+                // Add new tag
+                handleAdd(new PersonBuilder(tag.Name, role).Build());
+                isModified = true;
+            }
+        }
+
+        if (isModified)
+        {
+            onModified();
+        }
+    }
+
     public static bool HasAnyPeople(SeriesMetadataDto? seriesMetadata)
     {
         if (seriesMetadata == null) return false;
@@ -178,5 +231,20 @@ public static class PersonHelper
                seriesMetadata.Letterers.Any() ||
                seriesMetadata.Editors.Any() ||
                seriesMetadata.Translators.Any();
+    }
+
+    public static bool HasAnyPeople(ChapterMetadataDto? chapterMetadata)
+    {
+        if (chapterMetadata == null) return false;
+        return chapterMetadata.Writers.Any() ||
+               chapterMetadata.CoverArtists.Any() ||
+               chapterMetadata.Publishers.Any() ||
+               chapterMetadata.Characters.Any() ||
+               chapterMetadata.Pencillers.Any() ||
+               chapterMetadata.Inkers.Any() ||
+               chapterMetadata.Colorists.Any() ||
+               chapterMetadata.Letterers.Any() ||
+               chapterMetadata.Editors.Any() ||
+               chapterMetadata.Translators.Any();
     }
 }

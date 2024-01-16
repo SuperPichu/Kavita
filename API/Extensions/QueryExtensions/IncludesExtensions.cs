@@ -27,7 +27,7 @@ public static class IncludesExtensions
     {
         if (includes.HasFlag(ChapterIncludes.Volumes))
         {
-            queryable = queryable.Include(v => v.Volume);
+            queryable = queryable.Include(v => v.Volume).Include(v => v.Volume.Series);
         }
 
         if (includes.HasFlag(ChapterIncludes.Files))

@@ -135,7 +135,7 @@ public class SeriesController : BaseApiController
         var username = User.GetUsername();
         _logger.LogInformation("Series {SeriesId} is being deleted by {UserName}", seriesId, username);
 
-        return Ok(await _seriesService.DeleteMultipleSeries(new[] {seriesId}));
+        return Ok(await _seriesService.DeleteMultipleSeries(new[] { seriesId }));
     }
 
     [Authorize(Policy = "RequireAdminRole")]
@@ -509,11 +509,11 @@ public class SeriesController : BaseApiController
     /// <param name="ageRating"></param>
     /// <returns></returns>
     /// <remarks>This is cached for an hour</remarks>
-    [ResponseCache(CacheProfileName = "Month", VaryByQueryKeys = new [] {"ageRating"})]
+    [ResponseCache(CacheProfileName = "Month", VaryByQueryKeys = new[] { "ageRating" })]
     [HttpGet("age-rating")]
     public async Task<ActionResult<string>> GetAgeRating(int ageRating)
     {
-        var val = (AgeRating) ageRating;
+        var val = (AgeRating)ageRating;
         if (val == AgeRating.NotApplicable)
             return await _localizationService.Translate(User.GetUserId(), "age-restriction-not-applicable");
 
@@ -526,7 +526,7 @@ public class SeriesController : BaseApiController
     /// <param name="seriesId"></param>
     /// <returns></returns>
     /// <remarks>Do not rely on this API externally. May change without hesitation. </remarks>
-    [ResponseCache(CacheProfileName = ResponseCacheProfiles.FiveMinute, VaryByQueryKeys = new [] {"seriesId"})]
+    [ResponseCache(CacheProfileName = ResponseCacheProfiles.FiveMinute, VaryByQueryKeys = new[] { "seriesId" })]
     [HttpGet("series-detail")]
     public async Task<ActionResult<SeriesDetailDto>> GetSeriesDetailBreakdown(int seriesId)
     {
@@ -571,7 +571,7 @@ public class SeriesController : BaseApiController
     /// </summary>
     /// <param name="dto"></param>
     /// <returns></returns>
-    [Authorize(Policy="RequireAdminRole")]
+    [Authorize(Policy = "RequireAdminRole")]
     [HttpPost("update-related")]
     public async Task<ActionResult> UpdateRelatedSeries(UpdateRelatedSeriesDto dto)
     {
@@ -623,6 +623,34 @@ public class SeriesController : BaseApiController
         var userId = User.GetUserId();
 
         return Ok(await _seriesService.GetEstimatedChapterCreationDate(seriesId, userId));
+    }
+
+    [HttpPost("chapter-metadata")]
+    public async Task<ActionResult<ChapterMetadataDto>> UpdateChapterMetadata(UpdateChapterMetadataDto updateChapterMetadataDto)
+    {
+        if (!await _seriesService.UpdateChapterMetadata(updateChapterMetadataDto))
+            return BadRequest(await _localizationService.Translate(User.GetUserId(), "update-metadata-fail"));
+
+        if (await _licenseService.HasActiveLicense())
+        {
+            _logger.LogDebug("Clearing cache as chapter weblinks may have changed");
+            await _reviewCacheProvider.RemoveAsync(ReviewController.CacheKey + updateChapterMetadataDto.ChapterMetadata.ChapterId);
+            await _ratingCacheProvider.RemoveAsync(RatingController.CacheKey + updateChapterMetadataDto.ChapterMetadata.ChapterId);
+
+            var allUsers = (await _unitOfWork.UserRepository.GetAllUsersAsync()).Select(s => s.Id);
+            foreach (var userId in allUsers)
+            {
+                await _recommendationCacheProvider.RemoveAsync(RecommendedController.CacheKey + $"{updateChapterMetadataDto.ChapterMetadata.ChapterId}-{userId}");
+            }
+        }
+
+        return Ok(await _localizationService.Translate(User.GetUserId(), "chapter-updated"));
+    }
+
+    [HttpGet("chapters")]
+    public async Task<ActionResult<IEnumerable<ChapterDto>>> GetAllChapters()
+    {
+        return Ok(await _unitOfWork.ChapterRepository.GetChapterDtosAsync());
     }
 
 }
