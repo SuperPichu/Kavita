@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -19,6 +19,7 @@ using API.Entities.Enums;
 using API.Extensions;
 using API.Helpers;
 using API.Services;
+using API.Services.Tasks.Scanner.Parser;
 using Kavita.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -301,7 +302,7 @@ public class OpdsController : BaseApiController
     /// <returns></returns>
     [HttpGet("{apiKey}/smart-filter/{filterId}")]
     [Produces("application/xml")]
-    public async Task<IActionResult> GetSmartFilter(string apiKey, int filterId)
+    public async Task<IActionResult> GetSmartFilter(string apiKey, int filterId, [FromQuery] int pageNumber = 0)
     {
         var userId = await GetUser(apiKey);
         if (!(await _unitOfWork.SettingsRepository.GetSettingsDtoAsync()).EnableOpds)
@@ -315,7 +316,7 @@ public class OpdsController : BaseApiController
         SetFeedId(feed, "smartFilter-" + filter.Id);
 
         var decodedFilter = SmartFilterHelper.Decode(filter.Filter);
-        var series = await _unitOfWork.SeriesRepository.GetSeriesDtoForLibraryIdV2Async(userId, UserParams.Default,
+        var series = await _unitOfWork.SeriesRepository.GetSeriesDtoForLibraryIdV2Async(userId, GetUserParams(pageNumber),
             decodedFilter);
         var seriesMetadatas = await _unitOfWork.SeriesRepository.GetSeriesMetadataForIds(series.Select(s => s.Id));
 
@@ -1104,12 +1105,12 @@ public class OpdsController : BaseApiController
         {
             var volumeLabel = await _localizationService.Translate(userId, "volume-num", string.Empty);
             SeriesService.RenameVolumeName(volume.Chapters.First(), volume, libraryType, volumeLabel);
-            if (volume.Name != "0")
+            if (volume.Name != Services.Tasks.Scanner.Parser.Parser.DefaultChapter)
             {
                 title += $" - {volume.Name}";
             }
         }
-        else if (volume.Number != 0)
+        else if (!volume.IsLooseLeaf())
         {
             title = $"{series.Name} - Volume {volume.Name} - {await _seriesService.FormatChapterTitle(userId, chapter, libraryType)}";
         }
@@ -1250,7 +1251,7 @@ public class OpdsController : BaseApiController
         if (progress != null)
         {
             link.LastRead = progress.PageNum;
-            link.LastReadDate = progress.LastModifiedUtc;
+            link.LastReadDate = progress.LastModifiedUtc.ToString("s"); // Adhere to ISO 8601
         }
         link.IsPageStream = true;
         return link;
