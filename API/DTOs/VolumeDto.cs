@@ -3,17 +3,24 @@ using System;
 using System.Collections.Generic;
 using API.Entities;
 using API.Entities.Interfaces;
+using API.Services.Tasks.Scanner.Parser;
 
 namespace API.DTOs;
 
 public class VolumeDto : IHasReadTimeEstimate
 {
     public int Id { get; set; }
-    /// <inheritdoc cref="Volume.Number"/>
-    public int Number { get; set; }
-
+    /// <inheritdoc cref="Volume.MinNumber"/>
+    public float MinNumber { get; set; }
+    /// <inheritdoc cref="Volume.MaxNumber"/>
+    public float MaxNumber { get; set; }
     /// <inheritdoc cref="Volume.Name"/>
     public string Name { get; set; } = default!;
+    /// <summary>
+    /// This will map to MinNumber. Number was removed in v0.7.13.8/v0.7.14
+    /// </summary>
+    [Obsolete("Use MinNumber")]
+    public float Number { get; set; }
     public int Pages { get; set; }
     public int PagesRead { get; set; }
     public DateTime LastModifiedUtc { get; set; }
@@ -36,4 +43,13 @@ public class VolumeDto : IHasReadTimeEstimate
     public int MaxHoursToRead { get; set; }
     /// <inheritdoc cref="IHasReadTimeEstimate.AvgHoursToRead"/>
     public int AvgHoursToRead { get; set; }
+
+    /// <summary>
+    /// Is this a loose leaf volume
+    /// </summary>
+    /// <returns></returns>
+    public bool IsLooseLeaf()
+    {
+        return Math.Abs(this.MinNumber - Parser.LooseLeafVolumeNumber) < 0.001f;
+    }
 }

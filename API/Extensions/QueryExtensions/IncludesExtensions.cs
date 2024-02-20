@@ -37,7 +37,6 @@ public static class IncludesExtensions
         }
         queryable = queryable.Include(c => c.People).Include(c => c.Tags);
 
-
         return queryable.AsSplitQuery();
     }
 
@@ -66,6 +65,33 @@ public static class IncludesExtensions
             query = query.Include(s => s.Relations)
                 .ThenInclude(r => r.TargetSeries)
                 .Include(s => s.RelationOf);
+        }
+
+        if (includeFlags.HasFlag(SeriesIncludes.ExternalReviews))
+        {
+            query = query
+                .Include(s => s.ExternalSeriesMetadata)
+                .ThenInclude(s => s.ExternalReviews);
+        }
+
+        if (includeFlags.HasFlag(SeriesIncludes.ExternalRatings))
+        {
+            query = query
+                .Include(s => s.ExternalSeriesMetadata)
+                .ThenInclude(s => s.ExternalRatings);
+        }
+
+        if (includeFlags.HasFlag(SeriesIncludes.ExternalMetadata))
+        {
+            query = query
+                .Include(s => s.ExternalSeriesMetadata);
+        }
+
+        if (includeFlags.HasFlag(SeriesIncludes.ExternalRecommendations))
+        {
+            query = query
+                .Include(s => s.ExternalSeriesMetadata)
+                .ThenInclude(s => s.ExternalRecommendations);
         }
 
         if (includeFlags.HasFlag(SeriesIncludes.Metadata))
