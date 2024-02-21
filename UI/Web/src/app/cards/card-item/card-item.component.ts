@@ -159,7 +159,7 @@ export class CardItemComponent implements OnInit {
    * Library name item belongs to
    */
   libraryName: string | undefined = undefined;
-  libraryId: number | undefined = undefined;
+  @Input() libraryId: number | undefined = undefined;
   /**
    * Format of the entity (only applies to Series)
    */
