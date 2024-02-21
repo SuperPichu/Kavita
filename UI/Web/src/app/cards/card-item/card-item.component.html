@@ -59,7 +59,12 @@
             <i class="fa {{format | mangaFormatIcon}} me-1" aria-hidden="true" *ngIf="format !== MangaFormat.UNKNOWN" title="{{formatString}}"></i>
             <span class="visually-hidden">{{formatString}}</span>
           </ng-container>
-          {{title}}
+          <a class="card-title" [routerLink]="['/library', libraryId, 'series', id]" routerLinkActive="router-link-active" *ngIf="link">
+            {{title}}
+          </a>
+          @if (!link) {
+            {{title}}
+          }
         </span>
         <span class="card-actions float-end" *ngIf="actions && actions.length > 0">
           <app-card-actionables (actionHandler)="performAction($event)" [actions]="actions" [labelBy]="title"></app-card-actionables>

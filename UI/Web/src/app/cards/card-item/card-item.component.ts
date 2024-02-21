@@ -124,6 +124,10 @@ export class CardItemComponent implements OnInit {
    */
   @Input() allowSelection: boolean = false;
   /**
+   * If the entity should show link
+   */
+  @Input() link: boolean = false;
+  /**
    * This will suppress the "cannot read archive warning" when total pages is 0
    */
   @Input() suppressArchiveWarning: boolean = false;
@@ -131,6 +135,10 @@ export class CardItemComponent implements OnInit {
    * The number of updates/items within the card. If less than 2, will not be shown.
    */
   @Input() count: number = 0;
+  /**
+   * The id of the entity
+   */
+  @Input() id: number = 0;
   /**
    * Additional information to show on the overlay area. Will always render.
    */

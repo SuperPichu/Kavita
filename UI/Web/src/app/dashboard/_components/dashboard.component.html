@@ -66,7 +66,7 @@
         <app-carousel-reel [items]="data" [title]="t('recently-updated-title')" (sectionClick)="handleSectionClick(StreamId.RecentlyUpdatedSeries)">
           <ng-template #carouselItem let-item>
             <app-card-item [entity]="item" [title]="item.seriesName" [imageUrl]="imageService.getSeriesCoverImage(item.seriesId)"
-                           [suppressArchiveWarning]="true" (clicked)="handleRecentlyAddedChapterClick(item)" [count]="item.count"></app-card-item>
+                           [suppressArchiveWarning]="true" (clicked)="handleRecentlyAddedChapterClick(item)" [count]="item.count" [link]="true" [id]="item.seriesId"></app-card-item>
           </ng-template>
         </app-carousel-reel>
       }
