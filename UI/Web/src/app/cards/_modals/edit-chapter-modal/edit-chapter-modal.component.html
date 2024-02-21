@@ -1,0 +1,367 @@
+<ng-container *transloco="let t; read: 'edit-series-modal'">
+  <div class="modal-container" *ngIf="chapter !== undefined">
+    <div class="modal-header">
+      <h4 class="modal-title">
+        {{t('title', {chapterName: this.chapter.title})}}</h4>
+      <button type="button" class="btn-close" [attr.aria-label]="t('close')" (click)="close()"></button>
+    </div>
+    <div
+      class="modal-body scrollable-modal {{utilityService.getActiveBreakpoint() === Breakpoint.Mobile ? '' : 'd-flex'}}">
+      <form [formGroup]="editChapterForm">
+        <ul ngbNav #nav="ngbNav" [(activeId)]="active" class="nav-pills"
+          orientation="{{utilityService.getActiveBreakpoint() === Breakpoint.Mobile ? 'horizontal' : 'vertical'}}"
+          style="min-width: 135px;">
+
+          <li [ngbNavItem]="tabs[TabID.General]">
+            <a ngbNavLink>{{t(tabs[TabID.General])}}</a>
+            <ng-template ngbNavContent>
+              <div class="row g-0">
+                <div class="mb-3" style="width: 100%">
+                  <label for="titleName" class="form-label">{{t('name-label')}}</label>
+                  <div class="input-group">
+                    <input id="titleName" class="form-control" formControlName="titleName" type="text"
+                      [class.is-invalid]="editChapterForm.get('titleName')?.invalid && editChapterForm.get('titleName')?.touched">
+                    <ng-container *ngIf="editChapterForm.get('titleName')?.errors as errors">
+                      <div class="invalid-feedback" *ngIf="errors.required">
+                        {{t('required-field')}}
+                      </div>
+                    </ng-container>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-0" *ngIf="metadata">
+                <div class="mb-3" style="width: 100%">
+                  <label for="summary" class="form-label">{{t('summary-label')}}</label>
+                  <div class="input-group">
+                    <textarea id="summary" class="form-control" formControlName="summary" rows="4"></textarea>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-0" *ngIf="metadata">
+                <div class="mb-3" style="width: 100%">
+                  <label for="range" class="form-label">{{t('chapter-title')}}</label>
+                  <div class="input-group">
+                    <input id="range" class="form-control" formControlName="range" type="text">
+                  </div>
+                </div>
+              </div>
+
+            </ng-template>
+          </li>
+
+          <li [ngbNavItem]="tabs[TabID.Metadata]" *ngIf="metadata">
+            <a ngbNavLink>{{t(tabs[TabID.Metadata])}}</a>
+            <ng-template ngbNavContent>
+
+              <div class="row g-0">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label for="genres" class="form-label">{{t('genres-label')}}</label>
+                    <app-typeahead (selectedData)="updateGenres($event)" [settings]="genreSettings">
+                      <ng-template #badgeItem let-item let-position="idx">
+                        {{item.title}}
+                      </ng-template>
+                      <ng-template #optionItem let-item let-position="idx">
+                        {{item.title}}
+                      </ng-template>
+                    </app-typeahead>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-0">
+                <div class="col-md-12">
+                  <div class="mb-3">
+                    <label for="tags" class="form-label">{{t('tags-label')}}</label>
+                    <app-typeahead (selectedData)="updateTags($event)" [settings]="tagsSettings">
+                      <ng-template #badgeItem let-item let-position="idx">
+                        {{item.title}}
+                      </ng-template>
+                      <ng-template #optionItem let-item let-position="idx">
+                        {{item.title}}
+                      </ng-template>
+                    </app-typeahead>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row g-0">
+                <div class="col-lg-4 col-md-12 pe-2">
+                  <div class="mb-3">
+                    <label for="language" class="form-label">{{t('language-label')}}</label>
+                    <app-typeahead (selectedData)="updateLanguage($event);" [settings]="languageSettings">
+                      <ng-template #badgeItem let-item let-position="idx">
+                        {{item.title}}
+                      </ng-template>
+                      <ng-template #optionItem let-item let-position="idx">
+                        {{item.title}} ({{item.isoCode}})
+                      </ng-template>
+                    </app-typeahead>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-12 pe-2">
+                  <div class="mb-3">
+                    <label for="age-rating" class="form-label">{{t('age-rating-label')}}</label>
+                    <div class="input-group">
+                      <select class="form-select" id="age-rating" formControlName="ageRating">
+                        <option *ngFor="let opt of ageRatings" [value]="opt.value">{{opt.title | titlecase}}</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="col-lg-4 col-md-12">
+                  <div class="mb-3">
+                    <label for="publication-status" class="form-label">{{t('publication-status-label')}}</label>
+                    <div class="input-group">
+                      <select class="form-select" id="publication-status" formControlName="publicationStatus">
+                        <option *ngFor="let opt of publicationStatuses" [value]="opt.value">{{opt.title | titlecase}}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ng-template>
+          </li>
+
+          <li [ngbNavItem]="tabs[TabID.People]">
+            <a ngbNavLink>{{t(tabs[TabID.People])}}</a>
+            <ng-template ngbNavContent>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="writer" class="form-label">{{t('writer-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Writer);"
+                    [settings]="getPersonsSettings(PersonRole.Writer)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="cover-artist" class="form-label">{{t('cover-artist-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.CoverArtist);"
+                    [settings]="getPersonsSettings(PersonRole.CoverArtist)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+
+
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="publisher" class="form-label">{{t('publisher-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Publisher)"
+                    [settings]="getPersonsSettings(PersonRole.Publisher)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="penciller" class="form-label">{{t('penciller-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Penciller)"
+                    [settings]="getPersonsSettings(PersonRole.Penciller)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+
+
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="letterer" class="form-label">{{t('letterer-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Letterer)"
+                    [settings]="getPersonsSettings(PersonRole.Letterer)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="inker" class="form-label">{{t('inker-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Inker)"
+                    [settings]="getPersonsSettings(PersonRole.Inker)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+
+
+
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="editor" class="form-label">{{t('editor-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Editor)"
+                    [settings]="getPersonsSettings(PersonRole.Editor)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="colorist" class="form-label">{{t('colorist-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Colorist)"
+                    [settings]="getPersonsSettings(PersonRole.Colorist)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+
+
+
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="character" class="form-label">{{t('character-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Character)"
+                    [settings]="getPersonsSettings(PersonRole.Character)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+              <div class="row g-0">
+                <div class="mb-3">
+                  <label for="translator" class="form-label">{{t('translator-label')}}</label>
+                  <app-typeahead (selectedData)="updatePerson($event, PersonRole.Translator);"
+                    [settings]="getPersonsSettings(PersonRole.Translator)">
+                    <ng-template #badgeItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                    <ng-template #optionItem let-item let-position="idx">
+                      {{item.name}}
+                    </ng-template>
+                  </app-typeahead>
+                </div>
+              </div>
+
+            </ng-template>
+          </li>
+
+          <li [ngbNavItem]="tabs[TabID.WebLinks]" *ngIf="metadata">
+            <a ngbNavLink>{{t(tabs[TabID.WebLinks])}}</a>
+            <ng-template ngbNavContent>
+              <p>{{t('web-link-description')}}</p>
+              <app-edit-list [items]="WebLinks" [label]="t('web-link-label')"
+                (updateItems)="updateWeblinks($event)"></app-edit-list>
+            </ng-template>
+          </li>
+
+          <li [ngbNavItem]="tabs[TabID.CoverImage]">
+            <a ngbNavLink>{{t(tabs[TabID.CoverImage])}}</a>
+            <ng-template ngbNavContent>
+              <p class="alert alert-primary" role="alert">
+                {{t('cover-image-description')}}
+              </p>
+              <app-cover-image-chooser [(imageUrls)]="imageUrls" (imageSelected)="updateSelectedIndex($event)"
+                (selectedBase64Url)="updateSelectedImage($event)" [showReset]="chapter.coverImageLocked"
+                (resetClicked)="handleReset()"></app-cover-image-chooser>
+            </ng-template>
+          </li>
+          <li [ngbNavItem]="tabs[TabID.Related]">
+            <a ngbNavLink>{{t(tabs[TabID.Related])}}</a>
+          </li>
+          <li [ngbNavItem]="tabs[TabID.Info]">
+            <a ngbNavLink>{{t(tabs[TabID.Info])}}</a>
+            <ng-template ngbNavContent>
+              <h4>{{t('info-title')}}</h4>
+              <div class="row g-0 mb-2">
+                <div class="col-md-6" *ngIf="libraryName">{{t('library-title')}} {{libraryName | sentenceCase}}</div>
+                <div class="col-md-6">{{t('format-title')}} <app-tag-badge>{{chapter.files[0].format |
+                    mangaFormat}}</app-tag-badge></div>
+              </div>
+              <div class="row g-0 mb-2">
+              </div>
+
+              <div class="row g-0 mb-2">
+                <div class="col-auto">{{t('folder-path-title')}} {{chapter.files[0].filePath | defaultValue}}</div>
+              </div>
+              <div class="row g-0 mb-2" *ngIf="metadata">
+                <div class="col-md-6">{{t('publication-status-title')}} {{metadata.publicationStatus |
+                  publicationStatus}}</div>
+                <div class="col-md-6">{{t('total-pages-title')}} {{chapter.pages}}</div>
+                <div class="col-md-6">{{t('size-title')}} {{size | bytes}}</div>
+              </div>
+            </ng-template>
+          </li>
+        </ul>
+      </form>
+
+      <div [ngbNavOutlet]="nav"
+        class="tab-content {{utilityService.getActiveBreakpoint() === Breakpoint.Mobile ? 'mt-3' : 'ms-4 flex-fill'}}">
+      </div>
+    </div>
+    <div class="modal-footer">
+      @if (accountService.hasValidLicense$ | async) {
+      <button type="button" class="btn btn-light" (click)="forceScan()" position="above"
+        [ngbTooltip]="t('force-refresh-tooltip')">
+        @if (forceIsLoading) {
+        <div class="spinner-border spinner-border-sm text-primary" role="status">
+          <span class="visually-hidden">loading...</span>
+        </div>
+        } @else {
+        {{t('force-refresh')}}
+        }
+      </button>
+      }
+      <button type="button" class="btn btn-secondary" (click)="close()">{{t('close')}}</button>
+      <button type="submit" class="btn btn-primary" [disabled]="!editChapterForm.valid"
+        (click)="save()">{{t('save')}}</button>
+    </div>
+  </div>
+
+
+  <ng-template #lock let-item="item" let-field="field">
+    <span class="input-group-text clickable" (click)="unlock(item, field)">
+      <i class="fa fa-lock" aria-hidden="true"></i>
+      <span class="visually-hidden">{{t('field-locked-alt')}}</span>
+    </span>
+  </ng-template>
+
+
+</ng-container>
