@@ -216,14 +216,14 @@ public class SeriesService : ISeriesService
                 PersonHelper.UpdatePeopleList(PersonRole.CoverArtist, updateChapterMetadataDto.ChapterMetadata.CoverArtists, chapter, allCoverArtists.AsReadOnly(),
                     HandleAddPerson, () => { });
             }
-            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
+            
             if (!_unitOfWork.HasChanges())
             {
                 return true;
             }
 
             await _unitOfWork.CommitAsync();
-
+            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
             // Trigger code to cleanup tags, collections, people, etc
             try
             {
