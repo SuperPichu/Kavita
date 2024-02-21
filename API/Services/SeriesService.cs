@@ -107,6 +107,7 @@ public class SeriesService : ISeriesService
         try
         {
             var chapterId = updateChapterMetadataDto.ChapterMetadata.ChapterId;
+            if(chapterId == 0) chapterId = updateChapterMetadataDto.ChapterMetadata.Id;
             var chapter = await _unitOfWork.ChapterRepository.GetChapterByIdAsync(chapterId, ChapterIncludes.Volumes);
             if (chapter == null) return false;
 
@@ -126,7 +127,16 @@ public class SeriesService : ISeriesService
             {
                 chapter.Summary = updateChapterMetadataDto.ChapterMetadata?.Summary.Trim() ?? string.Empty;
             }
-
+            if (chapter.TitleName != updateChapterMetadataDto.ChapterMetadata?.TitleName.Trim())
+            {
+                chapter.TitleName = updateChapterMetadataDto.ChapterMetadata?.TitleName.Trim() ?? string.Empty;
+            }
+            if (chapter.Range != updateChapterMetadataDto.ChapterMetadata.Range) {
+                chapter.Range = updateChapterMetadataDto.ChapterMetadata.Range;
+            }
+            if (chapter.Number != updateChapterMetadataDto.ChapterMetadata.Range) {
+                chapter.Number = updateChapterMetadataDto.ChapterMetadata.Range;
+            }
             if (chapter.Language != updateChapterMetadataDto.ChapterMetadata?.Language)
             {
                 chapter.Language = updateChapterMetadataDto.ChapterMetadata?.Language ?? string.Empty;
@@ -216,13 +226,15 @@ public class SeriesService : ISeriesService
                 PersonHelper.UpdatePeopleList(PersonRole.CoverArtist, updateChapterMetadataDto.ChapterMetadata.CoverArtists, chapter, allCoverArtists.AsReadOnly(),
                     HandleAddPerson, () => { });
             }
-            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
+            
             if (!_unitOfWork.HasChanges())
             {
                 return true;
             }
 
             await _unitOfWork.CommitAsync();
+            var newChapter = await _unitOfWork.ChapterRepository.GetChapterByIdAsync(chapterId, ChapterIncludes.Volumes);
+            //_taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
 
             // Trigger code to cleanup tags, collections, people, etc
             try

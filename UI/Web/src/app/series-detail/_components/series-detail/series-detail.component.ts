@@ -52,6 +52,10 @@ import {
   EditSeriesModalCloseResult,
   EditSeriesModalComponent
 } from 'src/app/cards/_modals/edit-series-modal/edit-series-modal.component';
+import {
+  EditChapterModalCloseResult,
+  EditChapterModalComponent
+} from 'src/app/cards/_modals/edit-chapter-modal/edit-chapter-modal.component';
 import {TagBadgeCursor} from 'src/app/shared/tag-badge/tag-badge.component';
 import {DownloadEvent, DownloadService} from 'src/app/shared/_services/download.service';
 import {KEY_CODES, UtilityService} from 'src/app/shared/_services/utility.service';
@@ -856,11 +860,18 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
   }
 
   openViewInfo(data: Volume | Chapter) {
-    const drawerRef = this.offcanvasService.open(CardDetailDrawerComponent, {position: 'bottom'});
-    drawerRef.componentInstance.data = data;
-    drawerRef.componentInstance.parentName = this.series?.name;
-    drawerRef.componentInstance.seriesId = this.series?.id;
-    drawerRef.componentInstance.libraryId = this.series?.libraryId;
+    const modalRef = this.modalService.open(EditChapterModalComponent, {  size: 'xl' });
+    modalRef.componentInstance.chapter = data;
+    modalRef.closed.subscribe((closeResult: EditChapterModalCloseResult) => {
+      if (closeResult.success) {
+        window.scrollTo(0, 0);
+        this.loadSeries(this.seriesId, closeResult.updateExternal);
+      }
+
+      if (closeResult.coverImageUpdate) {
+        this.toastr.info(this.translocoService.translate('series-detail.cover-change'));
+      }
+    });
   }
 
   openEditSeriesModal() {
