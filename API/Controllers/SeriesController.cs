@@ -617,19 +617,6 @@ public class SeriesController : BaseApiController
         if (!await _seriesService.UpdateChapterMetadata(updateChapterMetadataDto))
             return BadRequest(await _localizationService.Translate(User.GetUserId(), "update-metadata-fail"));
 
-        if (await _licenseService.HasActiveLicense())
-        {
-            _logger.LogDebug("Clearing cache as chapter weblinks may have changed");
-            await _reviewCacheProvider.RemoveAsync(ReviewController.CacheKey + updateChapterMetadataDto.ChapterMetadata.ChapterId);
-            await _ratingCacheProvider.RemoveAsync(RatingController.CacheKey + updateChapterMetadataDto.ChapterMetadata.ChapterId);
-
-            var allUsers = (await _unitOfWork.UserRepository.GetAllUsersAsync()).Select(s => s.Id);
-            foreach (var userId in allUsers)
-            {
-                await _recommendationCacheProvider.RemoveAsync(RecommendedController.CacheKey + $"{updateChapterMetadataDto.ChapterMetadata.ChapterId}-{userId}");
-            }
-        }
-
         return Ok(await _localizationService.Translate(User.GetUserId(), "chapter-updated"));
     }
 
