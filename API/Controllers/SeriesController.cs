@@ -626,4 +626,16 @@ public class SeriesController : BaseApiController
         return Ok(await _unitOfWork.ChapterRepository.GetChapterDtosAsync());
     }
 
+    [AllowAnonymous]
+    [HttpPost("by-url")]
+    public async Task<ActionResult<Dictionary<string, bool>>> GetByUrl(SeriesByUrlDto seriesByUrlDto)
+    {
+        Dictionary<string, bool> results = new Dictionary<string, bool>();
+        foreach (string url in seriesByUrlDto.Urls)
+        {
+            bool found = await _unitOfWork.SeriesMetadataRepository.FindByUrl(url);
+            results.Add(url, found);
+        }
+        return Ok(results);
+    }
 }

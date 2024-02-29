@@ -19,6 +19,7 @@ using API.Extensions;
 using API.Helpers;
 using API.Helpers.Builders;
 using API.Services.Plus;
+using API.Services.Tasks.Scanner;
 using API.Services.Tasks.Scanner.Parser;
 using API.SignalR;
 using EasyCaching.Core;
@@ -56,6 +57,8 @@ public class SeriesService : ISeriesService
     private readonly IScrobblingService _scrobblingService;
     private readonly ILocalizationService _localizationService;
 
+    private readonly IProcessSeries _processSeries;
+
     private readonly NextExpectedChapterDto _emptyExpectedChapter = new NextExpectedChapterDto
     {
         ExpectedDate = null,
@@ -64,7 +67,7 @@ public class SeriesService : ISeriesService
     };
 
     public SeriesService(IUnitOfWork unitOfWork, IEventHub eventHub, ITaskScheduler taskScheduler,
-        ILogger<SeriesService> logger, IScrobblingService scrobblingService, ILocalizationService localizationService)
+        ILogger<SeriesService> logger, IScrobblingService scrobblingService, ILocalizationService localizationService, IProcessSeries processSeries)
     {
         _unitOfWork = unitOfWork;
         _eventHub = eventHub;
@@ -72,6 +75,8 @@ public class SeriesService : ISeriesService
         _logger = logger;
         _scrobblingService = scrobblingService;
         _localizationService = localizationService;
+        _processSeries = processSeries;
+
     }
 
     /// <summary>
@@ -216,14 +221,15 @@ public class SeriesService : ISeriesService
                 PersonHelper.UpdatePeopleList(PersonRole.CoverArtist, updateChapterMetadataDto.ChapterMetadata.CoverArtists, chapter, allCoverArtists.AsReadOnly(),
                     HandleAddPerson, () => { });
             }
-            
+
             if (!_unitOfWork.HasChanges())
             {
                 return true;
             }
 
             await _unitOfWork.CommitAsync();
-            _taskScheduler.ScanSeries(chapter.Volume.Series.LibraryId, chapter.Volume.SeriesId, true);
+            var series = await _unitOfWork.SeriesRepository.GetFullSeriesForSeriesIdAsync(chapter.Volume.SeriesId);
+            _processSeries.UpdateSeriesMetadata(series, series.Library);
             // Trigger code to cleanup tags, collections, people, etc
             try
             {
@@ -946,7 +952,7 @@ public class SeriesService : ISeriesService
 
         if (lastChapterNumber > 0)
         {
-            result.ChapterNumber = (int) Math.Truncate(lastChapterNumber) + 1;
+            result.ChapterNumber = (int)Math.Truncate(lastChapterNumber) + 1;
             result.VolumeNumber = lastChapter.Volume.MinNumber;
             result.Title = series.Library.Type switch
             {

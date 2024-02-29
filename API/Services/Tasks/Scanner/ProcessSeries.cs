@@ -222,11 +222,16 @@ public class ProcessSeries : IProcessSeries
                     _logger.LogTrace("[ScannerService] Series Metadata Dump: {@Series}", series.Metadata);
                     _logger.LogTrace("[ScannerService] People Dump: {@People}", _people
                         .Select(p =>
-                            new {p.Id, p.Name, SeriesMetadataIds =
+                            new
+                            {
+                                p.Id,
+                                p.Name,
+                                SeriesMetadataIds =
                                 p.SeriesMetadatas?.Select(m => m.Id),
                                 ChapterMetadataIds =
                                     p.ChapterMetadatas?.Select(m => m.Id)
-                                    .ToList()}));
+                                    .ToList()
+                            }));
 
                     await _eventHub.SendMessageAsync(MessageFactory.Error,
                         MessageFactory.ErrorEvent($"There was an issue writing to the DB for Series {series.OriginalName}",
@@ -314,24 +319,28 @@ public class ProcessSeries : IProcessSeries
         // The actual number of count's defined across all chapter's metadata
         series.Metadata.MaxCount = chapters.Max(chapter => chapter.Count);
 
-        var maxVolume = series.Volumes.Max(v => (int) Parser.Parser.MaxNumberFromRange(v.Name));
-        var maxChapter = chapters.Max(c => (int) Parser.Parser.MaxNumberFromRange(c.Range));
+        var maxVolume = series.Volumes.Max(v => (int)Parser.Parser.MaxNumberFromRange(v.Name));
+        var maxChapter = chapters.Max(c => (int)Parser.Parser.MaxNumberFromRange(c.Range));
 
         // Single books usually don't have a number in their Range (filename)
         if (series.Format == MangaFormat.Epub || series.Format == MangaFormat.Pdf && chapters.Count == 1)
         {
             series.Metadata.MaxCount = 1;
-        } else if (series.Metadata.TotalCount <= 1 && chapters.Count == 1 && chapters[0].IsSpecial)
+        }
+        else if (series.Metadata.TotalCount <= 1 && chapters.Count == 1 && chapters[0].IsSpecial)
         {
             // If a series has a TotalCount of 1 (or no total count) and there is only a Special, mark it as Complete
             series.Metadata.MaxCount = series.Metadata.TotalCount;
-        } else if ((maxChapter == Parser.Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) && maxVolume <= series.Metadata.TotalCount)
+        }
+        else if ((maxChapter == Parser.Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) && maxVolume <= series.Metadata.TotalCount)
         {
             series.Metadata.MaxCount = maxVolume;
-        } else if (maxVolume == series.Metadata.TotalCount)
+        }
+        else if (maxVolume == series.Metadata.TotalCount)
         {
             series.Metadata.MaxCount = maxVolume;
-        } else
+        }
+        else
         {
             series.Metadata.MaxCount = maxChapter;
         }
@@ -342,7 +351,8 @@ public class ProcessSeries : IProcessSeries
             if (series.Metadata.MaxCount == series.Metadata.TotalCount && series.Metadata.TotalCount > 0)
             {
                 series.Metadata.PublicationStatus = PublicationStatus.Completed;
-            } else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
+            }
+            else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
             {
                 series.Metadata.PublicationStatus = PublicationStatus.Ended;
             }
@@ -382,6 +392,19 @@ public class ProcessSeries : IProcessSeries
                 series.Metadata.Genres.Remove(genre);
             });
         }
+        List<string> weblinks = series.Metadata.WebLinks.Split(',').ToList();
+
+        foreach (var chapter in chapters)
+        {
+            foreach (string link in chapter.WebLinks.Split(','))
+            {
+                if (!weblinks.Contains(link))
+                {
+                    weblinks.Add(link);
+                }
+            }
+        }
+        series.Metadata.WebLinks = string.Join(',', weblinks);
 
 
         #region People
