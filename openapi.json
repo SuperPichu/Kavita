@@ -9556,7 +9556,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SeriesDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9564,7 +9564,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SeriesDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9572,7 +9572,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/SeriesDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               }
