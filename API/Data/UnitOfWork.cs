@@ -9,6 +9,7 @@ namespace API.Data;
 
 public interface IUnitOfWork
 {
+    DataContext Context { get; }
     ISeriesRepository SeriesRepository { get; }
     IUserRepository UserRepository { get; }
     ILibraryRepository LibraryRepository { get; }
@@ -38,7 +39,7 @@ public interface IUnitOfWork
 }
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly DataContext _context;
+    public readonly DataContext _context;
     private readonly IMapper _mapper;
     private readonly UserManager<AppUser> _userManager;
 
@@ -74,6 +75,8 @@ public class UnitOfWork : IUnitOfWork
     public IAppUserSmartFilterRepository AppUserSmartFilterRepository => new AppUserSmartFilterRepository(_context, _mapper);
     public IAppUserExternalSourceRepository AppUserExternalSourceRepository => new AppUserExternalSourceRepository(_context, _mapper);
     public IExternalSeriesMetadataRepository ExternalSeriesMetadataRepository => new ExternalSeriesMetadataRepository(_context, _mapper);
+
+    public DataContext Context => _context;
 
     /// <summary>
     /// Commits changes to the DB. Completes the open transaction.

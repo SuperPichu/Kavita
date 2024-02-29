@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using API.Constants;
 using API.Data;
@@ -637,5 +638,16 @@ public class SeriesController : BaseApiController
             results.Add(url, found);
         }
         return Ok(results);
+    }
+
+    [HttpGet("url-missing")]
+    public async Task<ActionResult<IList<ChapterDto>>> GetMissingUrl()
+    {
+        List<ChapterDto> chapterDtos = new List<ChapterDto>();
+        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.Summary != "eh").AsEnumerable().Where(s => !s.Summary.StartsWith('#')))
+        {
+            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterDtoAsync(chapter.Id));
+        }
+        return Ok(chapterDtos);
     }
 }
