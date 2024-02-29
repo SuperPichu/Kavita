@@ -16,6 +16,7 @@ using API.Extensions;
 using API.Helpers.Builders;
 using API.Services;
 using API.Services.Plus;
+using API.Services.Tasks.Scanner;
 using API.SignalR;
 using API.Tests.Helpers;
 using EasyCaching.Core;
@@ -31,7 +32,8 @@ using Xunit;
 
 namespace API.Tests.Services;
 
-internal class MockHostingEnvironment : IHostEnvironment {
+internal class MockHostingEnvironment : IHostEnvironment
+{
     public string ApplicationName { get => "API"; set => throw new NotImplementedException(); }
     public IFileProvider ContentRootFileProvider { get => throw new NotImplementedException(); set => throw new NotImplementedException(); }
 
@@ -59,7 +61,7 @@ public class SeriesServiceTests : AbstractDbTest
 
         _seriesService = new SeriesService(_unitOfWork, Substitute.For<IEventHub>(),
             Substitute.For<ITaskScheduler>(), Substitute.For<ILogger<SeriesService>>(),
-            Substitute.For<IScrobblingService>(), locService);
+            Substitute.For<IScrobblingService>(), locService, Substitute.For<IProcessSeries>());
     }
     #region Setup
 
@@ -127,7 +129,7 @@ public class SeriesServiceTests : AbstractDbTest
 
         await _context.SaveChangesAsync();
 
-        var expectedRanges = new[] {"Omake", "Something SP02"};
+        var expectedRanges = new[] { "Omake", "Something SP02" };
 
         var detail = await _seriesService.GetSeriesDetail(1, 1);
         Assert.NotEmpty(detail.Specials);
@@ -169,7 +171,7 @@ public class SeriesServiceTests : AbstractDbTest
 
         Assert.NotEmpty(detail.Volumes);
         Assert.Equal(2, detail.Volumes.Count()); // Volume 0 shouldn't be sent in Volumes
-        Assert.All(detail.Volumes, dto => Assert.Contains(dto.Name, new[] {"Volume 2", "Volume 3"})); // Volumes get names mapped
+        Assert.All(detail.Volumes, dto => Assert.Contains(dto.Name, new[] { "Volume 2", "Volume 3" })); // Volumes get names mapped
     }
 
     [Fact]
@@ -516,7 +518,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Genres = new List<GenreTagDto>() {new GenreTagDto() {Id = 0, Title = "New Genre"}}
+                Genres = new List<GenreTagDto>() { new GenreTagDto() { Id = 0, Title = "New Genre" } }
             },
             CollectionTags = new List<CollectionTagDto>()
         });
@@ -546,11 +548,11 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Genres = new List<GenreTagDto>() {new GenreTagDto() {Id = 0, Title = "New Genre"}},
-                Tags = new List<TagDto>() {new TagDto() {Id = 0, Title = "New Tag"}},
-                Characters = new List<PersonDto>() {new PersonDto() {Id = 0, Name = "Joe Shmo", Role = PersonRole.Character}},
-                Colorists = new List<PersonDto>() {new PersonDto() {Id = 0, Name = "Joe Shmo", Role = PersonRole.Colorist}},
-                Pencillers = new List<PersonDto>() {new PersonDto() {Id = 0, Name = "Joe Shmo 2", Role = PersonRole.Penciller}},
+                Genres = new List<GenreTagDto>() { new GenreTagDto() { Id = 0, Title = "New Genre" } },
+                Tags = new List<TagDto>() { new TagDto() { Id = 0, Title = "New Tag" } },
+                Characters = new List<PersonDto>() { new PersonDto() { Id = 0, Name = "Joe Shmo", Role = PersonRole.Character } },
+                Colorists = new List<PersonDto>() { new PersonDto() { Id = 0, Name = "Joe Shmo", Role = PersonRole.Colorist } },
+                Pencillers = new List<PersonDto>() { new PersonDto() { Id = 0, Name = "Joe Shmo 2", Role = PersonRole.Penciller } },
             },
             CollectionTags = new List<CollectionTagDto>()
             {
@@ -579,7 +581,7 @@ public class SeriesServiceTests : AbstractDbTest
         s.Library = new LibraryBuilder("Test LIb", LibraryType.Book).Build();
 
         var g = new GenreBuilder("Existing Genre").Build();
-        s.Metadata.Genres = new List<Genre>() {g};
+        s.Metadata.Genres = new List<Genre>() { g };
         _context.Series.Add(s);
 
         _context.Genre.Add(g);
@@ -590,7 +592,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Genres = new List<GenreTagDto>() {new () {Id = 0, Title = "New Genre"}},
+                Genres = new List<GenreTagDto>() { new() { Id = 0, Title = "New Genre" } },
             },
             CollectionTags = new List<CollectionTagDto>()
         });
@@ -623,7 +625,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Publishers = new List<PersonDto>() {new () {Id = 0, Name = "Existing Person", Role = PersonRole.Publisher}},
+                Publishers = new List<PersonDto>() { new() { Id = 0, Name = "Existing Person", Role = PersonRole.Publisher } },
             },
             CollectionTags = new List<CollectionTagDto>()
         });
@@ -657,7 +659,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Publishers = new List<PersonDto>() {new () {Id = 0, Name = "Existing Person", Role = PersonRole.Publisher}},
+                Publishers = new List<PersonDto>() { new() { Id = 0, Name = "Existing Person", Role = PersonRole.Publisher } },
                 PublisherLocked = true
             },
             CollectionTags = new List<CollectionTagDto>()
@@ -691,7 +693,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Publishers = new List<PersonDto>() {},
+                Publishers = new List<PersonDto>() { },
             },
             CollectionTags = new List<CollectionTagDto>()
         });
@@ -712,7 +714,7 @@ public class SeriesServiceTests : AbstractDbTest
             .Build();
         s.Library = new LibraryBuilder("Test LIb", LibraryType.Book).Build();
         var g = new GenreBuilder("Existing Genre").Build();
-        s.Metadata.Genres = new List<Genre>() {g};
+        s.Metadata.Genres = new List<Genre>() { g };
         s.Metadata.GenresLocked = true;
         _context.Series.Add(s);
 
@@ -724,7 +726,7 @@ public class SeriesServiceTests : AbstractDbTest
             SeriesMetadata = new SeriesMetadataDto()
             {
                 SeriesId = 1,
-                Genres = new List<GenreTagDto>() {new () {Id = 1, Title = "Existing Genre"}},
+                Genres = new List<GenreTagDto>() { new() { Id = 1, Title = "Existing Genre" } },
                 GenresLocked = true
             },
             CollectionTags = new List<CollectionTagDto>()
@@ -1243,7 +1245,7 @@ public class SeriesServiceTests : AbstractDbTest
     [InlineData(LibraryType.Comic, false, "Issue")]
     [InlineData(LibraryType.Comic, true, "Issue #")]
     [InlineData(LibraryType.Book, false, "Book")]
-    public async Task FormatChapterNameTest(LibraryType libraryType, bool withHash, string expected )
+    public async Task FormatChapterNameTest(LibraryType libraryType, bool withHash, string expected)
     {
         await ResetDb();
 
@@ -1478,7 +1480,7 @@ public class SeriesServiceTests : AbstractDbTest
         await _context.SaveChangesAsync();
 
         // Ensure we can delete the series
-        Assert.True(await _seriesService.DeleteMultipleSeries(new[] {1, 2}));
+        Assert.True(await _seriesService.DeleteMultipleSeries(new[] { 1, 2 }));
         Assert.Null(await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1));
         Assert.Null(await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(2));
     }
