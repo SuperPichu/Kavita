@@ -650,4 +650,15 @@ public class SeriesController : BaseApiController
         }
         return Ok(chapterDtos);
     }
+
+    [HttpGet("url-search")]
+    public async Task<ActionResult<IList<ChapterMetadataDto>>> GetUrlSearch(string query)
+    {
+        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
+        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(c => c.WebLinks.Contains(query) || c.Summary.Contains(query)))
+        {
+            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
+        }
+        return Ok(chapterDtos);
+    }
 }

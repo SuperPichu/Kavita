@@ -392,11 +392,11 @@ public class ProcessSeries : IProcessSeries
                 series.Metadata.Genres.Remove(genre);
             });
         }
-        List<string> weblinks = series.Metadata.WebLinks.Split(',').ToList();
+        List<string> weblinks = series.Metadata.WebLinks.Split(',').Where(l => l.Length > 0).ToList();
 
         foreach (var chapter in chapters)
         {
-            foreach (string link in chapter.WebLinks.Split(','))
+            foreach (string link in chapter.WebLinks.Split(',').Where(l => l.Length > 0))
             {
                 if (!weblinks.Contains(link))
                 {
