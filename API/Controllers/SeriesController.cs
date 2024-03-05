@@ -676,13 +676,15 @@ public class SeriesController : BaseApiController
 
     [AllowAnonymous]
     [HttpPost("by-file")]
-    public async Task<ActionResult<Dictionary<string, int>>> GetByFile(SeriesByUrlDto seriesByUrlDto)
+    public async Task<ActionResult<Dictionary<string, ChapterMetadataDto>>> GetByFile(SeriesByUrlDto seriesByUrlDto)
     {
-        Dictionary<string, int> results = new Dictionary<string, int>();
+        Dictionary<string, ChapterMetadataDto> results = new Dictionary<string, ChapterMetadataDto>();
         foreach (string url in seriesByUrlDto.Urls)
         {
-            int found = await _unitOfWork.Context.MangaFile.Where(f => f.FilePath.Contains(url)).Select(f => f.ChapterId).FirstOrDefaultAsync();
-            results.Add(url, found);
+            Chapter found = await _unitOfWork.Context.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).Where(f => f.FilePath.Contains(url)).Select(f => f.Chapter).FirstOrDefaultAsync();
+            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(found.Id);
+            chapterMetadataDto.SeriesName = found.Volume.Series.Name;
+            results.Add(url, chapterMetadataDto);
         }
         return Ok(results);
     }
