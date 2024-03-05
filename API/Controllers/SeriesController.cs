@@ -651,6 +651,17 @@ public class SeriesController : BaseApiController
         return Ok(chapterDtos);
     }
 
+    [HttpGet("all-url-missing")]
+    public async Task<ActionResult<IList<ChapterMetadataDto>>> GetAllMissingUrl()
+    {
+        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
+        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.WebLinks.Length == 0))
+        {
+            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
+        }
+        return Ok(chapterDtos);
+    }
+
     [HttpGet("url-search")]
     public async Task<ActionResult<IList<ChapterMetadataDto>>> GetUrlSearch(string query)
     {

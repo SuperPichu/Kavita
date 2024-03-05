@@ -9581,6 +9581,91 @@
         }
       }
     },
+    "/api/Series/all-url-missing": {
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Series/url-search": {
+      "get": {
+        "tags": [
+          "Series"
+        ],
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/Server/clear-cache": {
       "post": {
         "tags": [

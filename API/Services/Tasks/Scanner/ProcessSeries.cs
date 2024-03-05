@@ -403,6 +403,11 @@ public class ProcessSeries : IProcessSeries
                     weblinks.Add(link);
                 }
             }
+            if (chapter.WebLinks == "")
+            {
+                weblinks = new List<string>();
+                break;
+            }
         }
         series.Metadata.WebLinks = string.Join(',', weblinks);
 
