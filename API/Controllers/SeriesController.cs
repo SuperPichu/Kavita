@@ -24,6 +24,7 @@ using Kavita.Common.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace API.Controllers;
@@ -671,5 +672,18 @@ public class SeriesController : BaseApiController
             chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
         }
         return Ok(chapterDtos);
+    }
+
+    [AllowAnonymous]
+    [HttpPost("by-file")]
+    public async Task<ActionResult<Dictionary<string, int>>> GetByFile(SeriesByUrlDto seriesByUrlDto)
+    {
+        Dictionary<string, int> results = new Dictionary<string, int>();
+        foreach (string url in seriesByUrlDto.Urls)
+        {
+            int found = await _unitOfWork.Context.MangaFile.Where(f => f.FilePath.Contains(url)).Select(f => f.ChapterId).FirstOrDefaultAsync();
+            results.Add(url, found);
+        }
+        return Ok(results);
     }
 }

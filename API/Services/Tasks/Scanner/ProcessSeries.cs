@@ -392,7 +392,7 @@ public class ProcessSeries : IProcessSeries
                 series.Metadata.Genres.Remove(genre);
             });
         }
-        List<string> weblinks = series.Metadata.WebLinks.Split(',').Where(l => l.Length > 0).ToList();
+        List<string> weblinks = new List<string>();
 
         foreach (var chapter in chapters)
         {
