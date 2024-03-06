@@ -699,4 +699,13 @@ public class SeriesController : BaseApiController
         }
         return Ok(results);
     }
+
+    [HttpDelete("delete-file")]
+    public async Task<ActionResult> DeleteFile(int fileId)
+    {
+        MangaFile mangaFile = await _unitOfWork.Context.MangaFile.FindAsync(fileId);
+        _unitOfWork.Context.MangaFile.Remove(mangaFile);
+        await _unitOfWork.Context.SaveChangesAsync();
+        return Ok();
+    }
 }

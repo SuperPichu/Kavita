@@ -35,21 +35,21 @@ import { LibraryService } from 'src/app/_services/library.service';
 import { ReaderService } from 'src/app/_services/reader.service';
 import { SeriesService } from 'src/app/_services/series.service';
 import { UploadService } from 'src/app/_services/upload.service';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {CommonModule} from "@angular/common";
-import {EntityTitleComponent} from "../entity-title/entity-title.component";
-import {ImageComponent} from "../../shared/image/image.component";
-import {ReadMoreComponent} from "../../shared/read-more/read-more.component";
-import {EntityInfoCardsComponent} from "../entity-info-cards/entity-info-cards.component";
-import {CoverImageChooserComponent} from "../cover-image-chooser/cover-image-chooser.component";
-import {ChapterMetadataDetailComponent} from "../chapter-metadata-detail/chapter-metadata-detail.component";
-import {DefaultDatePipe} from "../../_pipes/default-date.pipe";
-import {BytesPipe} from "../../_pipes/bytes.pipe";
-import {BadgeExpanderComponent} from "../../shared/badge-expander/badge-expander.component";
-import {TagBadgeComponent} from "../../shared/tag-badge/tag-badge.component";
-import {PersonBadgeComponent} from "../../shared/person-badge/person-badge.component";
-import {translate, TranslocoDirective, TranslocoService} from "@ngneat/transloco";
-import {CardActionablesComponent} from "../../_single-module/card-actionables/card-actionables.component";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { CommonModule } from "@angular/common";
+import { EntityTitleComponent } from "../entity-title/entity-title.component";
+import { ImageComponent } from "../../shared/image/image.component";
+import { ReadMoreComponent } from "../../shared/read-more/read-more.component";
+import { EntityInfoCardsComponent } from "../entity-info-cards/entity-info-cards.component";
+import { CoverImageChooserComponent } from "../cover-image-chooser/cover-image-chooser.component";
+import { ChapterMetadataDetailComponent } from "../chapter-metadata-detail/chapter-metadata-detail.component";
+import { DefaultDatePipe } from "../../_pipes/default-date.pipe";
+import { BytesPipe } from "../../_pipes/bytes.pipe";
+import { BadgeExpanderComponent } from "../../shared/badge-expander/badge-expander.component";
+import { TagBadgeComponent } from "../../shared/tag-badge/tag-badge.component";
+import { PersonBadgeComponent } from "../../shared/person-badge/person-badge.component";
+import { translate, TranslocoDirective, TranslocoService } from "@ngneat/transloco";
+import { CardActionablesComponent } from "../../_single-module/card-actionables/card-actionables.component";
 
 enum TabID {
   General = 0,
@@ -78,7 +78,7 @@ export class CardDetailDrawerComponent implements OnInit {
   @Input() parentName = '';
   @Input() seriesId: number = 0;
   @Input() libraryId: number = 0;
-  @Input({required: true}) data!: Volume | Chapter;
+  @Input({ required: true }) data!: Volume | Chapter;
 
   /**
    * If this is a volume, this will be first chapter for said volume.
@@ -102,10 +102,10 @@ export class CardDetailDrawerComponent implements OnInit {
 
 
   tabs = [
-    {title: 'general-tab', disabled: false},
-    {title: 'metadata-tab', disabled: false},
-    {title: 'cover-tab', disabled: false},
-    {title: 'info-tab', disabled: false}
+    { title: 'general-tab', disabled: false },
+    { title: 'metadata-tab', disabled: false },
+    { title: 'cover-tab', disabled: false },
+    { title: 'info-tab', disabled: false }
   ];
   active = this.tabs[0];
 
@@ -121,13 +121,13 @@ export class CardDetailDrawerComponent implements OnInit {
     public imageService: ImageService, private uploadService: UploadService, private toastr: ToastrService,
     private accountService: AccountService, private actionFactoryService: ActionFactoryService,
     private actionService: ActionService, private router: Router, private libraryService: LibraryService,
-    private seriesService: SeriesService, private readerService: ReaderService,
+    public seriesService: SeriesService, private readerService: ReaderService,
     public activeOffcanvas: NgbActiveOffcanvas, private downloadService: DownloadService, private readonly cdRef: ChangeDetectorRef) {
-      this.isAdmin$ = this.accountService.currentUser$.pipe(
-        takeUntilDestroyed(this.destroyRef),
-        map(user => (user && this.accountService.hasAdminRole(user)) || false),
-        shareReplay()
-      );
+    this.isAdmin$ = this.accountService.currentUser$.pipe(
+      takeUntilDestroyed(this.destroyRef),
+      map(user => (user && this.accountService.hasAdminRole(user)) || false),
+      shareReplay()
+    );
   }
 
   ngOnInit(): void {
@@ -151,8 +151,8 @@ export class CardDetailDrawerComponent implements OnInit {
     }
 
     this.chapterActions = this.actionFactoryService.getChapterActions(this.handleChapterActionCallback.bind(this))
-                                .filter(item => item.action !== Action.Edit);
-    this.chapterActions.push({title: 'read', action: Action.Read, callback: this.handleChapterActionCallback.bind(this), requiresAdmin: false, children: []});
+      .filter(item => item.action !== Action.Edit);
+    this.chapterActions.push({ title: 'read', action: Action.Read, callback: this.handleChapterActionCallback.bind(this), requiresAdmin: false, children: [] });
     if (this.isChapter) {
       const chapter = this.utilityService.asChapter(this.data);
       this.chapterActions = this.actionFactoryService.filterSendToAction(this.chapterActions, chapter);
@@ -166,7 +166,7 @@ export class CardDetailDrawerComponent implements OnInit {
     });
 
 
-    const collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+    const collator = new Intl.Collator(undefined, { numeric: true, sensitivity: 'base' });
     this.chapters.forEach((c: Chapter) => {
       c.files.sort((a: MangaFile, b: MangaFile) => collator.compare(a.filePath, b.filePath));
     });
@@ -195,7 +195,7 @@ export class CardDetailDrawerComponent implements OnInit {
   }
 
   applyCoverImage(coverUrl: string) {
-    this.uploadService.updateChapterCoverImage(this.chapter.id, coverUrl).subscribe(() => {});
+    this.uploadService.updateChapterCoverImage(this.chapter.id, coverUrl).subscribe(() => { });
   }
 
   updateCoverImageIndex(selectedIndex: number) {
@@ -227,13 +227,13 @@ export class CardDetailDrawerComponent implements OnInit {
 
   handleChapterActionCallback(action: ActionItem<Chapter>, chapter: Chapter) {
     switch (action.action) {
-      case(Action.MarkAsRead):
+      case (Action.MarkAsRead):
         this.markChapterAsRead(chapter);
         break;
-      case(Action.MarkAsUnread):
+      case (Action.MarkAsUnread):
         this.markChapterAsUnread(chapter);
         break;
-        case(Action.AddToReadingList):
+      case (Action.AddToReadingList):
         this.actionService.addChapterToReadingList(chapter, this.seriesId);
         break;
       case (Action.IncognitoRead):
@@ -246,11 +246,11 @@ export class CardDetailDrawerComponent implements OnInit {
         this.readChapter(chapter, false);
         break;
       case (Action.SendTo):
-      {
-        const device = (action._extra!.data as Device);
-        this.actionService.sendToDevice([chapter.id], device);
-        break;
-      }
+        {
+          const device = (action._extra!.data as Device);
+          this.actionService.sendToDevice([chapter.id], device);
+          break;
+        }
       default:
         break;
     }
@@ -263,7 +263,7 @@ export class CardDetailDrawerComponent implements OnInit {
     }
 
     const params = this.readerService.getQueryParamsObject(incognito, false);
-    this.router.navigate(this.readerService.getNavigationArray(this.libraryId, this.seriesId, chapter.id, chapter.files[0].format), {queryParams: params});
+    this.router.navigate(this.readerService.getNavigationArray(this.libraryId, this.seriesId, chapter.id, chapter.files[0].format), { queryParams: params });
     this.close();
   }
 
@@ -280,6 +280,11 @@ export class CardDetailDrawerComponent implements OnInit {
       this.downloadInProgress = false;
       this.cdRef.markForCheck();
     });
+  }
+
+  deleteFile(fileId: number) {
+    this.seriesService.deleteFile(fileId).subscribe();
+    this.activeOffcanvas.dismiss();
   }
 
 }

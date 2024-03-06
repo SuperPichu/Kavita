@@ -17,11 +17,11 @@ import { Volume } from '../_models/volume';
 import { ImageService } from './image.service';
 import { TextResonse } from '../_types/text-response';
 import { SeriesFilterV2 } from '../_models/metadata/v2/series-filter-v2';
-import {UserReview} from "../_single-module/review-card/user-review";
-import {Rating} from "../_models/rating";
-import {Recommendation} from "../_models/series-detail/recommendation";
-import {ExternalSeriesDetail} from "../_models/series-detail/external-series-detail";
-import {NextExpectedChapter} from "../_models/series-detail/next-expected-chapter";
+import { UserReview } from "../_single-module/review-card/user-review";
+import { Rating } from "../_models/rating";
+import { Recommendation } from "../_models/series-detail/recommendation";
+import { ExternalSeriesDetail } from "../_models/series-detail/external-series-detail";
+import { NextExpectedChapter } from "../_models/series-detail/next-expected-chapter";
 
 @Injectable({
   providedIn: 'root'
@@ -40,10 +40,10 @@ export class SeriesService {
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
     const data = filter || {};
 
-    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/all-v2', data, {observe: 'response', params}).pipe(
-        map((response: any) => {
-          return this.utilityService.createPaginatedResult(response, this.paginatedResults);
-        })
+    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/all-v2', data, { observe: 'response', params }).pipe(
+      map((response: any) => {
+        return this.utilityService.createPaginatedResult(response, this.paginatedResults);
+      })
     );
   }
 
@@ -52,7 +52,7 @@ export class SeriesService {
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
     const data = filter || {};
 
-    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/v2', data, {observe: 'response', params}).pipe(
+    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/v2', data, { observe: 'response', params }).pipe(
       map((response: any) => {
         return this.utilityService.createPaginatedResult(response, this.paginatedResults);
       })
@@ -60,7 +60,7 @@ export class SeriesService {
   }
 
   getAllSeriesByIds(seriesIds: Array<number>) {
-    return this.httpClient.post<Series[]>(this.baseUrl + 'series/series-by-ids', {seriesIds: seriesIds});
+    return this.httpClient.post<Series[]>(this.baseUrl + 'series/series-by-ids', { seriesIds: seriesIds });
   }
 
   getSeries(seriesId: number) {
@@ -84,11 +84,11 @@ export class SeriesService {
   }
 
   deleteMultipleSeries(seriesIds: Array<number>) {
-    return this.httpClient.post<string>(this.baseUrl + 'series/delete-multiple', {seriesIds}, TextResonse).pipe(map(s => s === "true"));
+    return this.httpClient.post<string>(this.baseUrl + 'series/delete-multiple', { seriesIds }, TextResonse).pipe(map(s => s === "true"));
   }
 
   updateRating(seriesId: number, userRating: number) {
-    return this.httpClient.post(this.baseUrl + 'series/update-rating', {seriesId, userRating});
+    return this.httpClient.post(this.baseUrl + 'series/update-rating', { seriesId, userRating });
   }
 
   updateSeries(model: any) {
@@ -96,11 +96,11 @@ export class SeriesService {
   }
 
   markRead(seriesId: number) {
-    return this.httpClient.post<void>(this.baseUrl + 'reader/mark-read', {seriesId});
+    return this.httpClient.post<void>(this.baseUrl + 'reader/mark-read', { seriesId });
   }
 
   markUnread(seriesId: number) {
-    return this.httpClient.post<void>(this.baseUrl + 'reader/mark-unread', {seriesId});
+    return this.httpClient.post<void>(this.baseUrl + 'reader/mark-unread', { seriesId });
   }
 
   getRecentlyAdded(pageNum?: number, itemsPerPage?: number, filter?: SeriesFilterV2) {
@@ -108,7 +108,7 @@ export class SeriesService {
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
 
     const data = filter || {};
-    return this.httpClient.post<Series[]>(this.baseUrl + 'series/recently-added-v2', data, {observe: 'response', params}).pipe(
+    return this.httpClient.post<Series[]>(this.baseUrl + 'series/recently-added-v2', data, { observe: 'response', params }).pipe(
       map(response => {
         return this.utilityService.createPaginatedResult(response, new PaginatedResult<Series[]>());
       })
@@ -124,17 +124,17 @@ export class SeriesService {
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
     const data = filter || {};
 
-    return this.httpClient.post<Series[]>(this.baseUrl + 'want-to-read/v2', data, {observe: 'response', params}).pipe(
+    return this.httpClient.post<Series[]>(this.baseUrl + 'want-to-read/v2', data, { observe: 'response', params }).pipe(
       map(response => {
         return this.utilityService.createPaginatedResult(response, new PaginatedResult<Series[]>());
-    }));
+      }));
   }
 
   isWantToRead(seriesId: number) {
     return this.httpClient.get<string>(this.baseUrl + 'want-to-read?seriesId=' + seriesId, TextResonse)
-    .pipe(map(val => {
-      return val === 'true';
-    }));
+      .pipe(map(val => {
+        return val === 'true';
+      }));
   }
 
   getOnDeck(libraryId: number = 0, pageNum?: number, itemsPerPage?: number, filter?: SeriesFilterV2) {
@@ -142,23 +142,23 @@ export class SeriesService {
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
     const data = filter || {};
 
-    return this.httpClient.post<Series[]>(this.baseUrl + 'series/on-deck?libraryId=' + libraryId, data, {observe: 'response', params}).pipe(
+    return this.httpClient.post<Series[]>(this.baseUrl + 'series/on-deck?libraryId=' + libraryId, data, { observe: 'response', params }).pipe(
       map(response => {
         return this.utilityService.createPaginatedResult(response, new PaginatedResult<Series[]>());
-    }));
+      }));
   }
 
 
   refreshMetadata(series: Series) {
-    return this.httpClient.post(this.baseUrl + 'series/refresh-metadata', {libraryId: series.libraryId, seriesId: series.id});
+    return this.httpClient.post(this.baseUrl + 'series/refresh-metadata', { libraryId: series.libraryId, seriesId: series.id });
   }
 
   scan(libraryId: number, seriesId: number, force = false) {
-    return this.httpClient.post(this.baseUrl + 'series/scan', {libraryId: libraryId, seriesId: seriesId, forceUpdate: force});
+    return this.httpClient.post(this.baseUrl + 'series/scan', { libraryId: libraryId, seriesId: seriesId, forceUpdate: force });
   }
 
   analyzeFiles(libraryId: number, seriesId: number) {
-    return this.httpClient.post(this.baseUrl + 'series/analyze', {libraryId: libraryId, seriesId: seriesId});
+    return this.httpClient.post(this.baseUrl + 'series/analyze', { libraryId: libraryId, seriesId: seriesId });
   }
 
   getMetadata(seriesId: number) {
@@ -181,7 +181,7 @@ export class SeriesService {
 
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
 
-    return this.httpClient.get<PaginatedResult<Series[]>>(this.baseUrl + 'series/series-by-collection?collectionId=' + collectionTagId, {observe: 'response', params}).pipe(
+    return this.httpClient.get<PaginatedResult<Series[]>>(this.baseUrl + 'series/series-by-collection?collectionId=' + collectionTagId, { observe: 'response', params }).pipe(
       map((response: any) => {
         return this.utilityService.createPaginatedResult(response, this.paginatedSeriesForTagsResults);
       })
@@ -201,8 +201,10 @@ export class SeriesService {
     sequels: Array<number>, sideStories: Array<number>, spinOffs: Array<number>,
     alternativeSettings: Array<number>, alternativeVersions: Array<number>, doujinshis: Array<number>, editions: Array<number>) {
     return this.httpClient.post(this.baseUrl + 'series/update-related?seriesId=' + seriesId,
-    {seriesId, adaptations, characters, sequels, prequels, contains, others, sideStories, spinOffs,
-     alternativeSettings, alternativeVersions, doujinshis, editions});
+      {
+        seriesId, adaptations, characters, sequels, prequels, contains, others, sideStories, spinOffs,
+        alternativeSettings, alternativeVersions, doujinshis, editions
+      });
   }
 
   getSeriesDetail(seriesId: number) {
@@ -241,6 +243,10 @@ export class SeriesService {
 
   getNextExpectedChapterDate(seriesId: number) {
     return this.httpClient.get<NextExpectedChapter>(this.baseUrl + 'series/next-expected?seriesId=' + seriesId);
+  }
+
+  deleteFile(fileId: number) {
+    return this.httpClient.delete(this.baseUrl + 'series/delete-file?fileId=' + fileId);
   }
 
 }
