@@ -9461,7 +9461,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChapterDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9469,7 +9469,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChapterDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9477,7 +9477,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/ChapterDto"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               }
@@ -9698,8 +9698,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": "integer",
-                    "format": "int32"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9707,8 +9706,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": "integer",
-                    "format": "int32"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               },
@@ -9716,8 +9714,7 @@
                 "schema": {
                   "type": "object",
                   "additionalProperties": {
-                    "type": "integer",
-                    "format": "int32"
+                    "$ref": "#/components/schemas/ChapterMetadataDto"
                   }
                 }
               }
@@ -14521,6 +14518,14 @@
             "format": "int32"
           },
           "title": {
+            "type": "string",
+            "nullable": true
+          },
+          "seriesName": {
+            "type": "string",
+            "nullable": true
+          },
+          "filePath": {
             "type": "string",
             "nullable": true
           },

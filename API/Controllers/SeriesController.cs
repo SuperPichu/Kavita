@@ -623,9 +623,16 @@ public class SeriesController : BaseApiController
     }
 
     [HttpGet("chapters")]
-    public async Task<ActionResult<IEnumerable<ChapterDto>>> GetAllChapters()
+    public async Task<ActionResult<IEnumerable<ChapterMetadataDto>>> GetAllChapters()
     {
-        return Ok(await _unitOfWork.ChapterRepository.GetChapterDtosAsync());
+        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
+        foreach (ChapterDto chapterDto in await _unitOfWork.ChapterRepository.GetChapterDtosAsync())
+        {
+            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapterDto.Id);
+            chapterMetadataDto.FilePath = chapterDto.Files.FirstOrDefault().FilePath;
+            chapterDtos.Add(chapterMetadataDto);
+        }
+        return Ok(chapterDtos);
     }
 
     [AllowAnonymous]
@@ -647,7 +654,9 @@ public class SeriesController : BaseApiController
         List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
         foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.Summary != "eh").AsEnumerable().Where(s => (s.WebLinks == null || s.WebLinks.Length == 0) && s.Summary != null && !s.Summary.StartsWith('#')))
         {
-            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
+            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
+            chapterMetadataDto.FilePath = await _unitOfWork.Context.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
+            chapterDtos.Add(chapterMetadataDto);
         }
         return Ok(chapterDtos);
     }
@@ -658,7 +667,9 @@ public class SeriesController : BaseApiController
         List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
         foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.WebLinks.Length == 0))
         {
-            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
+            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
+            chapterMetadataDto.FilePath = await _unitOfWork.Context.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
+            chapterDtos.Add(chapterMetadataDto);
         }
         return Ok(chapterDtos);
     }
