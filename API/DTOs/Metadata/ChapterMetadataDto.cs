@@ -12,6 +12,7 @@ public class ChapterMetadataDto
     public int Id { get; set; }
     public int ChapterId { get; set; }
     public string Title { get; set; } = default!;
+    public string? TitleName { get; set; } = default!;
     public string? SeriesName { get; set; } = default!;
     public string? FilePath { get; set; } = default!;
     public ICollection<PersonDto> Writers { get; set; } = new List<PersonDto>();
