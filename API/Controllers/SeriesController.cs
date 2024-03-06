@@ -18,6 +18,7 @@ using API.Extensions;
 using API.Helpers;
 using API.Services;
 using API.Services.Plus;
+using API.SignalR;
 using EasyCaching.Core;
 using Kavita.Common;
 using Kavita.Common.Extensions;
@@ -41,13 +42,15 @@ public class SeriesController : BaseApiController
     private readonly ILocalizationService _localizationService;
     private readonly IExternalMetadataService _externalMetadataService;
     private readonly IEasyCachingProvider _externalSeriesCacheProvider;
+    private readonly IMetadataService _metadataService;
+    private readonly IEventHub _eventHub;
     private const string CacheKey = "externalSeriesData_";
 
 
     public SeriesController(ILogger<SeriesController> logger, ITaskScheduler taskScheduler, IUnitOfWork unitOfWork,
         ISeriesService seriesService, ILicenseService licenseService,
         IEasyCachingProviderFactory cachingProviderFactory, ILocalizationService localizationService,
-        IExternalMetadataService externalMetadataService)
+        IExternalMetadataService externalMetadataService, IMetadataService metadataService, IEventHub eventHub)
     {
         _logger = logger;
         _taskScheduler = taskScheduler;
@@ -56,6 +59,8 @@ public class SeriesController : BaseApiController
         _licenseService = licenseService;
         _localizationService = localizationService;
         _externalMetadataService = externalMetadataService;
+        _metadataService = metadataService;
+        _eventHub = eventHub;
 
         _externalSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusExternalSeries);
     }
@@ -703,9 +708,12 @@ public class SeriesController : BaseApiController
     [HttpDelete("delete-file")]
     public async Task<ActionResult> DeleteFile(int fileId)
     {
-        MangaFile mangaFile = await _unitOfWork.Context.MangaFile.FindAsync(fileId);
+        MangaFile mangaFile = await _unitOfWork.Context.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
         _unitOfWork.Context.MangaFile.Remove(mangaFile);
         await _unitOfWork.Context.SaveChangesAsync();
+        await _metadataService.GenerateCoversForSeries(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
+        await _eventHub.SendMessageAsync(MessageFactory.ScanSeries,
+            MessageFactory.ScanSeriesEvent(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId, mangaFile.Chapter.Volume.Series.Name));
         return Ok();
     }
 }
