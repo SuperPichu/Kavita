@@ -33,6 +33,7 @@ public interface IProcessSeries
 
     void Reset();
     Task ProcessSeriesAsync(IList<ParserInfo> parsedInfos, Library library, bool forceUpdate = false);
+    Task UpdateSeriesMetadata(Series series, Library library);
 }
 
 /// <summary>
@@ -301,7 +302,7 @@ public class ProcessSeries : IProcessSeries
     }
 
 
-    private async Task UpdateSeriesMetadata(Series series, Library library)
+    public async Task UpdateSeriesMetadata(Series series, Library library)
     {
         series.Metadata ??= new SeriesMetadataBuilder().Build();
         var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
