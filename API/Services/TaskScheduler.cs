@@ -169,12 +169,12 @@ public class TaskScheduler : ITaskScheduler
         {
             return;
         }
+
         RecurringJob.AddOrUpdate(CheckScrobblingTokensId, () => _scrobblingService.CheckExternalAccessTokens(),
             Cron.Daily, RecurringJobOptions);
         BackgroundJob.Enqueue(() => _scrobblingService.CheckExternalAccessTokens()); // We also kick off an immediate check on startup
         RecurringJob.AddOrUpdate(LicenseCheckId, () => _licenseService.HasActiveLicense(true),
             LicenseService.Cron, RecurringJobOptions);
-        BackgroundJob.Enqueue(() => _licenseService.HasActiveLicense(true));
 
         // KavitaPlus Scrobbling (every 4 hours)
         RecurringJob.AddOrUpdate(ProcessScrobblingEventsId, () => _scrobblingService.ProcessUpdatesSinceLastSync(),
@@ -265,7 +265,7 @@ public class TaskScheduler : ITaskScheduler
     public void ScheduleUpdaterTasks()
     {
         _logger.LogInformation("Scheduling Auto-Update tasks");
-        RecurringJob.AddOrUpdate(CheckForUpdateId, () => CheckForUpdate(), $"0 */{Rnd.Next(1, 2)} * * *", RecurringJobOptions);
+        RecurringJob.AddOrUpdate(CheckForUpdateId, () => CheckForUpdate(), $"0 */{Rnd.Next(4, 6)} * * *", RecurringJobOptions);
         BackgroundJob.Enqueue(() => CheckForUpdate());
     }
 
@@ -328,15 +328,15 @@ public class TaskScheduler : ITaskScheduler
         }
         if (RunningAnyTasksByMethod(ScanTasks, ScanQueue))
         {
-            _logger.LogInformation("A Library Scan is already running, rescheduling ScanLibrary in 3 hours");
+            _logger.LogInformation("A Scan is already running, rescheduling ScanLibrary in 3 hours");
             BackgroundJob.Schedule(() => ScanLibrary(libraryId, force), TimeSpan.FromHours(3));
             return;
         }
 
         _logger.LogInformation("Enqueuing library scan for: {LibraryId}", libraryId);
-        BackgroundJob.Enqueue(() => _scannerService.ScanLibrary(libraryId, force));
+        BackgroundJob.Enqueue(() => _scannerService.ScanLibrary(libraryId, force, true));
         // When we do a scan, force cache to re-unpack in case page numbers change
-        BackgroundJob.Enqueue(() => _cleanupService.CleanupCacheAndTempDirectories());
+        BackgroundJob.Enqueue(() => _cleanupService.CleanupCacheDirectory());
     }
 
     public void TurnOnScrobbling(int userId = 0)
@@ -386,6 +386,7 @@ public class TaskScheduler : ITaskScheduler
         }
         if (RunningAnyTasksByMethod(ScanTasks, ScanQueue))
         {
+            // BUG: This can end up triggering a ton of scan series calls (but i haven't seen in practice)
             _logger.LogInformation("A Scan is already running, rescheduling ScanSeries in 10 minutes");
             BackgroundJob.Schedule(() => ScanSeries(libraryId, seriesId, forceUpdate), TimeSpan.FromMinutes(10));
             return;
@@ -427,8 +428,14 @@ public class TaskScheduler : ITaskScheduler
     public static bool HasScanTaskRunningForLibrary(int libraryId, bool checkRunningJobs = true)
     {
         return
-            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, true}, ScanQueue, checkRunningJobs) ||
-            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, false}, ScanQueue, checkRunningJobs);
+            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, true, true}, ScanQueue,
+                checkRunningJobs) ||
+            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, false, true}, ScanQueue,
+                checkRunningJobs) ||
+            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, true, false}, ScanQueue,
+                checkRunningJobs) ||
+            HasAlreadyEnqueuedTask(ScannerService.Name, "ScanLibrary", new object[] {libraryId, false, false}, ScanQueue,
+                checkRunningJobs);
     }
 
     /// <summary>

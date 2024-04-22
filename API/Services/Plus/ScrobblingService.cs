@@ -11,7 +11,9 @@ using API.DTOs.Scrobbling;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Scrobble;
+using API.Extensions;
 using API.Helpers;
+using API.Services.Tasks.Scanner.Parser;
 using API.SignalR;
 using Flurl.Http;
 using Hangfire;
@@ -92,6 +94,7 @@ public class ScrobblingService : IScrobblingService
         ScrobbleProvider.AniList
     };
 
+
     private const string UnknownSeriesErrorMessage = "Series cannot be matched for Scrobbling";
     private const string AccessTokenErrorMessage = "Access Token needs to be rotated to continue scrobbling";
 
@@ -123,7 +126,7 @@ public class ScrobblingService : IScrobblingService
         var users = await _unitOfWork.UserRepository.GetAllUsersAsync();
         foreach (var user in users)
         {
-            if (string.IsNullOrEmpty(user.AniListAccessToken) || !_tokenService.HasTokenExpired(user.AniListAccessToken)) continue;
+            if (string.IsNullOrEmpty(user.AniListAccessToken) || !TokenService.HasTokenExpired(user.AniListAccessToken)) continue;
             _logger.LogInformation("User {UserName}'s AniList token has expired! They need to regenerate it for scrobbling to work", user.UserName);
             await _eventHub.SendMessageToAsync(MessageFactory.ScrobblingKeyExpired,
                 MessageFactory.ScrobblingKeyExpiredEvent(ScrobbleProvider.AniList), user.Id);
@@ -148,7 +151,7 @@ public class ScrobblingService : IScrobblingService
     private async Task<bool> HasTokenExpired(string token, ScrobbleProvider provider)
     {
         if (string.IsNullOrEmpty(token) ||
-            !_tokenService.HasTokenExpired(token)) return false;
+            !TokenService.HasTokenExpired(token)) return false;
 
         var license = await _unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey);
         if (string.IsNullOrEmpty(license.Value)) return true;
@@ -330,6 +333,7 @@ public class ScrobblingService : IScrobblingService
                     await _unitOfWork.AppUserProgressRepository.GetHighestFullyReadChapterForSeries(seriesId, userId),
                 Format = LibraryTypeHelper.GetFormat(series.Library.Type),
             };
+
             _unitOfWork.ScrobbleRepository.Attach(evt);
             await _unitOfWork.CommitAsync();
             _logger.LogDebug("Added Scrobbling Read update on {SeriesName} with Userid {UserId} ", series.Name, userId);
@@ -429,22 +433,25 @@ public class ScrobblingService : IScrobblingService
                 // Might want to log this under ScrobbleError
                 if (response.ErrorMessage != null && response.ErrorMessage.Contains("Too Many Requests"))
                 {
-                    _logger.LogInformation("Hit Too many requests, sleeping to regain requests");
+                    _logger.LogInformation("Hit Too many requests, sleeping to regain requests and retrying");
                     await Task.Delay(TimeSpan.FromMinutes(10));
-                } else if (response.ErrorMessage != null && response.ErrorMessage.Contains("Unauthorized"))
+                    return await PostScrobbleUpdate(data, license, evt);
+                }
+                if (response.ErrorMessage != null && response.ErrorMessage.Contains("Unauthorized"))
                 {
                     _logger.LogCritical("Kavita+ responded with Unauthorized. Please check your subscription");
                     await _licenseService.HasActiveLicense(true);
                     evt.IsErrored = true;
                     evt.ErrorDetails = "Kavita+ subscription no longer active";
                     throw new KavitaException("Kavita+ responded with Unauthorized. Please check your subscription");
-                } else if (response.ErrorMessage != null && response.ErrorMessage.Contains("Access token is invalid"))
+                }
+                if (response.ErrorMessage != null && response.ErrorMessage.Contains("Access token is invalid"))
                 {
                     evt.IsErrored = true;
                     evt.ErrorDetails = AccessTokenErrorMessage;
                     throw new KavitaException("Access token is invalid");
                 }
-                else if (response.ErrorMessage != null && response.ErrorMessage.Contains("Unknown Series"))
+                if (response.ErrorMessage != null && response.ErrorMessage.Contains("Unknown Series"))
                 {
                     // Log the Series name and Id in ScrobbleErrors
                     _logger.LogInformation("Kavita+ was unable to match the series");
@@ -479,10 +486,6 @@ public class ScrobblingService : IScrobblingService
                     evt.IsErrored = true;
                     evt.ErrorDetails = "Review was unable to be saved due to upstream requirements";
                 }
-
-                evt.IsErrored = true;
-                _logger.LogError("Scrobbling failed due to {ErrorMessage}: {SeriesName}", response.ErrorMessage, data.SeriesName);
-                throw new KavitaException($"Scrobbling failed due to {response.ErrorMessage}: {data.SeriesName}");
             }
 
             return response.RateLeft;
@@ -775,7 +778,7 @@ public class ScrobblingService : IScrobblingService
                 continue;
             }
 
-            if (_tokenService.HasTokenExpired(evt.AppUser.AniListAccessToken))
+            if (TokenService.HasTokenExpired(evt.AppUser.AniListAccessToken))
             {
                 _unitOfWork.ScrobbleRepository.Attach(new ScrobbleError()
                 {
@@ -798,7 +801,7 @@ public class ScrobblingService : IScrobblingService
                     SeriesId = evt.SeriesId
                 });
                 evt.IsErrored = true;
-                evt.ErrorDetails = "Series cannot be matched for Scrobbling";
+                evt.ErrorDetails = UnknownSeriesErrorMessage;
                 evt.ProcessDateUtc = DateTime.UtcNow;
                 _unitOfWork.ScrobbleRepository.Update(evt);
                 await _unitOfWork.CommitAsync();
@@ -816,6 +819,20 @@ public class ScrobblingService : IScrobblingService
             try
             {
                 var data = await createEvent(evt);
+                // We need to handle the encoding and changing it to the old one until we can update the API layer to handle these
+                // which could happen in v0.8.3
+                if (data.VolumeNumber is Parser.SpecialVolumeNumber)
+                {
+                    data.VolumeNumber = 0;
+                }
+                if (data.VolumeNumber is Parser.DefaultChapterNumber)
+                {
+                    data.VolumeNumber = 0;
+                }
+                if (data.ChapterNumber is Parser.DefaultChapterNumber)
+                {
+                    data.ChapterNumber = 0;
+                }
                 userRateLimits[evt.AppUserId] = await PostScrobbleUpdate(data, license.Value, evt);
                 evt.IsProcessed = true;
                 evt.ProcessDateUtc = DateTime.UtcNow;
@@ -859,6 +876,7 @@ public class ScrobblingService : IScrobblingService
             await _unitOfWork.CommitAsync();
         }
     }
+
 
     private static bool DoesUserHaveProviderAndValid(ScrobbleEvent readEvent)
     {

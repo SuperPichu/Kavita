@@ -13,6 +13,7 @@ namespace API.Helpers;
 
 public static class PersonHelper
 {
+
     /// <summary>
     /// Given a list of all existing people, this will check the new names and roles and if it doesn't exist in allPeople, will create and
     /// add an entry. For each person in name, the callback will be executed.
@@ -25,7 +26,6 @@ public static class PersonHelper
     /// <param name="action"></param>
     public static void UpdatePeople(ICollection<Person> allPeople, IEnumerable<string> names, PersonRole role, Action<Person> action)
     {
-        // TODO: Validate if we need this, not used
         var allPeopleTypeRole = allPeople.Where(p => p.Role == role).ToList();
 
         foreach (var name in names)

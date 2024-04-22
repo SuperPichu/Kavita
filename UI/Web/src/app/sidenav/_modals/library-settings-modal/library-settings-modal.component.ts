@@ -45,6 +45,7 @@ import {DefaultDatePipe} from "../../../_pipes/default-date.pipe";
 import {allFileTypeGroup, FileTypeGroup} from "../../../_models/library/file-type-group.enum";
 import {FileTypeGroupPipe} from "../../../_pipes/file-type-group.pipe";
 import {EditListComponent} from "../../../shared/edit-list/edit-list.component";
+import {WikiLink} from "../../../_models/wiki";
 
 enum TabID {
   General = 'general-tab',
@@ -75,6 +76,7 @@ export class LibrarySettingsModalComponent implements OnInit {
   protected readonly LibraryType = LibraryType;
   protected readonly Breakpoint = Breakpoint;
   protected readonly TabID = TabID;
+  protected readonly WikiLink = WikiLink;
 
   public readonly utilityService = inject(UtilityService);
   public readonly modal = inject(NgbActiveModal);
@@ -172,6 +174,7 @@ export class LibrarySettingsModalComponent implements OnInit {
             this.libraryForm.get(FileTypeGroup.Epub + '')?.setValue(false);
             break;
           case LibraryType.Comic:
+          case LibraryType.ComicVine:
             this.libraryForm.get(FileTypeGroup.Archive + '')?.setValue(true);
             this.libraryForm.get(FileTypeGroup.Images + '')?.setValue(false);
             this.libraryForm.get(FileTypeGroup.Pdf + '')?.setValue(false);
@@ -196,6 +199,9 @@ export class LibrarySettingsModalComponent implements OnInit {
             this.libraryForm.get(FileTypeGroup.Epub + '')?.setValue(false);
             break;
         }
+
+        this.libraryForm.get('allowScrobbling')?.setValue(this.IsKavitaPlusEligible);
+        this.cdRef.markForCheck();
       }),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe();
@@ -254,7 +260,10 @@ export class LibrarySettingsModalComponent implements OnInit {
 
   forceScan() {
     this.libraryService.scan(this.library!.id, true)
-      .subscribe(() => this.toastr.info(translate('toasts.forced-scan-queued', {name: this.library!.name})));
+      .subscribe(() => {
+        this.toastr.info(translate('toasts.forced-scan-queued', {name: this.library!.name}));
+        this.close();
+      });
   }
 
   async save() {
@@ -354,5 +363,4 @@ export class LibrarySettingsModalComponent implements OnInit {
         return false; // Advanced are optional
     }
   }
-
 }
