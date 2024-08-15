@@ -11,7 +11,7 @@
         "no-libraries": "Aucune bibliothèque configurée. Veuillez en ajouter une",
         "server-settings-link": "Paramètres serveur",
         "not-granted": "Vous n'avez accès à aucune bibliothèque.",
-        "on-deck-title": "En Cours",
+        "on-deck-title": "Continuer à lire",
         "recently-updated-title": "Séries mises à jour récemment",
         "recently-added-title": "Séries ajoutées récemment",
         "more-in-genre-title": "Plus dans {{genre}}"
@@ -44,13 +44,15 @@
         "processed": "Traité",
         "not-processed": "Non Traité",
         "chapter-num": "Chapitre {{num}}",
-        "volume-num": "Volume {{num}}"
+        "volume-num": "Volume {{num}}",
+        "not-read-warning": "Les fournisseurs en amont conserveront toujours le nombre le plus élevé",
+        "special": "{{entity-title.special}}"
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "Progression de la lecture",
         "score-updated": "Mise à jour de l'évaluation",
-        "want-to-read-add": "À lire : Ajouter à la liste",
-        "want-to-read-remove": "À lire : Retirer de la liste",
+        "want-to-read-add": "À lire : ajouter à la liste",
+        "want-to-read-remove": "À lire : retirer de la liste",
         "review": "Mettre à jour la critique"
     },
     "spoiler": {
@@ -74,21 +76,20 @@
     "review-card": {
         "your-review": "Voici votre critique",
         "external-review": "Critique externe",
-        "local-review": "Critique locale",
+        "local-review": "Avis locale",
         "rating-percentage": "Évaluation {{r}}%"
     },
     "want-to-read": {
-        "title": "À Lire",
+        "title": "À lire",
         "series-count": "{{common.series-count}}",
         "no-items": "Il n'y a pas d'élément. Essayez d'ajouter une série.",
-        "no-items-filtered": "Aucun éléments correspondant aux critères."
+        "no-items-filtered": "Aucun élément correspondant aux critères."
     },
     "user-preferences": {
         "title": "Tableau de bord Utilisateur",
         "pref-description": "Voici les paramètres globaux liés à votre compte.",
         "account-tab": "Compte",
         "preferences-tab": "Préférences",
-        "3rd-party-clients-tab": "Clients tiers",
         "theme-tab": "Thème",
         "devices-tab": "Appareils",
         "stats-tab": "Statistiques",
@@ -159,16 +160,24 @@
         "pdf-spread-mode-label": "Mode d'étalement"
     },
     "theme-manager": {
-        "title": "Gestionnaire de Theme",
-        "looking-for-theme": "Vous cherchez un thème clair ou E-ink ? Nous avons quelques thèmes personnalisés que vous pouvez utiliser. ",
-        "looking-for-theme-continued": "Github des Themes.",
-        "scan": "Analyser",
-        "site-themes": "Site des Themes",
-        "set-default": "Réinitialisation des paramètre par défaut",
+        "title": "Gestionnaire de thème",
+        "site-themes": "Site des thèmes",
+        "set-default": "Réinitialisation des paramètres par défaut",
         "applied": "Appliqué",
         "updated-toastr": "Site par défaut a été mise à jour vers {{name}}",
         "scan-queued": "Une analyse du thème du site a été mise en attente",
-        "apply": "{{common.apply}}"
+        "apply": "{{common.apply}}",
+        "download": "Télécharger",
+        "active-theme": "Actif",
+        "delete": "Supprimer",
+        "drag-n-drop": "Glisser-déposer",
+        "upload": "Téléverser",
+        "upload-continued": "un fichier CSS",
+        "preview-default-admin": "Sélectionnez d'abord un thème ou téléversez-en un manuellement",
+        "preview-default": "Sélectionnez d'abord un thème",
+        "default-theme": "Thème par défaut",
+        "preview-title": "Prévisualiser",
+        "description": "Kavita est disponible dans mes couleurs, trouvez une combinaison de couleurs qui réponde à vos besoins ou créez-en une vous-même et partagez-la. Les thèmes peuvent être appliqués à votre compte ou à tous les comptes."
     },
     "theme": {
         "theme-dark": "Sombre",
@@ -187,7 +196,7 @@
     },
     "site-theme-provider-pipe": {
         "system": "Système",
-        "user": "Utilisateur"
+        "custom": "Personnalisé"
     },
     "manage-devices": {
         "title": "Gestionnaire de périphérique",
@@ -200,15 +209,6 @@
         "edit": "{{common.edit}}",
         "description": "Cette section vous permet de configurer des appareils qui ne peuvent pas se connecter à Kavita par un navigateur web mais qui, en revanche, disposent d'une adresse courriel acceptant de recevoir des fichiers.",
         "email-setup-alert": "Vous souhaitez envoyer des fichiers à vos appareils ? Configurez d'abord vos paramètres d'E-mail !"
-    },
-    "edit-device": {
-        "device-name-label": "Nom du Périphérique",
-        "email-label": "{{common.email}}",
-        "email-tooltip": "Cette adresse courriel va être utilisée pour accepter le ficher via Envoyer Vers",
-        "device-platform-label": "Platforme du périphérique",
-        "save": "{{common.save}}",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}"
     },
     "change-password": {
         "password-label": "{{common.password}}",
@@ -295,13 +295,13 @@
         "open-filtered-search": "Ouvrez une recherche filtrée pour {{item}}"
     },
     "user-stats-info-cards": {
-        "total-pages-read-label": "Nombre de Pages lues",
+        "total-pages-read-label": "Nombre de pages lues",
         "total-pages-read-tooltip": "{{user-stats-info-cards.total-pages-read-label}} : {{value}}",
-        "total-words-read-label": "Nombre de Mots Lus",
+        "total-words-read-label": "Nombre de mots lus",
         "total-words-read-tooltip": "{{user-stats-info-cards.total-words-read-label}}: {{value}}",
         "time-spent-reading-label": "Temps passé à lire",
         "time-spent-reading-tooltip": "{{user-stats-info-cards.time-spent-reading-label}} : {{value}}",
-        "chapters-read-label": "Chapitres Lu",
+        "chapters-read-label": "Chapitres lu",
         "chapters-read-tooltip": "{{user-stats-info-cards.chapters-read-label}}: {{value}}",
         "avg-reading-per-week-label": "Lecture moyenne / semaine",
         "last-active-label": "Dernière activité",
@@ -309,10 +309,10 @@
     },
     "user-stats": {
         "library-read-progress-title": "Progrès de lecture de la bibliothèque",
-        "read-percentage": "% Lu"
+        "read-percentage": "% lu"
     },
     "top-readers": {
-        "title": "Meilleurs Lecteurs",
+        "title": "Meilleurs lecteurs",
         "time-selection-label": "Laps de temps",
         "comics-label": "BD : {{value}} hrs",
         "manga-label": "Manga : {{value}} hrs",
@@ -328,7 +328,7 @@
         "title": "Rôles"
     },
     "directory-picker": {
-        "title": "Sélectionner un Dossier",
+        "title": "Sélectionner un dossier",
         "close": "{{common.close}}",
         "path-label": "Chemin",
         "path-placeholder": "Commencer à écrire ou choisir le chemin",
@@ -342,20 +342,20 @@
     "library-access-modal": {
         "select-all": "{{common.select-all}}",
         "deselect-all": "{{common.deselect-all}}",
-        "title": "Accès à la Bibliothèque",
+        "title": "Accès à la bibliothèque",
         "close": "{{common.close}}",
         "reset": "{{common.reset}}",
         "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
-        "no-data": "Il n'y a présentement aucune bibliothèque de configurée."
+        "no-data": "Il n'y a aucune bibliothèque de configurée pour l'instant."
     },
     "time-periods": {
-        "this-week": "Cette Semaine",
+        "this-week": "Cette semaine",
         "last-7-days": "7 derniers jours",
         "last-30-days": "30 derniers jours",
         "last-90-days": "90 derniers jours",
         "last-year": "L'année dernière",
-        "all-time": "En tout Temps"
+        "all-time": "Tout"
     },
     "device-platform-pipe": {
         "custom": "Personnalisé"
@@ -375,11 +375,11 @@
         "failure": "Échec"
     },
     "cbl-conflict-reason-pipe": {
-        "empty-file": "Le fichier cbl est vide, rien à faire.",
+        "empty-file": "Le fichier CBL est vide, rien à faire.",
         "series-collision": "La série, {{seriesLink}}, entre en conflit avec une autre série du même nom dans une autre bibliothèque.",
         "volume-missing": "{{series}} : Volume {{volume}} est manquant dans Kavita ou votre compte n'a pas les permissions nécessaires. Tous les éléments ayant ce numéro de volume seront ignorés.",
         "chapter-missing": "{{series}}: Le chapitre {{chapter}} est manquant dans Kavita. Celui-ci sera ignoré.",
-        "name-conflict": "Une liste de lecture ({{readingListName}}) correspondant au fichier cbl existe déjà dans votre compte.",
+        "name-conflict": "Une liste de lecture ({{readingListName}}) correspondant au fichier CBL existe déjà dans votre compte.",
         "series-missing": "La série, {{series}}, est absente de Kavita ou votre compte n'a pas les permissions requises. Tous les éléments de cette série seront ignorés lors de l'import.",
         "all-series-missing": "Votre compte n'a accès à aucune des séries de la liste ou Kavita n'a aucune série disponible dans la liste.",
         "invalid-file": "Le fichier est corrompu ou ne correspond pas aux étiquettes/spécifications attendues.",
@@ -427,7 +427,7 @@
         "required-field": "{{validation.required-field}}"
     },
     "all-series": {
-        "title": "Toutes les Séries",
+        "title": "Toutes les séries",
         "series-count": "{{common.series-count}}"
     },
     "series-metadata-detail": {
@@ -456,7 +456,7 @@
     },
     "side-nav": {
         "home": "Accueil",
-        "want-to-read": "À Lire",
+        "want-to-read": "À lire",
         "collections": "Collections",
         "reading-lists": "Listes de lecture",
         "bookmarks": "Marque-pages",
@@ -486,7 +486,8 @@
         "bookmarks": "{{side-nav.bookmarks}}",
         "genres": "Genres",
         "people": "Personnes",
-        "libraries": "Bibliothèques"
+        "libraries": "Bibliothèques",
+        "include-extras": "Inclure chapitres et fichiers"
     },
     "metadata-filter": {
         "collections-label": "Collections",
@@ -623,7 +624,10 @@
         "promoted": "Promu",
         "clear": "Effacer",
         "filter": "Filtre",
-        "remove": "Retirer"
+        "remove": "Retirer",
+        "chapter-num-shorthand": "Ch {{num}}",
+        "issue-num-shorthand": "#{{num}}",
+        "volume-num-shorthand": "Vol {{num}}"
     },
     "filter-comparison-pipe": {
         "must-contains": "Doit contenir",
@@ -735,7 +739,7 @@
         "rating-pending": "Classification en attente",
         "everyone": "Tous publics",
         "ma15-plus": "15+",
-        "mature-17-plus": "Mature 17+"
+        "mature-17-plus": "Jeunes adultes 17+"
     },
     "server-stats": {
         "tags": "Étiquettes",
@@ -1083,7 +1087,8 @@
     },
     "all-filters": {
         "title": "Tous les filtres intelligents",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}"
+        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
+        "create": "{{common.create}}"
     },
     "personal-table-of-contents": {
         "delete": "Supprimer {{bookmarkName}}",
@@ -1139,7 +1144,7 @@
         "read": "Lire",
         "import-cbl": "Importer CBL",
         "mark-invisible": "Marquer comme invisible",
-        "remove-from-on-deck": "Retirer du tableau de bord",
+        "remove-from-on-deck": "Retirer de Continuer à lire",
         "clear": "{{common.clear}}",
         "customize": "Personnaliser",
         "remove-rule-group": "Retirer le groupe de règles",
@@ -1179,7 +1184,7 @@
         "unread": "Non lu",
         "cover-tab": "Couverture",
         "pages": "Pages :",
-        "info-tab": "Infos",
+        "info-tab": "{{edit-series-modal.info-tab}}",
         "tags-title": "{{series-metadata-detail.tags-title}}",
         "read": "{{common.read}}",
         "general-tab": "Général",
@@ -1260,16 +1265,6 @@
     "download-indicator": {
         "progress": "{{percentage}}% téléchargé"
     },
-    "manage-alerts": {
-        "filter-label": "{{common.filter}}",
-        "clear-alerts": "Effacer les alertes",
-        "details-header": "Détails",
-        "description-part-2": "wiki.",
-        "extension-header": "Extension",
-        "file-header": "Fichier",
-        "comment-header": "Commentaire",
-        "description-part-1": "Ce tableau contient les problèmes détectés lors de l'analyse ou de la lecture de vos médias. Cette liste n'est pas gérée. Vous pouvez l'effacer à tout moment et utiliser la fonction scan de la bibliothèque (en mode Forcer) pour effectuer une analyse. Une liste de quelques erreurs courantes et leur signification peut être trouvée sur le "
-    },
     "series-info-cards": {
         "format-title": "Format",
         "less-than-hour": "{{entity-info-cards.less-than-hour}}",
@@ -1306,7 +1301,6 @@
         "save": "{{common.save}}",
         "description": "Kavita est livré avec un service de messagerie pour effectuer des tâches telles que l'invitation d'utilisateurs, les demandes de réinitialisation de mot de passe, etc. Les e-mails envoyés via notre service sont immédiatement supprimés. Vous pouvez utiliser votre propre service de messagerie en configurant le service {{link}}. Définissez l'URL du service de messagerie et utilisez le bouton Test pour vous assurer qu'il fonctionne. Vous pouvez réinitialiser ces paramètres par défaut à tout moment. Il n'existe aucun moyen de désactiver les e-mails pour l'authentification, même si vous n'êtes pas obligé d'utiliser une adresse e-mail valide pour les utilisateurs. Les liens de confirmation seront toujours enregistrés dans les journaux et présentés dans l'interface utilisateur. Les e-mails d'inscription/confirmation ne seront pas envoyés si vous n'accédez pas à Kavita via une URL accessible au public ou à moins que la fonctionnalité Nom d'hôte ne soit configurée. Pour utiliser certaines fonctions de Kavita comme \"Mot de passe oublié\" et \"Envoyer à l'appareil\", un fournisseur d'E-mail doit être configuré. D'autre fonctionnalités comme \"Changer mot de passe\" sont moins sécurisée sans E-mail configuré.",
         "send-to-warning": "Si vous souhaitez que l'envoi vers un appareil fonctionne, vous devez paramétré votre service de messagerie",
-        "title": "Services E-mail (SMTP)",
         "email-settings-title": "Paramètres E-mail",
         "sender-address-label": "Adresse d’expéditeur",
         "sender-displayname-label": "Nom complet",
@@ -1324,7 +1318,9 @@
         "customized-templates-tooltip": "Kavita doit-il utiliser le répertoire \"config/templates\" pour les modèles plutôt que celui par défaut ? Vous êtes responsable de tenir à jour les changement des modèles.",
         "username-tooltip": "Le nom d'utilisateur utilisé pour s'authentifier auprès de l'hôte",
         "gmail-label": "Gmail",
-        "outlook-label": "Outlook"
+        "outlook-label": "Outlook",
+        "setting-description": "Vous devez remplir les paramètres Nom d'hôte et SMTP pour utiliser les fonctionnalités de messagerie électronique dans Kavita.",
+        "test-warning": "Vous devez enregistrer avant d'utiliser le bouton Test."
     },
     "bulk-add-to-collection": {
         "collection-label": "Collection",
@@ -1389,7 +1385,7 @@
         "enable-folder-watching": "Activer la surveillance des dossiers",
         "reset-to-default": "{{common.reset-to-default}}",
         "cache-size-label": "Taille du cache",
-        "on-deck-last-progress-label": "Tableau de bord Dernière progression (jours)",
+        "on-deck-last-progress-label": "Dernière progression de Continuer à lire (jours)",
         "base-url-tooltip": "Utilisez cela si vous souhaitez héberger Kavita sur une URL de base, i.e. votredomaine.com/kavita. Non pris en charge sur Docker en utilisant un utilisateur non root.",
         "backup-tooltip": "Le nombre de sauvegardes à maintenir. La valeur par défaut est 30, le minimum est 1, le maximum est 30.",
         "log-label": "Jours des journalisation",
@@ -1398,7 +1394,7 @@
         "folder-watching-tooltip": "Permet à Kavita de surveiller les dossiers de bibliothèque pour détecter les modifications et lancer un scan de ces modifications. Cela permet au contenu d'être mis à jour sans appeler manuellement des scans ni d'attendre des scans nocturnes. Attendra toujours 10 minutes avant de déclencher un scan.",
         "log-tooltip": "Le nombre de journalisation à conserver. La valeur par défaut est 30, le minimum est 1, le maximum est 30.",
         "opds-label": "OPDS",
-        "on-deck-last-chapter-add-label": "Tableau de bord Chapitres récents (jours)",
+        "on-deck-last-chapter-add-label": "Chapitres récents de Continuer à lire (jours)",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
         "min-cache-validation": "Doit être à 50 Mo.",
@@ -1432,14 +1428,16 @@
         "wiki-title": "Wiki :",
         "installId-title": "ID d'installation",
         "localization-title": "Localisations :",
-        "updates-title": "Historique des mises à jour"
+        "updates-title": "Historique des mises à jour",
+        "first-install-version-title": "Version de première installation",
+        "first-install-date-title": "Date de la première installation"
     },
     "manage-tasks-settings": {
         "title": "Tâches récurrentes",
         "library-scan-tooltip": "À quelle fréquence Kavita analysera et actualisera les métadonnées des fichiers de bibliothèque.",
         "library-scan-label": "Scan de la bibliothèque",
         "reset-to-default": "{{common.reset-to-default}}",
-        "clean-up-want-to-read-task": "Nettoyer A lire",
+        "clean-up-want-to-read-task": "Nettoyer À lire",
         "analyze-files-task-success": "L'analyse du fichier a été mise en attente",
         "backup-database-task-success": "Une tâche de sauvegarde de la base de données a été mise en file d'attente",
         "library-database-backup-label": "Sauvegarde de Kavita",
@@ -1492,7 +1490,7 @@
         "cover-image-size-tooltip": "Quelle doit être la taille des images de couverture générées. Remarque : Tout ce qui est plus grand que la valeur par défaut entraînera des temps de chargement de page plus longs.",
         "encode-as-description-part-2": "Puis-je utiliser WebP ?",
         "reset": "{{common.reset}}",
-        "media-warning": "Vous devez déclencher la tâche de conversion des médias dans l'onglet Tâches.,",
+        "media-warning": "Vous devez déclencher la tâche de conversion des médias dans l'onglet Tâches.",
         "encode-as-tooltip": "Tous les médias gérés par Kavita (couvertures, marque-pages, favicons) seront encodés avec ce type.",
         "save": "{{common.save}}",
         "encode-as-description-part-1": "WebP/AVIF peut réduire considérablement l'espace requis pour les fichiers. WebP/AVIF n'est pas pris en charge sur tous les navigateurs ou versions. Pour savoir si ces paramètres sont appropriés à votre configuration, visitez ",
@@ -1529,7 +1527,8 @@
         "read-progress": "Dernière lecture",
         "sort-name": "Nom",
         "created": "Créé",
-        "average-rating": "Note moyenne"
+        "average-rating": "Note moyenne",
+        "random": "Aléatoire"
     },
     "manage-users": {
         "change-password-alt": "Modifier le mot de passe {{user}}",
@@ -1540,8 +1539,6 @@
         "delete-user-alt": "Supprimer l'utilisateur {{user}}",
         "title": "Utilisateurs actifs",
         "delete-user-tooltip": "Supprimer l'utilisateur",
-        "roles-title": "Rôles :",
-        "last-active-title": "Dernière activité :",
         "none": "Aucun",
         "edit-user-alt": "Modifier l'utilisateur {{user}}",
         "resend-invite-alt": "Renvoyer l'invitation {{user}}",
@@ -1549,7 +1546,6 @@
         "setup": "Configurer",
         "edit-user-tooltip": "Modifier",
         "no-data": "Il n'y a pas d'autres utilisateurs.",
-        "sharing-title": "Partage :",
         "loading": "{{common.loading}}",
         "change-password-tooltip": "Modifier le mot de passe",
         "resend": "Renvoyer",
@@ -1558,24 +1554,6 @@
         "setup-user-alt": "Configurer l'utilisateur {{user}}",
         "username-pattern": "Le nom d'utilisateur ne peut contenir que les caractères et espaces suivants : {{caractères}}",
         "admin": "Admin"
-    },
-    "admin-dashboard": {
-        "users-tab": "Utilisateurs",
-        "media-tab": "Médias",
-        "kavita+-desc-part-3": "aujourd'hui !",
-        "libraries-tab": "Bibliothèques",
-        "email-tab": "E-mail",
-        "general-tab": "Général",
-        "system-tab": "Système",
-        "logs-tab": "Journaux",
-        "kavita+-desc-part-1": "Kavita+ est un service d'abonnement premium qui débloque des fonctionnalités pour tous les utilisateurs de cette instance Kavita. Achetez un abonnement pour débloquer ",
-        "title": "Tableau de bord de l'administrateur",
-        "statistics-tab": "Statistiques",
-        "kavita+-tab": "Kavita+",
-        "tasks-tab": "Tâches",
-        "kavita+-desc-part-2": "avantages premium",
-        "kavita+-releases": "Voir les versions publiées",
-        "kavita+-requirement": "Kavita+ est conçu pour fonctionner uniquement avec la dernière version - 2 versions. Toute autre version est susceptible de ne pas fonctionner."
     },
     "import-cbl-modal": {
         "validate-warning": "Le CBL présente des problèmes qui empêchent l'importation. Corrigez ces problèmes et réessayez.",
@@ -1661,7 +1639,9 @@
         "incognito-title": "Mode incognito :",
         "bookmark-page-tooltip": "Page des marque-pages",
         "emulate-comic-book-label": "{{user-preferences.emulate-comic-book-label}}",
-        "reading-direction-tooltip": "Sens de lecture : "
+        "reading-direction-tooltip": "Sens de lecture : ",
+        "off": "Désactivé",
+        "width-override-label": "Remplacement de la largeur"
     },
     "events-widget": {
         "active-events-title": "Événements actifs :",
@@ -1672,7 +1652,9 @@
         "users-online-count": "{{num}} Utilisateurs en ligne",
         "more-info": "Cliquez pour plus d'informations",
         "downloading-item": "Téléchargement {{item}}",
-        "title-alt": "Activité"
+        "title-alt": "Activité",
+        "left-to-process": "Reste à traiter : {{leftToProcess}}",
+        "download-in-queue": "{{num}} féléchargements dans la file d'attente"
     },
     "library-recommended": {
         "on-deck": "{{dashboard.on-deck-title}}",
@@ -1710,7 +1692,12 @@
         "cover-image-tab": "Image de couverture",
         "save": "{{common.save}}",
         "series-tab": "Séries",
-        "filter-label": "{{common.filter}}"
+        "filter-label": "{{common.filter}}",
+        "info-tab": "{{edit-series-modal.info-tab}}",
+        "source-url-title": "URL source :",
+        "total-series-title": "Total de séries :",
+        "missing-series-title": "Séries manquantes :",
+        "last-sync-title": "Dernière synchro :"
     },
     "stream-list-item": {
         "external-source": "Source externe",
@@ -1733,7 +1720,6 @@
     "nav-header": {
         "skip-alt": "Passer au contenu principal",
         "settings": "Paramètres",
-        "promoted": "{{common.promoted}}",
         "announcements": "Annonces",
         "logout": "Déconnexion",
         "all-filters": "Filtres intelligents",
@@ -1780,7 +1766,9 @@
         "series-header": "Séries",
         "no-data-filtered": "Aucun élément ne correspond à votre filtre actuel.",
         "no-data": "Il n'y a pas d'éléments. Essayez d'ajouter une série.",
-        "title-alt": "Kavita - Collection{{collectionName}}"
+        "title-alt": "Kavita - Collection{{collectionName}}",
+        "sync-progress": "Séries collectées : {{title}}",
+        "last-sync": "Dernière synchro : {{date}}"
     },
     "metadata-filter-row": {
         "unit-reading-progress": "Pourcentage",
@@ -1797,7 +1785,9 @@
         "data-table-label": "Tableau de données",
         "total-file-size-title": "Taille totale du fichier :",
         "extension-header": "Extension",
-        "format-tooltip": "Non classé signifie que Kavita n'a pas analysé certains fichiers. Cela se produit pour les anciens fichiers antérieurs à la version 0.7. Il se peut que vous deviez lancer une analyse forcée via la fenêtre modale des paramètres de la bibliothèque."
+        "format-tooltip": "Non classé signifie que Kavita n'a pas analysé certains fichiers. Cela se produit pour les anciens fichiers antérieurs à la version 0.7. Il se peut que vous deviez lancer une analyse forcée via la fenêtre modale des paramètres de la bibliothèque.",
+        "download-file-for-extension-alt": "Télécharger les fichiers Rapport pour {{extension}}",
+        "download-file-for-extension-header": "Rapport de téléchargement"
     },
     "stream-pipe": {
         "recently-updated": "{{dashboard.recently-updated-title}}",
@@ -1905,7 +1895,14 @@
         "collections-unpromoted": "Collections non promues",
         "confirm-delete-collections": "Êtes-vous sûr de vouloir supprimer plusieurs collections ?",
         "collections-deleted": "Collections supprimées",
-        "collections-promoted": "Promotion des collections"
+        "collections-promoted": "Promotion des collections",
+        "stack-imported": "Pile importée",
+        "confirm-delete-theme": "Supprimer ce thème l'effacera du disque. Vous pouvez le récupérer du dossier temp avant suppression",
+        "mal-token-required": "Le jeton MAL est requis, il est défini dans les paramètres de l'utilisateur",
+        "reading-lists-unpromoted": "Listes de lecture non promues",
+        "reading-lists-deleted": "Listes de lecture supprimées",
+        "confirm-delete-reading-lists": "Êtes-vous sûr de vouloir supprimer les listes de lecture? Cela ne peut pas être annulé.",
+        "reading-lists-promoted": "Listes de lecture promues"
     },
     "manga-format-stats": {
         "title": "Format",
@@ -2017,13 +2014,17 @@
         "rejected-cover-upload": "L'image n'a pas pu être récupérée car le serveur a refusé la demande. Veuillez la télécharger et la charger à partir d'un fichier.",
         "invalid-confirmation-url": "URL de confirmation invalide",
         "invalid-confirmation-email": "E-mail de confirmation invalide",
-        "not-found": "Cette URL n'existe pas"
+        "not-found": "Cette URL n'existe pas",
+        "delete-theme-in-use": "Le thème est actuellement utilisé par au moins un utilisateur, impossible de le supprimer",
+        "theme-manual-upload": "Il y a eu une erreur durant la création du thème à partir d'un téléversement manuel",
+        "theme-already-in-use": "Un thème avec le même nom existe déjà"
     },
     "manage-smart-filters": {
         "no-data": "Aucun filtre intelligent n'a été créé",
         "filter": "{{common.filter}}",
         "delete": "{{common.delete}}",
-        "clear": "{{common.clear}}"
+        "clear": "{{common.clear}}",
+        "errored": "Il y a une erreur d'encodage dans le filtre. Vous devez le recréer."
     },
     "day-breakdown": {
         "x-axis-label": "Jour de la semaine",
@@ -2047,7 +2048,8 @@
         "series-count": "{{common.series-count}}",
         "restack-count": "{{num}} Rempilés",
         "title": "Importation de la pile d'intérêt MAL",
-        "description": "Importez vos piles d'intérêts MAL et créez des collections dans Kavita"
+        "description": "Importez vos piles d'intérêts MAL et créez des collections dans Kavita",
+        "nothing-found": "Aucun résultat"
     },
     "promoted-icon": {
         "promoted": "{{common.promoted}}"
@@ -2088,5 +2090,8 @@
         "off": "Pas d'écart",
         "odd": "Ecarts étranges",
         "even": "Ecarts réguliers"
+    },
+    "browse-themes-modal": {
+        "title": "Parcourir les thèmes"
     }
 }

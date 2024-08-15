@@ -28,7 +28,7 @@ import {NgbCollapse} from "@ng-bootstrap/ng-bootstrap";
 import {SeriesInfoCardsComponent} from "../../../cards/series-info-cards/series-info-cards.component";
 import {LibraryType} from "../../../_models/library/library";
 import {MetadataDetailComponent} from "../metadata-detail/metadata-detail.component";
-import {TranslocoDirective} from "@ngneat/transloco";
+import {TranslocoDirective} from "@jsverse/transloco";
 import {FilterField} from "../../../_models/metadata/v2/filter-field";
 import {FilterComparison} from "../../../_models/metadata/v2/filter-comparison";
 import {ImageComponent} from "../../../shared/image/image.component";
@@ -94,7 +94,7 @@ export class SeriesMetadataDetailComponent implements OnChanges, OnInit {
 
   ngOnInit() {
     // If on desktop, we can just have all the data expanded by default:
-    this.isCollapsed = this.utilityService.getActiveBreakpoint() < Breakpoint.Desktop;
+    this.isCollapsed = true; // this.utilityService.getActiveBreakpoint() < Breakpoint.Desktop;
     // Check if there is a lot of extended data, if so, re-collapse
     const sum = (this.seriesMetadata.colorists.length + this.seriesMetadata.editors.length
       + this.seriesMetadata.coverArtists.length + this.seriesMetadata.inkers.length

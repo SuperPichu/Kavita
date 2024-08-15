@@ -263,9 +263,9 @@ public class ReaderController : BaseApiController
             info.Title += " - " + info.ChapterTitle;
         }
 
-        if (info.IsSpecial && dto.VolumeNumber.Equals(Services.Tasks.Scanner.Parser.Parser.LooseLeafVolume))
+        if (info.IsSpecial)
         {
-            info.Subtitle = info.FileName;
+            info.Subtitle = Path.GetFileNameWithoutExtension(info.FileName);
         } else if (!info.IsSpecial && info.VolumeNumber.Equals(Services.Tasks.Scanner.Parser.Parser.LooseLeafVolume))
         {
             info.Subtitle = ReaderService.FormatChapterName(info.LibraryType, true, true) + info.ChapterNumber;
@@ -748,7 +748,7 @@ public class ReaderController : BaseApiController
     {
         var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(User.GetUsername(), AppUserIncludes.Bookmarks);
         if (user == null) return new UnauthorizedResult();
-        if (user.Bookmarks.IsNullOrEmpty()) return Ok();
+        if (user.Bookmarks == null || user.Bookmarks.Count == 0) return Ok();
 
         if (!await _accountService.HasBookmarkPermission(user))
             return BadRequest(await _localizationService.Translate(User.GetUserId(), "bookmark-permission"));

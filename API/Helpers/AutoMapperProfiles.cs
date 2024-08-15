@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using API.Data.Migrations;
 using API.DTOs;
@@ -20,6 +21,7 @@ using API.DTOs.Search;
 using API.DTOs.SeriesDetail;
 using API.DTOs.Settings;
 using API.DTOs.SideNav;
+using API.DTOs.Stats;
 using API.DTOs.Theme;
 using API.Entities;
 using API.Entities.Enums;
@@ -115,6 +117,10 @@ public class AutoMapperProfiles : Profile
                 opt =>
                     opt.MapFrom(src =>
                         src.People.Where(p => p.Role == PersonRole.Inker).OrderBy(p => p.NormalizedName)))
+            .ForMember(dest => dest.Imprints,
+                opt =>
+                    opt.MapFrom(src =>
+                        src.People.Where(p => p.Role == PersonRole.Imprint).OrderBy(p => p.NormalizedName)))
             .ForMember(dest => dest.Letterers,
                 opt =>
                     opt.MapFrom(src =>
@@ -241,7 +247,10 @@ public class AutoMapperProfiles : Profile
                         IncludeUnknowns = src.AgeRestrictionIncludeUnknowns
                     }));
 
-        CreateMap<SiteTheme, SiteThemeDto>();
+        CreateMap<SiteTheme, SiteThemeDto>()
+            .ForMember(dest => dest.PreviewUrls,
+                opt =>
+                    opt.MapFrom(src => (src.PreviewUrls ?? string.Empty).Split('|', StringSplitOptions.TrimEntries)));
         CreateMap<AppUserPreferences, UserPreferencesDto>()
             .ForMember(dest => dest.Theme,
                 opt =>
@@ -322,5 +331,8 @@ public class AutoMapperProfiles : Profile
                     opt.MapFrom(src => ReviewService.GetCharacters(src.Body)));
 
         CreateMap<ExternalRecommendation, ExternalSeriesDto>();
+
+
+        CreateMap<MangaFile, FileExtensionExportDto>();
     }
 }

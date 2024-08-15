@@ -1,11 +1,11 @@
 {
     "login": {
         "title": "登录",
-        "username": "用户",
-        "password": "密码",
-        "password-validation": "验证密码",
+        "username": "{{common.username}}",
+        "password": "{{common.password}}",
+        "password-validation": "{{validation.password-validation}}",
         "forgot-password": "忘记密码？",
-        "submit": "提交"
+        "submit": "{{common.submit}}"
     },
     "dashboard": {
         "no-libraries": "还没有设置资料库，请先配置一些",
@@ -14,13 +14,13 @@
         "on-deck-title": "最近阅读",
         "recently-updated-title": "最近更新的系列",
         "recently-added-title": "新增系列",
-        "more-in-genre-title": "{{genre}}分类的更多内容"
+        "more-in-genre-title": "{{genre}} 分类的更多内容"
     },
     "edit-user": {
-        "edit": "编辑",
-        "close": "关闭",
-        "username": "用户名",
-        "required": "输入必要字段",
+        "edit": "{{common.edit}}",
+        "close": "{{common.close}}",
+        "username": "{{common.username}}",
+        "required": "{{validation.required-field}}",
         "email": "电子邮箱",
         "not-valid-email": "验证邮箱",
         "cancel": "{{common.cancel}}",
@@ -44,7 +44,9 @@
         "processed": "已处理",
         "not-processed": "尚未处理",
         "volume-num": "卷 {{num}}",
-        "chapter-num": "章节 {{num}}"
+        "chapter-num": "章节 {{num}}",
+        "not-read-warning": "上游供应商将始终保持最高数量",
+        "special": "{{entity-title.special}}"
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "阅读进度",
@@ -88,7 +90,6 @@
         "pref-description": "这些是绑定到您的帐户的全局设置。",
         "account-tab": "账户",
         "preferences-tab": "首选项",
-        "3rd-party-clients-tab": "第三方客户端",
         "theme-tab": "主题",
         "devices-tab": "设备",
         "stats-tab": "状态",
@@ -147,7 +148,7 @@
         "clients-opds-alert": "此服务器未启用OPDS，不会影响Tachiyomi用户。",
         "clients-opds-description": "所有第三方客户端均使用下方的API密钥或链接。它们就像密码一样，请保密。",
         "clients-api-key-tooltip": "API密钥等同于密码，请保持它的机密性和安全性。",
-        "clients-opds-url-tooltip": "OPDS URL",
+        "clients-opds-url-tooltip": "OPDS 网址",
         "reset": "重置",
         "save": "保存",
         "smart-filters-tab": "智能筛选器",
@@ -164,15 +165,23 @@
     },
     "theme-manager": {
         "title": "主题管理器",
-        "looking-for-theme": "您正在寻找一个明亮的或者墨水屏的主题吗？您可以使用我们制作的自定义主题。 ",
-        "looking-for-theme-continued": "Github 主题。",
-        "scan": "扫描",
         "site-themes": "网站主题",
         "set-default": "设为默认值",
-        "apply": "应用",
-        "applied": "已应用",
+        "apply": "{{common.apply}}",
+        "applied": "应用",
         "updated-toastr": "网站默认值已更新为{{name}}",
-        "scan-queued": "网站主题扫描已进入队列"
+        "scan-queued": "网站主题扫描已进入队列",
+        "description": "Kavita 采用我的颜色，找到一种满足您需求的配色方案，或者自己构建一个配色方案并分享。 主题可以应用于您的帐户或应用于所有帐户。",
+        "default-theme": "默认主题",
+        "download": "{{changelog.download}}",
+        "active-theme": "活动",
+        "upload": "{{cover-image-chooser.upload}}",
+        "upload-continued": "一个 CSS 文件",
+        "preview-default": "首先选择一个主题",
+        "delete": "{{common.delete}}",
+        "preview-default-admin": "首先选择主题或手动上传主题",
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "preview-title": "预览"
     },
     "theme": {
         "theme-dark": "黑暗",
@@ -191,7 +200,7 @@
     },
     "site-theme-provider-pipe": {
         "system": "系统",
-        "user": "用户"
+        "custom": "{{device-platform-pipe.custom}}"
     },
     "manage-devices": {
         "title": "设备管理",
@@ -204,15 +213,6 @@
         "delete": "删除",
         "edit": "编辑",
         "email-setup-alert": "想要将文件发送到您的设备吗？ 首先进行管理员设置电子邮件设置！"
-    },
-    "edit-device": {
-        "device-name-label": "设备名称",
-        "email-label": "电子邮箱",
-        "email-tooltip": "此电子邮件地址用于接收通过“发送到”菜单发送的文件",
-        "device-platform-label": "设备平台",
-        "save": "保存",
-        "required-field": "必填项",
-        "valid-email": "填写有效邮箱"
     },
     "change-password": {
         "password-label": "密码",
@@ -437,17 +437,17 @@
     "person-role-pipe": {
         "artist": "设计师",
         "character": "角色",
-        "colorist": "上色师",
+        "colorist": "上色",
         "cover-artist": "封面设计",
         "editor": "编辑",
         "inker": "上墨师",
         "letterer": "嵌字师",
-        "penciller": "线稿师",
+        "penciller": "铅稿",
         "publisher": "出版社",
         "writer": "作者",
         "other": "其他",
-        "translator": "译者",
-        "imprint": "压印",
+        "translator": "翻译",
+        "imprint": "出版分社",
         "team": "{{filter-field-pipe.team}}",
         "location": "{{filter-field-pipe.location}}"
     },
@@ -600,7 +600,7 @@
     "personal-table-of-contents": {
         "no-data": "尚未添加书签",
         "page": "页 {{value}}",
-        "delete": "删除{{bookmarkName}}"
+        "delete": "删除 {{bookmarkName}}"
     },
     "confirm-email": {
         "title": "注册",
@@ -679,12 +679,12 @@
         "writers-title": "作者",
         "cover-artists-title": "封面设计",
         "characters-title": "角色",
-        "colorists-title": "上色师",
+        "colorists-title": "上色",
         "editors-title": "编辑",
         "inkers-title": "上墨师",
         "letterers-title": "嵌字师",
-        "translators-title": "译者",
-        "pencillers-title": "线稿师",
+        "translators-title": "翻译",
+        "pencillers-title": "铅稿",
         "publishers-title": "出版社",
         "promoted": "{{common.promoted}}",
         "see-more": "查看更多",
@@ -839,7 +839,7 @@
         "general-tab": "常规",
         "metadata-tab": "元数据",
         "cover-tab": "封面",
-        "info-tab": "信息",
+        "info-tab": "{{edit-series-modal.info-tab}}",
         "no-summary": "没有可用的摘要。",
         "writers-title": "{{series-metadata-detail.writers-title}}",
         "genres-title": "{{series-metadata-detail.genres-title}}",
@@ -883,16 +883,16 @@
         "drag-n-drop": "拖放",
         "upload": "上传",
         "upload-continued": "一张图片",
-        "url-label": "链接",
+        "url-label": "网址",
         "load": "加载",
         "back": "返回",
         "reset-cover-tooltip": "重置封面图像",
         "reset": "{{common.reset}}",
-        "image-num": "图片{{num}}",
+        "image-num": "图片 {{num}}",
         "apply": "{{common.apply}}",
         "applied": "{{theme-manager.applied}}",
         "enter-an-url-pre-title": "输入 {{url}}",
-        "url": "Url"
+        "url": "网址"
     },
     "download-indicator": {
         "progress": "{{percentage}}% 已下载"
@@ -975,21 +975,10 @@
     "list-item": {
         "read": "{{common.read}}"
     },
-    "manage-alerts": {
-        "description-part-1": "此表格列出了扫描或读取媒体时发现的问题。此列表不受管理。您可以随时清除它，并使用扫描（强制）资料库来进行分析。一些常见错误及其释义的列表可以访问。 ",
-        "description-part-2": "wiki。",
-        "filter-label": "{{common.filter}}",
-        "clear-alerts": "清除警报",
-        "extension-header": "扩展名",
-        "file-header": "文件",
-        "comment-header": "备注",
-        "details-header": "详情"
-    },
     "manage-email-settings": {
-        "title": "电子邮件服务（SMTP）",
         "description": "为了使用 Kavita 的某些功能，例如忘记密码和发送到设备，必须设置电子邮件提供商。如果没有电子邮件设置，其他功能（例如密码更改）的安全性就会降低。",
         "send-to-warning": "如果您希望\"发送到设备\"正常工作，您必须设置您的电子邮件设置",
-        "email-url-label": "邮件服务器URL",
+        "email-url-label": "邮件服务器网址",
         "email-url-tooltip": "请使用完整的URL地址来配置电子邮件服务，不要包含结尾的斜杠。",
         "reset": "{{common.reset}}",
         "test": "测试",
@@ -1015,7 +1004,9 @@
         "username-tooltip": "用于对主机进行身份验证的用户名",
         "sender-address-tooltip": "这是收件人收到电子邮件时将看到的电子邮件地址。通常是与帐户关联的电子邮件地址。",
         "gmail-label": "Gmail",
-        "outlook-label": "Outlook"
+        "outlook-label": "Outlook",
+        "setting-description": "您必须填写主机名和 SMTP 设置才能使用 Kavita 中的基于电子邮件的功能。",
+        "test-warning": "使用测试按钮之前必须保存。"
     },
     "manage-library": {
         "title": "资料库",
@@ -1065,9 +1056,9 @@
     },
     "manage-settings": {
         "notice": "注意：",
-        "restart-required": "更改端口、网址、缓存大小或者IP后，需要重启Kavita才能生效。",
-        "base-url-label": "基本URL",
-        "base-url-tooltip": "如果您想在基本URL上托管Kavita，例如yourdomain.com/kavita，请使用此选项。在使用非root用户的Docker上不支持该功能。",
+        "restart-required": "更改端口、路径、缓存大小或者IP后，需要重启 Kavita 才能生效。",
+        "base-url-label": "路径",
+        "base-url-tooltip": "如果您想在Kavita主机的网址上加入路径，例如yourdomain.com/kavita，请使用此选项。在使用非root用户的Docker上不支持该功能。",
         "ip-address-label": "IP地址",
         "ip-address-tooltip": "服务器监听的IP地址列表，以逗号分隔。如果Kavita在Docker中运行，则此选项无法更改。需要重启服务才能生效。",
         "port-label": "端口",
@@ -1106,7 +1097,7 @@
         "max-backup-validation": "不能超过{{num}}个备份",
         "min-backup-validation": "至少 1 个备份",
         "ip-address-validation": "IP地址只能包含有效的IPv4或IPv6地址",
-        "base-url-validation": "基本URL必须以/开头和结尾",
+        "base-url-validation": "基本网址必须以/开头和结尾",
         "host-name-label": "{{manage-email-settings.host-name-label}}",
         "host-name-tooltip": "{{manage-email-settings.host-name-tooltip}}",
         "host-name-validation": "{{manage-email-settings.host-name-validation}}"
@@ -1123,7 +1114,9 @@
         "source-title": "源代码：",
         "feature-request-title": "功能请求:",
         "localization-title": "本地化:",
-        "updates-title": "更新历史"
+        "updates-title": "更新历史",
+        "first-install-version-title": "首次安装版本",
+        "first-install-date-title": "首次安装日期"
     },
     "manage-tasks-settings": {
         "title": "周期性任务",
@@ -1193,19 +1186,16 @@
         "change-password-alt": "更改密码 {{user}}",
         "resend": "重新发送",
         "setup": "设置",
-        "last-active-title": "上次活动：",
-        "roles-title": "角色：",
         "none": "没有",
         "never": "从不",
         "online-now-tooltip": "在线",
-        "sharing-title": "共享：",
         "no-data": "没有其他用户。",
         "loading": "{{common.loading}}",
         "username-pattern": "用户名只能包含以下字符和空格： {{characters}}",
         "admin": "管理员"
     },
     "edit-collection-tags": {
-        "title": "编辑{{collectionName}} 收藏",
+        "title": "编辑 {{collectionName}} 收藏",
         "required-field": "{{validation.required-field}}",
         "save": "{{common.save}}",
         "close": "{{common.close}}",
@@ -1220,7 +1210,12 @@
         "summary-label": "内容简介",
         "deselect-all": "{{common.deselect-all}}",
         "select-all": "{{common.select-all}}",
-        "filter-label": "{{common.filter}}"
+        "filter-label": "{{common.filter}}",
+        "last-sync-title": "上次同步：",
+        "total-series-title": "总系列：",
+        "missing-series-title": "缺失系列：",
+        "info-tab": "{{edit-series-modal.info-tab}}",
+        "source-url-title": "来源网址："
     },
     "library-detail": {
         "library-tab": "资料库",
@@ -1235,29 +1230,13 @@
         "quick-reads": "快速阅读",
         "on-deck": "{{dashboard.on-deck-title}}"
     },
-    "admin-dashboard": {
-        "title": "管理员面板",
-        "general-tab": "常规",
-        "users-tab": "用户",
-        "libraries-tab": "资料库",
-        "media-tab": "媒体",
-        "logs-tab": "日志",
-        "email-tab": "电子邮件",
-        "tasks-tab": "任务",
-        "statistics-tab": "统计数据",
-        "system-tab": "系统",
-        "kavita+-tab": "Kavita+",
-        "kavita+-desc-part-1": "Kavita+是一项高级订阅服务，可为Kavita上的所有用户解锁功能。购买订阅解锁 ",
-        "kavita+-desc-part-2": "高级会员福利",
-        "kavita+-desc-part-3": "！",
-        "kavita+-requirement": "Kavita+ 设计为仅适用于最新版本 - 2 个版本。除此之外的任何内容都可能无法正常工作。",
-        "kavita+-releases": "查看版本"
-    },
     "collection-detail": {
         "no-data": "暂无项目。请尝试添加一个系列。",
         "no-data-filtered": "没有项目与当前筛选器匹配。",
-        "title-alt": "Kavita - {{collectionName}}收藏集",
-        "series-header": "系列"
+        "title-alt": "Kavita - {{collectionName}} 收藏",
+        "series-header": "系列",
+        "sync-progress": "系列收藏：{{title}}",
+        "last-sync": "上次同步：{{date}}"
     },
     "all-collections": {
         "title": "收藏",
@@ -1308,7 +1287,9 @@
         "close": "{{common.close}}",
         "users-online-count": "{{num}}用户在线",
         "active-events-title": "活动事件：",
-        "no-data": "无运行"
+        "no-data": "无运行",
+        "left-to-process": "待处理：{{leftToProcess}}",
+        "download-in-queue": "{{num}} 队列中的下载"
     },
     "shortcuts-modal": {
         "title": "热键",
@@ -1332,13 +1313,13 @@
         "collections": "收藏",
         "close": "{{common.close}}",
         "loading": "{{common.loading}}",
-        "bookmarks": "{{side-nav.bookmarks}}"
+        "bookmarks": "{{side-nav.bookmarks}}",
+        "include-extras": "包括章节和文件"
     },
     "nav-header": {
         "skip-alt": "跳转至主要内容",
         "search-series-alt": "搜索系列",
         "search-alt": "搜索…",
-        "promoted": "{{common.promoted}}",
         "no-data": "无结果",
         "scroll-to-top-alt": "滚动到顶部",
         "server-settings": "服务器设置",
@@ -1438,8 +1419,10 @@
         "emulate-comic-book-label": "{{user-preferences.emulate-comic-book-label}}",
         "unbookmark-page-tooltip": "取消书签页面",
         "bookmark-page-tooltip": "书签页面",
-        "series-progress": "系列进度：{{percent}}",
-        "bookmarks-title": "书签"
+        "series-progress": "系列进度： {{percentage}}",
+        "bookmarks-title": "书签",
+        "width-override-label": "宽度覆盖",
+        "off": "关"
     },
     "metadata-filter": {
         "filter-title": "{{common.filter}}",
@@ -1451,13 +1434,13 @@
         "cover-artist-label": "封面设计",
         "writer-label": "作者",
         "publisher-label": "出版社",
-        "penciller-label": "线稿师",
+        "penciller-label": "铅稿",
         "letterer-label": "嵌字师",
         "inker-label": "上墨师",
         "editor-label": "编辑",
-        "colorist-label": "上色师",
+        "colorist-label": "上色",
         "character-label": "角色",
-        "translator-label": "译者",
+        "translator-label": "翻译",
         "read-progress-label": "阅读进度",
         "unread": "未读",
         "read": "已读",
@@ -1476,7 +1459,7 @@
         "descending-alt": "降序",
         "reset": "{{common.reset}}",
         "apply": "{{common.apply}}",
-        "limit-label": "限定",
+        "limit-label": "限制数量",
         "save": "{{common.save}}",
         "filter-name-label": "筛选器名称"
     },
@@ -1488,7 +1471,8 @@
         "time-to-read": "阅读时间",
         "release-year": "发行年份",
         "read-progress": "上次阅读",
-        "average-rating": "平均评分"
+        "average-rating": "平均评分",
+        "random": "随机"
     },
     "edit-series-modal": {
         "title": "{{seriesName}} 详细信息",
@@ -1504,13 +1488,13 @@
         "cover-artist-label": "封面设计",
         "writer-label": "作者",
         "publisher-label": "出版社",
-        "penciller-label": "线稿师",
+        "penciller-label": "铅稿",
         "letterer-label": "嵌字师",
         "inker-label": "上墨师",
         "editor-label": "编辑",
-        "colorist-label": "上色师",
+        "colorist-label": "上色",
         "character-label": "角色",
-        "translator-label": "译者",
+        "translator-label": "翻译",
         "language-label": "语言",
         "age-rating-label": "年龄分级",
         "publication-status-label": "出版状态",
@@ -1572,7 +1556,9 @@
         "total-size-header": "总大小",
         "total-files-header": "文件总数",
         "not-classified": "未分类",
-        "total-file-size-title": "总文件大小："
+        "total-file-size-title": "总文件大小：",
+        "download-file-for-extension-header": "下载报告",
+        "download-file-for-extension-alt": "下载 {{extension}} 的文件报告"
     },
     "reading-activity": {
         "title": "阅读活动",
@@ -1643,30 +1629,33 @@
         "user-not-auth": "用户未通过身份验证",
         "error-code": "{{num}}错误",
         "download": "下载此文件时出现问题，或者您没有权限访问该文件",
-        "not-found": "该URL不存在",
+        "not-found": "该网址不存在",
         "generic": "发生了意外的错误",
         "rejected-cover-upload": "由于服务器拒绝请求，无法获取图像。请下载并从文件中上传。",
-        "invalid-confirmation-url": "无效的确认URL",
+        "invalid-confirmation-url": "无效的确认网址",
         "invalid-confirmation-email": "无效的确认电子邮件",
-        "invalid-password-reset-url": "无效的重置密码URL"
+        "invalid-password-reset-url": "无效的重置密码网址",
+        "theme-manual-upload": "通过手动上传创建主题时出现问题",
+        "theme-already-in-use": "同名的主题已存在",
+        "delete-theme-in-use": "主题当前已被至少一名用户使用，无法删除"
     },
     "toasts": {
         "regen-cover": "已加入队列的任务以重新生成封面图像",
         "no-pages": "没有任何页面。Kavita 无法读取此档案文件。",
         "download-in-progress": "下载正在进行中，请稍候。",
-        "scan-queued": "{{name}}进入队列扫描",
+        "scan-queued": "{{name}} 进入队列扫描",
         "server-settings-updated": "服务器设置已更新",
         "reset-ip-address": "IP地址已重置",
-        "reset-base-url": "基本URL已重置",
+        "reset-base-url": "基本网址已重置",
         "unauthorized-1": "您没有权限查看此页面。",
         "unauthorized-2": "未经授权",
         "no-updates": "暂无可用更新",
         "confirm-delete-user": "您确定要删除此用户吗？",
         "user-deleted": "{{user}}已被删除",
         "click-email-link": "请点击此链接确认您的电子邮件。您必须确认后才能登录。",
-        "series-added-to-collection": "系列已添加到{{collectionName}}收藏集",
-        "no-series-collection-warning": "警告！未选择任何系列，保存将删除该收藏集。您确定要继续吗？",
-        "collection-updated": "收藏集已更新",
+        "series-added-to-collection": "系列已添加到 {{collectionName}} 收藏",
+        "no-series-collection-warning": "警告！未选择任何系列，保存将删除该收藏。您确定要继续吗？",
+        "collection-updated": "收藏已更新",
         "reading-list-deleted": "阅读列表已删除",
         "reading-list-updated": "阅读列表已更新",
         "confirm-delete-reading-list": "您确定要删除阅读列表吗？此操作无法撤销。",
@@ -1681,7 +1670,7 @@
         "incognito-off": "隐身模式已关闭。进度将开始被跟踪。",
         "email-service-reset": "电子邮件服务已重置",
         "email-service-reachable": "Kavita电子邮件服务连接成功",
-        "email-service-unresponsive": "电子邮件服务的URL没有响应。",
+        "email-service-unresponsive": "电子邮件服务的网址没有响应。",
         "refresh-covers-queued": "已为{{name}}排队刷新封面",
         "library-file-analysis-queued": "已为{{name}}排队进行资料库文件分析",
         "entity-read": "{{name}}已标记为已读",
@@ -1741,11 +1730,18 @@
         "force-kavita+-refresh-success": "Kavita+ 外部元数据已失效",
         "confirm-download-size-ios": "iOS 在下载大于 200MB 的文件时出现问题，此下载可能无法完成。",
         "collection-not-owned": "您没有该收藏",
-        "collections-promoted": "收藏推广",
+        "collections-promoted": "推广收藏",
         "collections-unpromoted": "未推广的收藏",
         "confirm-delete-collections": "您确定要删除多个收藏吗？",
         "collections-deleted": "收藏已删除",
-        "pdf-book-mode-screen-size": "屏幕对于书籍模式来说太小"
+        "pdf-book-mode-screen-size": "屏幕对于书籍模式来说太小",
+        "stack-imported": "Stack 导入",
+        "confirm-delete-theme": "删除该主题将从磁盘中删除它。您可以在删除之前从临时目录中获取它",
+        "mal-token-required": "需要 MAL 令牌，在用户设置中设置",
+        "reading-lists-deleted": "阅读列表已删除",
+        "reading-lists-unpromoted": "未推广的阅读清单",
+        "confirm-delete-reading-lists": "您确定要删除阅读列表吗？此操作无法撤消。",
+        "reading-lists-promoted": "推广阅读清单"
     },
     "actionable": {
         "scan-library": "扫描资料库",
@@ -1856,7 +1852,10 @@
         "volume-num": "卷",
         "clear": "清空",
         "filter": "筛选",
-        "remove": "删除"
+        "remove": "删除",
+        "issue-num-shorthand": "#{{num}}",
+        "chapter-num-shorthand": "章节 {{num}}",
+        "volume-num-shorthand": "卷 {{num}}"
     },
     "infinite-scroller": {
         "continuous-reading-prev-chapter-alt": "向上滚动以返回上一章节",
@@ -1873,7 +1872,7 @@
     "filter-field-pipe": {
         "characters": "角色",
         "collection-tags": "收藏标签",
-        "colorist": "上色师",
+        "colorist": "上色",
         "cover-artist": "封面设计",
         "editor": "编辑",
         "formats": "格式",
@@ -1886,7 +1885,7 @@
         "series-name": "系列名称",
         "summary": "内容简介",
         "tags": "标签",
-        "translators": "译者",
+        "translators": "翻译",
         "writers": "作者",
         "age-rating": "年龄分级",
         "libraries": "资料库",
@@ -1894,7 +1893,7 @@
         "publisher": "出版社",
         "user-rating": "用户评分",
         "letterer": "嵌字师",
-        "penciller": "线稿师",
+        "penciller": "铅稿",
         "path": "路径",
         "file-path": "文件路径",
         "read-date": "阅读日期",
@@ -2019,11 +2018,13 @@
         "no-data": "未创建智能筛选",
         "filter": "{{common.filter}}",
         "delete": "{{common.delete}}",
-        "clear": "{{common.clear}}"
+        "clear": "{{common.clear}}",
+        "errored": "筛选器中存在编码错误。您需要重新创建它。"
     },
     "all-filters": {
         "title": "所有智能筛选器",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}"
+        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
+        "create": "{{common.create}}"
     },
     "next-expected-card": {
         "title": "~{{date}}"
@@ -2062,8 +2063,9 @@
         "title": "MAL Interest Stack 导入",
         "restack-count": "{{num}} Restacks",
         "close": "{{common.close}}",
-        "description": "导入您的 MAL Interest Stacks 并在 Kavita 中创建收藏集",
-        "series-count": "{{common.series-count}}"
+        "description": "导入您的 MAL Interest Stacks 并在 Kavita 中创建收藏",
+        "series-count": "{{common.series-count}}",
+        "nothing-found": "没有任何结果"
     },
     "pdf-layout-mode-pipe": {
         "multiple": "默认",
@@ -2088,5 +2090,8 @@
         "off": "单页视图",
         "even": "书籍视图",
         "odd": "双页视图"
+    },
+    "browse-themes-modal": {
+        "title": "浏览主题"
     }
 }

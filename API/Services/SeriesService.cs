@@ -713,6 +713,7 @@ public class SeriesService : ISeriesService
             StorylineChapters = storylineChapters,
             TotalCount = chapters.Count,
             UnreadCount = chapters.Count(c => c.Pages > 0 && c.PagesRead < c.Pages),
+            // TODO: See if we can get the ContinueFrom here
         };
     }
 

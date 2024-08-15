@@ -137,14 +137,14 @@ public class Startup
         {
             c.SwaggerDoc("v1", new OpenApiInfo
             {
-                Version = BuildInfo.Version.ToString(),
+                Version = "3.1.0",
                 Title = "Kavita",
-                Description = "Kavita provides a set of APIs that are authenticated by JWT. JWT token can be copied from local storage.",
+                Description = $"Kavita provides a set of APIs that are authenticated by JWT. JWT token can be copied from local storage. Assume all fields of a payload are required. Built against v{BuildInfo.Version.ToString()}",
                 License = new OpenApiLicense
                 {
                     Name = "GPL-3.0",
                     Url = new Uri("https://github.com/Kareadita/Kavita/blob/develop/LICENSE")
-                }
+                },
             });
 
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -176,7 +176,7 @@ public class Startup
                 Url = "{protocol}://{hostpath}",
                 Variables = new Dictionary<string, OpenApiServerVariable>
                 {
-                    { "protocol", new OpenApiServerVariable { Default = "http", Enum = new List<string> { "http", "https" } } },
+                    { "protocol", new OpenApiServerVariable { Default = "http", Enum = ["http", "https"]} },
                     { "hostpath", new OpenApiServerVariable { Default = "localhost:5000" } }
                 }
             });
@@ -207,7 +207,7 @@ public class Startup
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UseInMemoryStorage());
-            //.UseSQLiteStorage("config/Hangfire.db")); // UseSQLiteStorage - SQLite has some issues around resuming jobs when aborted (and locking can cause high utilization)
+            //.UseSQLiteStorage("config/Hangfire.db")); // UseSQLiteStorage - SQLite has some issues around resuming jobs when aborted (and locking can cause high utilization) (NOTE: There is code to clear jobs on startup a redditor gave me)
 
         // Add the processing server as IHostedService
         services.AddHangfireServer(options =>
@@ -265,6 +265,11 @@ public class Startup
 
                     // v0.8.1
                     await MigrateLowestSeriesFolderPath.Migrate(dataContext, unitOfWork, logger);
+
+                    // v0.8.2
+                    await ManualMigrateThemeDescription.Migrate(dataContext, logger);
+                    await MigrateInitialInstallData.Migrate(dataContext, logger, directoryService);
+                    await MigrateSeriesLowestFolderPath.Migrate(dataContext, logger, directoryService);
 
                     //  Update the version in the DB after all migrations are run
                     var installVersion = await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.InstallVersion);
@@ -355,7 +360,14 @@ public class Startup
 
         app.UseStaticFiles(new StaticFileOptions
         {
-            ContentTypeProvider = new FileExtensionContentTypeProvider(),
+            // bcmap files needed for PDF reader localizations (https://github.com/Kareadita/Kavita/issues/2970)
+            ContentTypeProvider = new FileExtensionContentTypeProvider
+            {
+                Mappings =
+                {
+                    [".bcmap"] = "application/octet-stream"
+                }
+            },
             HttpsCompression = HttpsCompressionMode.Compress,
             OnPrepareResponse = ctx =>
             {
@@ -398,7 +410,10 @@ public class Startup
             endpoints.MapControllers();
             endpoints.MapHub<MessageHub>("hubs/messages");
             endpoints.MapHub<LogHub>("hubs/logs");
-            endpoints.MapHangfireDashboard();
+            if (env.IsDevelopment())
+            {
+                endpoints.MapHangfireDashboard();
+            }
             endpoints.MapFallbackToController("Index", "Fallback");
         });
 
@@ -412,8 +427,8 @@ public class Startup
             catch (Exception)
             {
                 /* Swallow Exception */
+                Console.WriteLine($"Kavita - v{BuildInfo.Version}");
             }
-            Console.WriteLine($"Kavita - v{BuildInfo.Version}");
         });
 
         logger.LogInformation("Starting with base url as {BaseUrl}", basePath);

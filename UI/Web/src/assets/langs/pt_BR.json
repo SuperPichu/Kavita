@@ -44,7 +44,9 @@
         "processed": "Processado",
         "not-processed": "Não Processado",
         "volume-num": "Volume {{num}}",
-        "chapter-num": "Capítulo {{num}}"
+        "chapter-num": "Capítulo {{num}}",
+        "not-read-warning": "Os provedores upstream sempre manterão o número mais alto",
+        "special": "{{entity-title.special}}"
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "Progresso da Leitura",
@@ -88,7 +90,6 @@
         "pref-description": "Essas são configurações globais vinculadas à sua conta.",
         "account-tab": "Conta",
         "preferences-tab": "Preferências",
-        "3rd-party-clients-tab": "Clientes de Terceiros",
         "theme-tab": "Tema",
         "devices-tab": "Dispositivos",
         "stats-tab": "Estatísticas",
@@ -164,15 +165,23 @@
     },
     "theme-manager": {
         "title": "Gerenciador de Temas",
-        "looking-for-theme": "Procurando um tema de claro ou e-ink? Temos alguns temas personalizados que você pode usar em nosso ",
-        "looking-for-theme-continued": "tema no github.",
-        "scan": "Escanear",
         "site-themes": "Temas do Site",
         "set-default": "Definir Padrão",
         "apply": "{{common.apply}}",
         "applied": "Aplicado",
         "updated-toastr": "O padrão do site foi atualizado para {{name}}",
-        "scan-queued": "Uma varredura do tema do site foi colocada na fila"
+        "scan-queued": "Uma varredura do tema do site foi colocada na fila",
+        "description": "Kavita vem nas minhas cores, encontre um esquema de cores que atenda às suas necessidades ou construa um você mesmo e compartilhe-o. Os temas podem ser aplicados à sua conta ou a todas as contas.",
+        "active-theme": "Ativo",
+        "delete": "{{common.delete}}",
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
+        "upload-continued": "um arquivo css",
+        "preview-default": "Selecione um tema primeiro",
+        "preview-default-admin": "Selecione um tema primeiro ou carregue um manualmente",
+        "default-theme": "Tema Padrão",
+        "download": "{{changelog.download}}",
+        "preview-title": "Prévia"
     },
     "theme": {
         "theme-dark": "Escuro",
@@ -191,7 +200,7 @@
     },
     "site-theme-provider-pipe": {
         "system": "Sistema",
-        "user": "Usuário"
+        "custom": "{{device-platform-pipe.custom}}"
     },
     "manage-devices": {
         "title": "Gerenciador de Dispositivo",
@@ -204,15 +213,6 @@
         "delete": "{{common.delete}}",
         "edit": "{{common.edit}}",
         "email-setup-alert": "Quer enviar arquivos para seus dispositivos? Peça ao seu administrador que configure as configurações de e-mail primeiro!"
-    },
-    "edit-device": {
-        "device-name-label": "Nome do Dispositivo",
-        "email-label": "{{common.email}}",
-        "email-tooltip": "Este e-mail será usado para aceitar o arquivo via Enviar Para",
-        "device-platform-label": "Plataforma do Dispositivo",
-        "save": "{{common.save}}",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}"
     },
     "change-password": {
         "password-label": "{{common.password}}",
@@ -839,7 +839,7 @@
         "general-tab": "Geral",
         "metadata-tab": "Metadados",
         "cover-tab": "Capa",
-        "info-tab": "Info",
+        "info-tab": "{{edit-series-modal.info-tab}}",
         "no-summary": "Nenhum Resumo disponível.",
         "writers-title": "{{series-metadata-detail.writers-title}}",
         "genres-title": "{{series-metadata-detail.genres-title}}",
@@ -975,18 +975,7 @@
     "list-item": {
         "read": "{{common.read}}"
     },
-    "manage-alerts": {
-        "description-part-1": "Esta tabela contém problemas encontrados durante a verificação ou leitura de sua mídia. Esta lista não é gerenciada. Você pode limpá-lo a qualquer momento e usar o Escanear (À Força) Biblioteca para realizar a análise. Uma lista de alguns erros comuns e o que eles significam pode ser encontrada no ",
-        "description-part-2": "wiki.",
-        "filter-label": "{{common.filter}}",
-        "clear-alerts": "Limpar Alertas",
-        "extension-header": "Extensão",
-        "file-header": "Arquivo",
-        "comment-header": "Comentário",
-        "details-header": "Detalhes"
-    },
     "manage-email-settings": {
-        "title": "Serviço de E-Mail (SMTP)",
         "description": "Para usar algumas funções do Kavita, como Esqueci a senha e Enviar para o dispositivo, um provedor de e-mail deve ser configurado. Outros recursos, como alteração de senha, são menos seguros sem configuração de e-mail.",
         "send-to-warning": "se quiser que Enviar para dispositivo funcione, você deve definir suas configurações de e-mail",
         "email-url-label": "URL do Serviço de E-Mail",
@@ -1015,7 +1004,9 @@
         "host-tooltip": "Endereço de saída/SMTP do seu servidor de e-mail",
         "username-tooltip": "O nome de usuário usado para autenticação no host",
         "gmail-label": "Gmail",
-        "outlook-label": "Outlook"
+        "outlook-label": "Outlook",
+        "test-warning": "Você deve salvar antes de usar o botão Teste.",
+        "setting-description": "Você deve preencher as configurações de nome do host e SMTP para usar a funcionalidade baseada em e-mail no Kavita."
     },
     "manage-library": {
         "title": "Bibliotecas",
@@ -1036,7 +1027,7 @@
         "encode-as-description-part-2": "Posso usar o WebP?",
         "encode-as-description-part-3": "Posso usar AVIF?",
         "encode-as-warning": "Você não pode converter de volta para PNG depois de ir para WebP/AVIF. Você precisaria atualizar as capas em suas bibliotecas para regenerar todas as capas. Marcadores e favicons não podem ser convertidos.",
-        "media-warning": "Você deve acionar a tarefa de conversão de mídia na aba Tarefas.,",
+        "media-warning": "Você deve acionar a tarefa de conversão de mídia na Aba Tarefas.",
         "encode-as-label": "Salvar Mídia Como",
         "encode-as-tooltip": "Todas as mídias que o Kavita gerencia (capas, favoritos, favicons) serão codificadas como este tipo.",
         "bookmark-dir-label": "Diretório dos Marcadores",
@@ -1123,7 +1114,9 @@
         "source-title": "Fonte:",
         "feature-request-title": "Solicitações de recursos:",
         "localization-title": "Localizações:",
-        "updates-title": "Histórico de Atualizações"
+        "updates-title": "Histórico de Atualizações",
+        "first-install-version-title": "Primeira Versão de Instalação",
+        "first-install-date-title": "Data da Primeira Instalação"
     },
     "manage-tasks-settings": {
         "title": "Tarefas Recorrentes",
@@ -1193,12 +1186,9 @@
         "change-password-alt": "Alterar Senha {{user}}",
         "resend": "Reenviar",
         "setup": "Configurar",
-        "last-active-title": "Última Atividade:",
-        "roles-title": "Papéis:",
         "none": "Nada",
         "never": "Nunca",
         "online-now-tooltip": "Online Agora",
-        "sharing-title": "Compartilhando:",
         "no-data": "Não há outros usuários.",
         "loading": "{{common.loading}}",
         "username-pattern": "O nome de usuário só pode conter os seguintes caracteres e espaços em branco: {{characters}}",
@@ -1220,7 +1210,12 @@
         "summary-label": "Sumário",
         "deselect-all": "{{common.deselect-all}}",
         "select-all": "{{common.select-all}}",
-        "filter-label": "{{common.filter}}"
+        "filter-label": "{{common.filter}}",
+        "last-sync-title": "Última Sincronização:",
+        "source-url-title": "URL da Fonte:",
+        "total-series-title": "Total de Séries:",
+        "missing-series-title": "Séries Ausentes:",
+        "info-tab": "{{edit-series-modal.info-tab}}"
     },
     "library-detail": {
         "library-tab": "Biblioteca",
@@ -1235,29 +1230,13 @@
         "quick-reads": "Leituras Rápidas",
         "on-deck": "{{dashboard.on-deck-title}}"
     },
-    "admin-dashboard": {
-        "title": "Painel do Administrador",
-        "general-tab": "Geral",
-        "users-tab": "Usuários",
-        "libraries-tab": "Bibliotecas",
-        "media-tab": "Mídia",
-        "logs-tab": "Registros",
-        "email-tab": "Email",
-        "tasks-tab": "Tarefas",
-        "statistics-tab": "Estatísticas",
-        "system-tab": "Sistema",
-        "kavita+-tab": "Kavita+",
-        "kavita+-desc-part-1": "Kavita+ é um serviço de assinatura premium que desbloqueia recursos para todos os usuários nesta instância Kavita. Compre uma assinatura para desbloquear ",
-        "kavita+-desc-part-2": "benefícios premium",
-        "kavita+-desc-part-3": "hoje!",
-        "kavita+-requirement": "Kavita+ foi projetado para funcionar apenas com a versão mais recente – 2 versões. Qualquer coisa fora disso está sujeita a não funcionar.",
-        "kavita+-releases": "Ver lançamentos"
-    },
     "collection-detail": {
         "no-data": "Não há itens. Tente adicionar uma série.",
         "no-data-filtered": "Nenhum item corresponde ao seu filtro atual.",
         "title-alt": "Kavita - {{collectionName}} Coleção",
-        "series-header": "Séries"
+        "series-header": "Séries",
+        "sync-progress": "Série Coletada: {{title}}",
+        "last-sync": "Última Sincronização: {{date}}"
     },
     "all-collections": {
         "title": "Coleções",
@@ -1308,7 +1287,9 @@
         "close": "{{common.close}}",
         "users-online-count": "{{num}} Usuários online",
         "active-events-title": "Eventos Ativos:",
-        "no-data": "Não há muita coisa acontecendo aqui"
+        "no-data": "Não há muita coisa acontecendo aqui",
+        "left-to-process": "Resta para Processar: {{leftToProcess}}",
+        "download-in-queue": "{{num}} downloads na Fila"
     },
     "shortcuts-modal": {
         "title": "Atalhos de Teclado",
@@ -1332,13 +1313,13 @@
         "collections": "Coleções",
         "close": "{{common.close}}",
         "loading": "{{common.loading}}",
-        "bookmarks": "{{side-nav.bookmarks}}"
+        "bookmarks": "{{side-nav.bookmarks}}",
+        "include-extras": "Incluir Capítulos & Arquivos"
     },
     "nav-header": {
         "skip-alt": "Ir para o conteúdo principal",
         "search-series-alt": "Pesquisar séries",
         "search-alt": "Pesquisar…",
-        "promoted": "{{common.promoted}}",
         "no-data": "Nenhum resultado encontrado",
         "scroll-to-top-alt": "Rolar para o Topo",
         "server-settings": "Configurações do Servidor",
@@ -1439,7 +1420,9 @@
         "unbookmark-page-tooltip": "Desmarcar Página",
         "bookmark-page-tooltip": "Marcar Página",
         "series-progress": "Progresso das Séries: {{percentage}}",
-        "bookmarks-title": "Marcadores"
+        "bookmarks-title": "Marcadores",
+        "off": "Desligado",
+        "width-override-label": "Substituição de Largura"
     },
     "metadata-filter": {
         "filter-title": "{{common.filter}}",
@@ -1488,7 +1471,8 @@
         "time-to-read": "Tempo para Ler",
         "release-year": "Ano de Lançamento",
         "read-progress": "Última Leitura",
-        "average-rating": "Avaliação Média"
+        "average-rating": "Avaliação Média",
+        "random": "Aleatório"
     },
     "edit-series-modal": {
         "title": "{{seriesName}} Detalhes",
@@ -1572,7 +1556,9 @@
         "total-size-header": "Tamanho Total",
         "total-files-header": "Total de Arquivos",
         "not-classified": "Não Classificado",
-        "total-file-size-title": "Tamanho Total do Arquivo:"
+        "total-file-size-title": "Tamanho Total do Arquivo:",
+        "download-file-for-extension-header": "Baixar Relatório",
+        "download-file-for-extension-alt": "Baixe o Relatório de arquivos para {{extension}}"
     },
     "reading-activity": {
         "title": "Atividade de Leitura",
@@ -1648,7 +1634,10 @@
         "rejected-cover-upload": "A imagem não pôde ser buscada porque o servidor recusou a solicitação. Em vez disso, faça o download e o upload do arquivo.",
         "invalid-confirmation-url": "URL de confirmação inválida",
         "invalid-confirmation-email": "E-mail de confirmação inválido",
-        "invalid-password-reset-url": "URL de redefinição de senha inválida"
+        "invalid-password-reset-url": "URL de redefinição de senha inválida",
+        "theme-manual-upload": "Ocorreu um problema ao criar o tema a partir do upload manual",
+        "theme-already-in-use": "O tema já existe com esse nome",
+        "delete-theme-in-use": "O tema está em uso por pelo menos um usuário, não é possível excluí-lo"
     },
     "toasts": {
         "regen-cover": "Uma tarefa foi colocada na fila para gerar novamente a imagem da capa",
@@ -1745,7 +1734,14 @@
         "collections-promoted": "Coleções promovidas",
         "collections-unpromoted": "Coleções não promovidas",
         "collections-deleted": "Coleções excluídas",
-        "pdf-book-mode-screen-size": "Tela muito pequena para o modo Livro"
+        "pdf-book-mode-screen-size": "Tela muito pequena para o modo Livro",
+        "stack-imported": "Pilha Importada",
+        "confirm-delete-theme": "A remoção deste tema irá excluí-lo do disco. Você pode obtê-lo do diretório temporário antes da remoção",
+        "mal-token-required": "O token MAL é obrigatório, definido nas Configurações do Usuário",
+        "reading-lists-deleted": "Listas de leitura excluídas",
+        "confirm-delete-reading-lists": "Tem certeza de que deseja excluir as listas de leitura? Isto não pode ser desfeito.",
+        "reading-lists-unpromoted": "Listas de leitura não promovidas",
+        "reading-lists-promoted": "Listas de leitura promovidas"
     },
     "actionable": {
         "scan-library": "Escanear Biblioteca",
@@ -1856,7 +1852,10 @@
         "volume-num": "Volume",
         "clear": "Limpar",
         "filter": "Filtro",
-        "remove": "Remover"
+        "remove": "Remover",
+        "chapter-num-shorthand": "Cap. {{num}}",
+        "issue-num-shorthand": "#{{num}}",
+        "volume-num-shorthand": "Vol. {{num}}"
     },
     "infinite-scroller": {
         "continuous-reading-prev-chapter-alt": "Role para cima para ir para o capítulo anterior",
@@ -2008,7 +2007,8 @@
         "no-data": "Nenhum Filtro Inteligente criado",
         "filter": "{{common.filter}}",
         "delete": "{{common.delete}}",
-        "clear": "{{common.clear}}"
+        "clear": "{{common.clear}}",
+        "errored": "Há um erro de codificação no filtro. Você precisa recriá-lo."
     },
     "stream-pipe": {
         "collections": "{{side-nav.collections}}",
@@ -2032,7 +2032,8 @@
     },
     "all-filters": {
         "title": "Todos os Filtros Inteligentes",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}"
+        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
+        "create": "{{common.create}}"
     },
     "out-of-date-modal": {
         "close": "{{common.close}}",
@@ -2047,7 +2048,8 @@
         "title": "Importar Pilha de Interesses do Mal",
         "close": "{{common.close}}",
         "restack-count": "{{num}} Reempilhar",
-        "description": "Importa suas pilhas de interesse do Mal e cria Coleções no interior do Kavita"
+        "description": "Importa suas pilhas de interesse do Mal e cria Coleções no interior do Kavita",
+        "nothing-found": "Nada encontrado"
     },
     "edit-chapter-progress": {
         "page-read-header": "Páginas Lidas",
@@ -2088,5 +2090,8 @@
     "collection-owner": {
         "collection-via-label": "via {{source}}",
         "collection-created-label": "Criado por: {{owner}}"
+    },
+    "browse-themes-modal": {
+        "title": "Navegar pelos Temas"
     }
 }

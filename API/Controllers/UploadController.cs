@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using API.Constants;
 using API.Data;
+using API.Data.Repositories;
 using API.DTOs.Uploads;
 using API.Entities.Enums;
 using API.Extensions;
@@ -107,6 +108,7 @@ public class UploadController : BaseApiController
             {
                 series.CoverImage = filePath;
                 series.CoverImageLocked = true;
+                _imageService.UpdateColorScape(series);
                 _unitOfWork.SeriesRepository.Update(series);
             }
 
@@ -155,6 +157,7 @@ public class UploadController : BaseApiController
             {
                 tag.CoverImage = filePath;
                 tag.CoverImageLocked = true;
+                _imageService.UpdateColorScape(tag);
                 _unitOfWork.CollectionTagRepository.Update(tag);
             }
 
@@ -206,6 +209,7 @@ public class UploadController : BaseApiController
             {
                 readingList.CoverImage = filePath;
                 readingList.CoverImageLocked = true;
+                _imageService.UpdateColorScape(readingList);
                 _unitOfWork.ReadingListRepository.Update(readingList);
             }
 
@@ -294,6 +298,68 @@ public class UploadController : BaseApiController
     }
 
     /// <summary>
+    /// Replaces volume cover image and locks it with a base64 encoded image.
+    /// </summary>
+    /// <remarks>This is a helper API for Komf - Kavita UI does not use. Volume will find first chapter to update.</remarks>
+    /// <param name="uploadFileDto"></param>
+    /// <returns></returns>
+    [Authorize(Policy = "RequireAdminRole")]
+    [RequestSizeLimit(ControllerConstants.MaxUploadSizeBytes)]
+    [HttpPost("volume")]
+    public async Task<ActionResult> UploadVolumeCoverImageFromUrl(UploadFileDto uploadFileDto)
+    {
+        // Check if Url is non empty, request the image and place in temp, then ask image service to handle it.
+        // See if we can do this all in memory without touching underlying system
+        if (string.IsNullOrEmpty(uploadFileDto.Url))
+        {
+            return BadRequest(await _localizationService.Translate(User.GetUserId(), "url-required"));
+        }
+
+        try
+        {
+            var volume = await _unitOfWork.VolumeRepository.GetVolumeAsync(uploadFileDto.Id, VolumeIncludes.Chapters);
+            if (volume == null) return BadRequest(await _localizationService.Translate(User.GetUserId(), "volume-doesnt-exist"));
+
+            // Find the first chapter of the volume
+            var chapter = volume.Chapters[0];
+
+            var filePath = await CreateThumbnail(uploadFileDto, $"{ImageService.GetChapterFormat(chapter.Id, uploadFileDto.Id)}");
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                chapter.CoverImage = filePath;
+                chapter.CoverImageLocked = true;
+                _imageService.UpdateColorScape(chapter);
+                _unitOfWork.ChapterRepository.Update(chapter);
+
+                volume.CoverImage = chapter.CoverImage;
+                _imageService.UpdateColorScape(volume);
+                _unitOfWork.VolumeRepository.Update(volume);
+            }
+
+            if (_unitOfWork.HasChanges())
+            {
+                await _unitOfWork.CommitAsync();
+
+                await _eventHub.SendMessageAsync(MessageFactory.CoverUpdate,
+                    MessageFactory.CoverUpdateEvent(chapter.VolumeId, MessageFactoryEntityTypes.Volume), false);
+                await _eventHub.SendMessageAsync(MessageFactory.CoverUpdate,
+                    MessageFactory.CoverUpdateEvent(volume.Id, MessageFactoryEntityTypes.Chapter), false);
+                return Ok();
+            }
+
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "There was an issue uploading cover image for Volume {Id}", uploadFileDto.Id);
+            await _unitOfWork.RollbackAsync();
+        }
+
+        return BadRequest(await _localizationService.Translate(User.GetUserId(), "generic-cover-volume-save"));
+    }
+
+
+    /// <summary>
     /// Replaces library cover image with a base64 encoded image. If empty string passed, will reset to null.
     /// </summary>
     /// <param name="uploadFileDto"></param>
@@ -311,6 +377,7 @@ public class UploadController : BaseApiController
         if (string.IsNullOrEmpty(uploadFileDto.Url))
         {
             library.CoverImage = null;
+            library.ResetColorScape();
             _unitOfWork.LibraryRepository.Update(library);
             if (_unitOfWork.HasChanges())
             {
@@ -330,6 +397,7 @@ public class UploadController : BaseApiController
             if (!string.IsNullOrEmpty(filePath))
             {
                 library.CoverImage = filePath;
+                _imageService.UpdateColorScape(library);
                 _unitOfWork.LibraryRepository.Update(library);
             }
 
@@ -365,12 +433,15 @@ public class UploadController : BaseApiController
             var chapter = await _unitOfWork.ChapterRepository.GetChapterAsync(uploadFileDto.Id);
             if (chapter == null) return BadRequest(await _localizationService.Translate(User.GetUserId(), "chapter-doesnt-exist"));
             var originalFile = chapter.CoverImage;
+
             chapter.CoverImage = string.Empty;
             chapter.CoverImageLocked = false;
             _unitOfWork.ChapterRepository.Update(chapter);
+
             var volume = (await _unitOfWork.VolumeRepository.GetVolumeAsync(chapter.VolumeId))!;
             volume.CoverImage = chapter.CoverImage;
             _unitOfWork.VolumeRepository.Update(volume);
+
             var series = (await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(volume.SeriesId))!;
 
             if (_unitOfWork.HasChanges())
@@ -390,5 +461,4 @@ public class UploadController : BaseApiController
 
         return BadRequest(await _localizationService.Translate(User.GetUserId(), "reset-chapter-lock"));
     }
-
 }

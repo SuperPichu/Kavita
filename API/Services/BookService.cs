@@ -73,7 +73,8 @@ public class BookService : IBookService
     {
         PackageReaderOptions = new PackageReaderOptions
         {
-            IgnoreMissingToc = true
+            IgnoreMissingToc = true,
+            SkipInvalidManifestItems = true
         }
     };
 
@@ -846,7 +847,7 @@ public class BookService : IBookService
                         Filename = Path.GetFileName(filePath),
                         Title = specialName?.Trim() ?? string.Empty,
                         FullFilePath = Parser.NormalizePath(filePath),
-                        IsSpecial = false,
+                        IsSpecial = Parser.HasSpecialMarker(filePath),
                         Series = series.Trim(),
                         SeriesSort = series.Trim(),
                         Volumes = seriesIndex
@@ -868,7 +869,7 @@ public class BookService : IBookService
                 Filename = Path.GetFileName(filePath),
                 Title = epubBook.Title.Trim(),
                 FullFilePath = Parser.NormalizePath(filePath),
-                IsSpecial = false,
+                IsSpecial = Parser.HasSpecialMarker(filePath),
                 Series = epubBook.Title.Trim(),
                 Volumes = Parser.LooseLeafVolume,
             };
@@ -1222,7 +1223,7 @@ public class BookService : IBookService
         {
             // Try to get the cover image from OPF file, if not set, try to parse it from all the files, then result to the first one.
             var coverImageContent = epubBook.Content.Cover
-                                    ?? epubBook.Content.Images.Local.FirstOrDefault(file => Parser.IsCoverImage(file.FilePath)) // FileName -> FilePath
+                                    ?? epubBook.Content.Images.Local.FirstOrDefault(file => Parser.IsCoverImage(file.FilePath))
                                     ?? epubBook.Content.Images.Local.FirstOrDefault();
 
             if (coverImageContent == null) return string.Empty;

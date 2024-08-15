@@ -72,7 +72,6 @@
         "pref-description": "Bunlar, hesabınıza bağlı olan genel ayarlardır.",
         "account-tab": "Hesap",
         "preferences-tab": "Tercihler",
-        "3rd-party-clients-tab": "3. Parti Uygulamalar",
         "theme-tab": "Tema",
         "devices-tab": "Cihazlar",
         "stats-tab": "İstatistikler",
@@ -116,9 +115,6 @@
     },
     "theme-manager": {
         "title": "Tema Yöneticisi",
-        "looking-for-theme": "Hafif ya da e-kitap okuyucu temasına mı bakıyorsunuz? Size önerebileceğimiz özel temalarımız var. ",
-        "looking-for-theme-continued": "Github teması.",
-        "scan": "Tara",
         "site-themes": "Site Teması",
         "set-default": "Varsayılan olarak ayarla",
         "applied": "Uygulanmış",
@@ -138,16 +134,12 @@
         "include-unknowns-label": "Bilinmeyenleri ekle"
     },
     "site-theme-provider-pipe": {
-        "system": "Sistem",
-        "user": "Kullanıcı"
+        "system": "Sistem"
     },
     "manage-devices": {
         "title": "Aygıt Yöneticisi",
         "devices-title": "Aygıtlar",
         "no-devices": "Herhangi bir aygıt ayarlanmamış"
-    },
-    "edit-device": {
-        "device-name-label": "Aygıt İsmi"
     },
     "common": {
         "email": "E-posta",

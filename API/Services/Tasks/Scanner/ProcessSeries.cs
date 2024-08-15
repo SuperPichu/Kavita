@@ -18,6 +18,7 @@ using API.Services.Tasks.Scanner.Parser;
 using API.SignalR;
 using Hangfire;
 using Kavita.Common;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace API.Services.Tasks.Scanner;
@@ -32,8 +33,8 @@ public interface IProcessSeries
     Task Prime();
 
     void Reset();
-    Task ProcessSeriesAsync(IList<ParserInfo> parsedInfos, Library library, bool forceUpdate = false);
     Task UpdateSeriesMetadata(Series series, Library library);
+    Task ProcessSeriesAsync(IList<ParserInfo> parsedInfos, Library library, int totalToProcess, bool forceUpdate = false);
 }
 
 /// <summary>
@@ -100,7 +101,7 @@ public class ProcessSeries : IProcessSeries
         _tagManagerService.Reset();
     }
 
-    public async Task ProcessSeriesAsync(IList<ParserInfo> parsedInfos, Library library, bool forceUpdate = false)
+    public async Task ProcessSeriesAsync(IList<ParserInfo> parsedInfos, Library library, int totalToProcess, bool forceUpdate = false)
     {
         if (!parsedInfos.Any()) return;
 
@@ -108,7 +109,7 @@ public class ProcessSeries : IProcessSeries
         var scanWatch = Stopwatch.StartNew();
         var seriesName = parsedInfos[0].Series;
         await _eventHub.SendMessageAsync(MessageFactory.NotificationProgress,
-            MessageFactory.LibraryScanProgressEvent(library.Name, ProgressEventType.Updated, seriesName));
+            MessageFactory.LibraryScanProgressEvent(library.Name, ProgressEventType.Updated, seriesName, totalToProcess));
         _logger.LogInformation("[ScannerService] Beginning series update on {SeriesName}, Forced: {ForceUpdate}", seriesName, forceUpdate);
 
         // Check if there is a Series
@@ -189,6 +190,39 @@ public class ProcessSeries : IProcessSeries
                 try
                 {
                     await _unitOfWork.CommitAsync();
+                }
+                catch (DbUpdateConcurrencyException ex)
+                {
+                    foreach (var entry in ex.Entries)
+                    {
+                        if (entry.Entity is Series)
+                        {
+                            var proposedValues = entry.CurrentValues;
+                            var databaseValues = await entry.GetDatabaseValuesAsync();
+
+                            foreach (var property in proposedValues.Properties)
+                            {
+                                var proposedValue = proposedValues[property];
+                                var databaseValue = databaseValues[property];
+
+                                // TODO: decide which value should be written to database
+                                _logger.LogDebug("Property conflict, proposed: {Proposed} vs db: {Database}", proposedValue, databaseValue);
+                                // proposedValues[property] = <value to be saved>;
+                            }
+
+                            // Refresh original values to bypass next concurrency check
+                            entry.OriginalValues.SetValues(databaseValues);
+                        }
+                    }
+
+
+                    _logger.LogCritical(ex,
+                        "[ScannerService] There was an issue writing to the database for series {SeriesName}",
+                        series.Name);
+                    await _eventHub.SendMessageAsync(MessageFactory.Error,
+                        MessageFactory.ErrorEvent($"There was an issue writing to the DB for Series {series.OriginalName}",
+                            ex.Message));
+                    return;
                 }
                 catch (Exception ex)
                 {
@@ -365,6 +399,7 @@ public class ProcessSeries : IProcessSeries
                 series.Metadata.PublicationStatus = PublicationStatus.Ended;
             }
         }
+        DeterminePublicationStatus(series, chapters);
 
         if (!string.IsNullOrEmpty(firstChapter?.Summary) && !series.Metadata.SummaryLocked)
         {
@@ -601,6 +636,64 @@ public class ProcessSeries : IProcessSeries
 
     }
 
+    private void DeterminePublicationStatus(Series series, List<Chapter> chapters)
+    {
+        try
+        {
+            // Count (aka expected total number of chapters or volumes from metadata) across all chapters
+            series.Metadata.TotalCount = chapters.Max(chapter => chapter.TotalCount);
+            // The actual number of count's defined across all chapter's metadata
+            series.Metadata.MaxCount = chapters.Max(chapter => chapter.Count);
+
+            var nonSpecialVolumes = series.Volumes.Where(v => v.MaxNumber.IsNot(Parser.Parser.SpecialVolumeNumber));
+
+            var maxVolume = (int)(nonSpecialVolumes.Any() ? nonSpecialVolumes.Max(v => v.MaxNumber) : 0);
+            var maxChapter = (int)chapters.Max(c => c.MaxNumber);
+
+            // Single books usually don't have a number in their Range (filename)
+            if (series.Format == MangaFormat.Epub || series.Format == MangaFormat.Pdf && chapters.Count == 1)
+            {
+                series.Metadata.MaxCount = 1;
+            }
+            else if (series.Metadata.TotalCount <= 1 && chapters.Count == 1 && chapters[0].IsSpecial)
+            {
+                // If a series has a TotalCount of 1 (or no total count) and there is only a Special, mark it as Complete
+                series.Metadata.MaxCount = series.Metadata.TotalCount;
+            }
+            else if ((maxChapter == Parser.Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) &&
+                     maxVolume <= series.Metadata.TotalCount)
+            {
+                series.Metadata.MaxCount = maxVolume;
+            }
+            else if (maxVolume == series.Metadata.TotalCount)
+            {
+                series.Metadata.MaxCount = maxVolume;
+            }
+            else
+            {
+                series.Metadata.MaxCount = maxChapter;
+            }
+
+            if (!series.Metadata.PublicationStatusLocked)
+            {
+                series.Metadata.PublicationStatus = PublicationStatus.OnGoing;
+                if (series.Metadata.MaxCount == series.Metadata.TotalCount && series.Metadata.TotalCount > 0)
+                {
+                    series.Metadata.PublicationStatus = PublicationStatus.Completed;
+                }
+                else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
+                {
+                    series.Metadata.PublicationStatus = PublicationStatus.Ended;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogCritical(ex, "There was an issue determining Publication Status");
+            series.Metadata.PublicationStatus = PublicationStatus.OnGoing;
+        }
+    }
+
     private async Task UpdateVolumes(Series series, IList<ParserInfo> parsedInfos, bool forceUpdate = false)
     {
         // Add new volumes and update chapters per volume
@@ -729,6 +822,12 @@ public class ProcessSeries : IProcessSeries
                 chapter.SortOrder = info.IssueOrder;
             }
             chapter.Range = chapter.GetNumberTitle();
+            if (float.TryParse(chapter.Title, out var _))
+            {
+                // If we have float based chapters, first scan can have the chapter formatted as Chapter 0.2 - .2 as the title is wrong.
+                chapter.Title = chapter.GetNumberTitle();
+            }
+
         }
 
 

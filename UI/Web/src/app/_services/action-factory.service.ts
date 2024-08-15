@@ -10,7 +10,8 @@ import { Volume } from '../_models/volume';
 import { AccountService } from './account.service';
 import { DeviceService } from './device.service';
 import {SideNavStream} from "../_models/sidenav/sidenav-stream";
-import {User} from "../_models/user";
+import {SmartFilter} from "../_models/metadata/v2/smart-filter";
+import {translate} from "@jsverse/transloco";
 
 export enum Action {
   Submenu = -1,
@@ -102,7 +103,11 @@ export enum Action {
    * Promotes the underlying item (Reading List, Collection)
    */
   Promote = 24,
-  UnPromote = 25
+  UnPromote = 25,
+  /**
+   * Invoke a refresh covers as false to generate colorscapes
+   */
+  GenerateColorScape = 26,
 }
 
 /**
@@ -113,6 +118,7 @@ export type ActionAllowedCallback<T> = (action: ActionItem<T>) => boolean;
 
 export interface ActionItem<T> {
   title: string;
+  description: string;
   action: Action;
   callback: ActionCallback<T>;
   requiresAdmin: boolean;
@@ -151,6 +157,7 @@ export class ActionFactoryService {
   bookmarkActions: Array<ActionItem<Series>> = [];
 
   sideNavStreamActions: Array<ActionItem<SideNavStream>> = [];
+  smartFilterActions: Array<ActionItem<SmartFilter>> = [];
 
   isAdmin = false;
 
@@ -179,6 +186,10 @@ export class ActionFactoryService {
     return this.applyCallbackToList(this.sideNavStreamActions, callback);
   }
 
+  getSmartFilterActions(callback: ActionCallback<SmartFilter>) {
+    return this.applyCallbackToList(this.smartFilterActions, callback);
+  }
+
   getVolumeActions(callback: ActionCallback<Volume>) {
 		return this.applyCallbackToList(this.volumeActions, callback);
   }
@@ -199,15 +210,6 @@ export class ActionFactoryService {
     return this.applyCallbackToList(this.bookmarkActions, callback);
   }
 
-  getMetadataFilterActions(callback: ActionCallback<any>) {
-    const actions = [
-      {title: 'add-rule-group-and', action: Action.AddRuleGroup, requiresAdmin: false, children: [], callback: this.dummyCallback},
-      {title: 'add-rule-group-or', action: Action.AddRuleGroup, requiresAdmin: false, children: [], callback: this.dummyCallback},
-      {title: 'remove-rule-group', action: Action.RemoveRuleGroup, requiresAdmin: false, children: [], callback: this.dummyCallback},
-    ];
-    return this.applyCallbackToList(actions, callback);
-  }
-
   dummyCallback(action: ActionItem<any>, data: any) {}
 
   filterSendToAction(actions: Array<ActionItem<Chapter>>, chapter: Chapter) {
@@ -218,11 +220,44 @@ export class ActionFactoryService {
     return actions;
   }
 
+  getActionablesForSettingsPage(actions: Array<ActionItem<any>>, blacklist: Array<Action> = []) {
+    const tasks = [];
+
+    let actionItem;
+    for (let parent of actions) {
+      if (parent.action === Action.SendTo) continue;
+
+      if (parent.children.length === 0) {
+        actionItem = {...parent};
+        actionItem.title = translate('actionable.' + actionItem.title);
+        if (actionItem.description !== '') {
+          actionItem.description = translate('actionable.' + actionItem.description);
+        }
+
+        tasks.push(actionItem);
+        continue;
+      }
+
+      for (let child of parent.children) {
+        actionItem = {...child};
+        actionItem.title = translate('actionable.' + actionItem.title);
+        if (actionItem.description !== '') {
+          actionItem.description = translate('actionable.' + actionItem.description);
+        }
+        tasks.push(actionItem);
+      }
+    }
+
+    // Filter out tasks that don't make sense
+    return tasks.filter(t => !blacklist.includes(t.action));
+  }
+
   private _resetActions() {
     this.libraryActions = [
       {
         action: Action.Scan,
         title: 'scan-library',
+        description: 'scan-library-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [],
@@ -230,12 +265,22 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'others',
+        description: '',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [
           {
             action: Action.RefreshMetadata,
             title: 'refresh-covers',
+            description: 'refresh-covers-tooltip',
+            callback: this.dummyCallback,
+            requiresAdmin: true,
+            children: [],
+          },
+          {
+            action: Action.GenerateColorScape,
+            title: 'generate-colorscape',
+            description: 'generate-colorscape-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             children: [],
@@ -243,6 +288,7 @@ export class ActionFactoryService {
           {
             action: Action.AnalyzeFiles,
             title: 'analyze-files',
+            description: 'analyze-files-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             children: [],
@@ -250,6 +296,7 @@ export class ActionFactoryService {
           {
             action: Action.Delete,
             title: 'delete',
+            description: 'delete-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             children: [],
@@ -259,6 +306,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'settings',
+        description: 'settings-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [],
@@ -269,6 +317,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'edit',
+        description: 'edit-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -276,6 +325,7 @@ export class ActionFactoryService {
       {
         action: Action.Delete,
         title: 'delete',
+        description: 'delete-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         class: 'danger',
@@ -284,6 +334,7 @@ export class ActionFactoryService {
       {
         action: Action.Promote,
         title: 'promote',
+        description: 'promote-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -291,6 +342,7 @@ export class ActionFactoryService {
       {
         action: Action.UnPromote,
         title: 'unpromote',
+        description: 'unpromote-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -301,6 +353,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsRead,
         title: 'mark-as-read',
+        description: 'mark-as-read-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -308,6 +361,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsUnread,
         title: 'mark-as-unread',
+        description: 'mark-as-unread-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -315,6 +369,7 @@ export class ActionFactoryService {
       {
         action: Action.Scan,
         title: 'scan-series',
+        description: 'scan-series-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [],
@@ -322,12 +377,14 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'add-to',
+        description: '',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [
         	{
             action: Action.AddToWantToReadList,
             title: 'add-to-want-to-read',
+            description: 'add-to-want-to-read-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: false,
             children: [],
@@ -335,6 +392,7 @@ export class ActionFactoryService {
           {
             action: Action.RemoveFromWantToReadList,
             title: 'remove-from-want-to-read',
+            description: 'remove-to-want-to-read-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: false,
             children: [],
@@ -342,6 +400,7 @@ export class ActionFactoryService {
           {
             action: Action.AddToReadingList,
             title: 'add-to-reading-list',
+            description: 'add-to-reading-list-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: false,
             children: [],
@@ -349,6 +408,7 @@ export class ActionFactoryService {
           {
             action: Action.AddToCollection,
             title: 'add-to-collection',
+            description: 'add-to-collection-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: false,
             children: [],
@@ -358,12 +418,14 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'send-to',
+        description: 'send-to-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [
           {
             action: Action.SendTo,
             title: '',
+            description: '',
             callback: this.dummyCallback,
             requiresAdmin: false,
             dynamicList: this.deviceService.devices$.pipe(map((devices: Array<Device>) => devices.map(d => {
@@ -376,12 +438,22 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'others',
+        description: '',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [
           {
             action: Action.RefreshMetadata,
             title: 'refresh-covers',
+            description: 'refresh-covers-tooltip',
+            callback: this.dummyCallback,
+            requiresAdmin: true,
+            children: [],
+          },
+          {
+            action: Action.GenerateColorScape,
+            title: 'generate-colorscape',
+            description: 'generate-colorscape-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             children: [],
@@ -389,6 +461,7 @@ export class ActionFactoryService {
           {
             action: Action.AnalyzeFiles,
             title: 'analyze-files',
+            description: 'analyze-files-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             children: [],
@@ -396,6 +469,7 @@ export class ActionFactoryService {
           {
             action: Action.Delete,
             title: 'delete',
+            description: 'delete-tooltip',
             callback: this.dummyCallback,
             requiresAdmin: true,
             class: 'danger',
@@ -406,6 +480,7 @@ export class ActionFactoryService {
       {
         action: Action.Download,
         title: 'download',
+        description: 'download-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -413,6 +488,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'edit',
+        description: 'edit-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: true,
         children: [],
@@ -423,6 +499,7 @@ export class ActionFactoryService {
       {
         action: Action.IncognitoRead,
         title: 'read-incognito',
+        description: 'read-incognito-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -430,6 +507,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsRead,
         title: 'mark-as-read',
+        description: 'mark-as-read-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -437,6 +515,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsUnread,
         title: 'mark-as-unread',
+        description: 'mark-as-unread-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -444,12 +523,14 @@ export class ActionFactoryService {
 			{
 				action: Action.Submenu,
 				title: 'add-to',
+        description: '=',
 				callback: this.dummyCallback,
 				requiresAdmin: false,
 				children: [
 					{
 						action: Action.AddToReadingList,
 						title: 'add-to-reading-list',
+            description: 'add-to-reading-list-tooltip',
 						callback: this.dummyCallback,
 						requiresAdmin: false,
 						children: [],
@@ -459,12 +540,14 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'send-to',
+        description: 'send-to-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [
           {
             action: Action.SendTo,
             title: '',
+            description: '',
             callback: this.dummyCallback,
             requiresAdmin: false,
             dynamicList: this.deviceService.devices$.pipe(map((devices: Array<Device>) => devices.map(d => {
@@ -477,6 +560,7 @@ export class ActionFactoryService {
       {
         action: Action.Download,
         title: 'download',
+        description: 'download-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -484,6 +568,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'details',
+        description: 'edit-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -494,6 +579,7 @@ export class ActionFactoryService {
       {
         action: Action.IncognitoRead,
         title: 'read-incognito',
+        description: 'read-incognito-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -501,6 +587,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsRead,
         title: 'mark-as-read',
+        description: 'mark-as-read-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -508,6 +595,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsUnread,
         title: 'mark-as-unread',
+        description: 'mark-as-unread-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -515,12 +603,14 @@ export class ActionFactoryService {
 			{
 				action: Action.Submenu,
 				title: 'add-to',
+        description: '',
 				callback: this.dummyCallback,
 				requiresAdmin: false,
 				children: [
 					{
 						action: Action.AddToReadingList,
 						title: 'add-to-reading-list',
+            description: 'add-to-reading-list-tooltip',
 						callback: this.dummyCallback,
 						requiresAdmin: false,
 						children: [],
@@ -530,12 +620,14 @@ export class ActionFactoryService {
       {
         action: Action.Submenu,
         title: 'send-to',
+        description: 'send-to-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [
           {
             action: Action.SendTo,
             title: '',
+            description: '',
             callback: this.dummyCallback,
             requiresAdmin: false,
             dynamicList: this.deviceService.devices$.pipe(map((devices: Array<Device>) => devices.map(d => {
@@ -545,10 +637,11 @@ export class ActionFactoryService {
           }
         ],
       },
-      // RBS will handle rendering this, so non-admins with download are appicable
+      // RBS will handle rendering this, so non-admins with download are applicable
       {
         action: Action.Download,
         title: 'download',
+        description: 'download-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -556,6 +649,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'details',
+        description: 'edit-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -566,6 +660,7 @@ export class ActionFactoryService {
       {
         action: Action.Edit,
         title: 'edit',
+        description: 'edit-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -573,9 +668,26 @@ export class ActionFactoryService {
       {
         action: Action.Delete,
         title: 'delete',
+        description: 'delete-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         class: 'danger',
+        children: [],
+      },
+      {
+        action: Action.Promote,
+        title: 'promote',
+        description: 'promote-tooltip',
+        callback: this.dummyCallback,
+        requiresAdmin: false,
+        children: [],
+      },
+      {
+        action: Action.UnPromote,
+        title: 'unpromote',
+        description: 'unpromote-tooltip',
+        callback: this.dummyCallback,
+        requiresAdmin: false,
         children: [],
       },
     ];
@@ -584,6 +696,7 @@ export class ActionFactoryService {
       {
         action: Action.ViewSeries,
         title: 'view-series',
+        description: 'view-series-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -591,6 +704,7 @@ export class ActionFactoryService {
       {
         action: Action.DownloadBookmark,
         title: 'download',
+        description: 'download-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -598,6 +712,7 @@ export class ActionFactoryService {
       {
         action: Action.Delete,
         title: 'clear',
+        description: 'delete-tooltip',
         callback: this.dummyCallback,
         class: 'danger',
         requiresAdmin: false,
@@ -609,6 +724,7 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsVisible,
         title: 'mark-visible',
+        description: 'mark-visible-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],
@@ -616,6 +732,18 @@ export class ActionFactoryService {
       {
         action: Action.MarkAsInvisible,
         title: 'mark-invisible',
+        description: 'mark-invisible-tooltip',
+        callback: this.dummyCallback,
+        requiresAdmin: false,
+        children: [],
+      },
+    ];
+
+    this.smartFilterActions = [
+      {
+        action: Action.Delete,
+        title: 'delete',
+        description: 'delete-tooltip',
         callback: this.dummyCallback,
         requiresAdmin: false,
         children: [],

@@ -22,6 +22,7 @@ public enum ChapterIncludes
     None = 1,
     Volumes = 2,
     Files = 4,
+    People = 8
 }
 
 public interface IChapterRepository
@@ -36,7 +37,7 @@ public interface IChapterRepository
     Task<ChapterDto?> GetChapterDtoAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.Files);
     Task<ChapterMetadataDto?> GetChapterMetadataDtoAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.Files);
     Task<IList<MangaFile>> GetFilesForChapterAsync(int chapterId);
-    Task<IList<Chapter>> GetChaptersAsync(int volumeId);
+    Task<IList<Chapter>> GetChaptersAsync(int volumeId, ChapterIncludes includes = ChapterIncludes.None);
     Task<IList<MangaFile>> GetFilesForChaptersAsync(IReadOnlyList<int> chapterIds);
     Task<string?> GetChapterCoverImageAsync(int chapterId);
     Task<IList<string>> GetAllCoverImagesAsync();
@@ -206,10 +207,11 @@ public class ChapterRepository : IChapterRepository
     /// </summary>
     /// <param name="volumeId"></param>
     /// <returns></returns>
-    public async Task<IList<Chapter>> GetChaptersAsync(int volumeId)
+    public async Task<IList<Chapter>> GetChaptersAsync(int volumeId, ChapterIncludes includes = ChapterIncludes.None)
     {
         return await _context.Chapter
             .Where(c => c.VolumeId == volumeId)
+            .Includes(includes)
             .OrderBy(c => c.SortOrder)
             .ToListAsync();
     }
