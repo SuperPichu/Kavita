@@ -6,7 +6,7 @@ import { MangaFormat } from 'src/app/_models/manga-format';
 import { PaginatedResult } from 'src/app/_models/pagination';
 import { Series } from 'src/app/_models/series';
 import { Volume } from 'src/app/_models/volume';
-import {TranslocoService} from "@ngneat/transloco";
+import {TranslocoService} from "@jsverse/transloco";
 
 export enum KEY_CODES {
   RIGHT_ARROW = 'ArrowRight',
@@ -133,7 +133,7 @@ export class UtilityService {
     );
   }
 
-  deepEqual(object1: any, object2: any) {
+  deepEqual(object1: any | undefined | null, object2: any | undefined | null) {
     if ((object1 === null || object1 === undefined) && (object2 !== null || object2 !== undefined)) return false;
     if ((object2 === null || object2 === undefined) && (object1 !== null || object1 !== undefined)) return false;
     if (object1 === null && object2 === null) return true;

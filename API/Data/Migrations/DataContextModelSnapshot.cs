@@ -15,7 +15,7 @@ namespace API.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.4");
+            modelBuilder.HasAnnotation("ProductVersion", "8.0.7");
 
             modelBuilder.Entity("API.Entities.AppRole", b =>
                 {
@@ -224,11 +224,20 @@ namespace API.Data.Migrations
                     b.Property<DateTime>("LastSyncUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("MissingSeriesFromSource")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("NormalizedTitle")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PrimaryColor")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("Promoted")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("Source")
                         .HasColumnType("INTEGER");
@@ -241,6 +250,9 @@ namespace API.Data.Migrations
 
                     b.Property<string>("Title")
                         .HasColumnType("TEXT");
+
+                    b.Property<int>("TotalSourceCount")
+                        .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
@@ -769,10 +781,16 @@ namespace API.Data.Migrations
                     b.Property<int>("Pages")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Range")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("ReleaseDate")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryColor")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("SeriesGroup")
@@ -991,6 +1009,12 @@ namespace API.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryColor")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Type")
@@ -1498,8 +1522,14 @@ namespace API.Data.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
                     b.Property<bool>("Promoted")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("StartingMonth")
                         .HasColumnType("INTEGER");
@@ -1788,6 +1818,12 @@ namespace API.Data.Migrations
                     b.Property<int>("Pages")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("SortName")
                         .HasColumnType("TEXT");
 
@@ -1865,13 +1901,25 @@ namespace API.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("Author")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("CompatibleVersion")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("Created")
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Description")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FileName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("GitHubPath")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsDefault")
@@ -1889,8 +1937,14 @@ namespace API.Data.Migrations
                     b.Property<string>("NormalizedName")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("PreviewUrls")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("Provider")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("ShaHash")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -1964,6 +2018,12 @@ namespace API.Data.Migrations
 
                     b.Property<int>("Pages")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("PrimaryColor")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SecondaryColor")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("SeriesId")
                         .HasColumnType("INTEGER");

@@ -37,9 +37,9 @@ import {FormsModule} from "@angular/forms";
 import {MangaFormatPipe} from "../../_pipes/manga-format.pipe";
 import {MangaFormatIconPipe} from "../../_pipes/manga-format-icon.pipe";
 import {SentenceCasePipe} from "../../_pipes/sentence-case.pipe";
-import {CommonModule} from "@angular/common";
+import {DecimalPipe, NgTemplateOutlet} from "@angular/common";
 import {RouterLink, RouterLinkActive} from "@angular/router";
-import {TranslocoModule} from "@ngneat/transloco";
+import {TranslocoModule} from "@jsverse/transloco";
 import {CardActionablesComponent} from "../../_single-module/card-actionables/card-actionables.component";
 import {NextExpectedChapter} from "../../_models/series-detail/next-expected-chapter";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
@@ -51,7 +51,6 @@ import {SeriesFormatComponent} from "../../shared/series-format/series-format.co
   selector: 'app-card-item',
   standalone: true,
   imports: [
-    CommonModule,
     ImageComponent,
     NgbProgressbar,
     DownloadIndicatorComponent,
@@ -66,7 +65,9 @@ import {SeriesFormatComponent} from "../../shared/series-format/series-format.co
     SafeHtmlPipe,
     RouterLinkActive,
     PromotedIconComponent,
-    SeriesFormatComponent
+    SeriesFormatComponent,
+    DecimalPipe,
+    NgTemplateOutlet
   ],
   templateUrl: './card-item.component.html',
   styleUrls: ['./card-item.component.scss'],

@@ -60,7 +60,6 @@ public interface IScrobblingService
 public class ScrobblingService : IScrobblingService
 {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ITokenService _tokenService;
     private readonly IEventHub _eventHub;
     private readonly ILogger<ScrobblingService> _logger;
     private readonly ILicenseService _licenseService;
@@ -99,12 +98,10 @@ public class ScrobblingService : IScrobblingService
     private const string AccessTokenErrorMessage = "Access Token needs to be rotated to continue scrobbling";
 
 
-    public ScrobblingService(IUnitOfWork unitOfWork, ITokenService tokenService,
-        IEventHub eventHub, ILogger<ScrobblingService> logger, ILicenseService licenseService,
-        ILocalizationService localizationService)
+    public ScrobblingService(IUnitOfWork unitOfWork, IEventHub eventHub, ILogger<ScrobblingService> logger,
+        ILicenseService licenseService, ILocalizationService localizationService)
     {
         _unitOfWork = unitOfWork;
-        _tokenService = tokenService;
         _eventHub = eventHub;
         _logger = logger;
         _licenseService = licenseService;
@@ -231,7 +228,7 @@ public class ScrobblingService : IScrobblingService
             LibraryId = series.LibraryId,
             ScrobbleEventType = ScrobbleEventType.Review,
             AniListId = ExtractId<int?>(series.Metadata.WebLinks, AniListWeblinkWebsite),
-            MalId = ExtractId<long?>(series.Metadata.WebLinks, MalWeblinkWebsite),
+            MalId = GetMalId(series),
             AppUserId = userId,
             Format = LibraryTypeHelper.GetFormat(series.Library.Type),
             ReviewBody = reviewBody,
@@ -253,7 +250,7 @@ public class ScrobblingService : IScrobblingService
     {
         if (!await _licenseService.HasActiveLicense()) return;
 
-        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library);
+        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library | SeriesIncludes.ExternalMetadata);
         if (series == null) throw new KavitaException(await _localizationService.Translate(userId, "series-doesnt-exist"));
 
         _logger.LogInformation("Processing Scrobbling rating event for {UserId} on {SeriesName}", userId, series.Name);
@@ -277,22 +274,34 @@ public class ScrobblingService : IScrobblingService
             SeriesId = series.Id,
             LibraryId = series.LibraryId,
             ScrobbleEventType = ScrobbleEventType.ScoreUpdated,
-            AniListId = ExtractId<int?>(series.Metadata.WebLinks, AniListWeblinkWebsite), // TODO: We can get this also from ExternalSeriesMetadata
-            MalId = ExtractId<long?>(series.Metadata.WebLinks, MalWeblinkWebsite),
+            AniListId = GetAniListId(series),
+            MalId = GetMalId(series),
             AppUserId = userId,
             Format = LibraryTypeHelper.GetFormat(series.Library.Type),
             Rating = rating
         };
         _unitOfWork.ScrobbleRepository.Attach(evt);
         await _unitOfWork.CommitAsync();
-        _logger.LogDebug("Added Scrobbling Rating update on {SeriesName} with Userid {UserId} ", series.Name, userId);
+        _logger.LogDebug("Added Scrobbling Rating update on {SeriesName} with Userid {UserId}", series.Name, userId);
+    }
+
+    private static long? GetMalId(Series series)
+    {
+        var malId = ExtractId<long?>(series.Metadata.WebLinks, MalWeblinkWebsite);
+        return malId ?? series.ExternalSeriesMetadata.MalId;
+    }
+
+    private static int? GetAniListId(Series series)
+    {
+        var aniListId = ExtractId<int?>(series.Metadata.WebLinks, AniListWeblinkWebsite);
+        return aniListId ?? series.ExternalSeriesMetadata.AniListId;
     }
 
     public async Task ScrobbleReadingUpdate(int userId, int seriesId)
     {
         if (!await _licenseService.HasActiveLicense()) return;
 
-        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library);
+        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library | SeriesIncludes.ExternalMetadata);
         if (series == null) throw new KavitaException(await _localizationService.Translate(userId, "series-doesnt-exist"));
 
         _logger.LogInformation("Processing Scrobbling reading event for {UserId} on {SeriesName}", userId, series.Name);
@@ -324,8 +333,8 @@ public class ScrobblingService : IScrobblingService
                 SeriesId = series.Id,
                 LibraryId = series.LibraryId,
                 ScrobbleEventType = ScrobbleEventType.ChapterRead,
-                AniListId = ExtractId<int?>(series.Metadata.WebLinks, AniListWeblinkWebsite),
-                MalId = ExtractId<long?>(series.Metadata.WebLinks, MalWeblinkWebsite),
+                AniListId = GetAniListId(series),
+                MalId = GetMalId(series),
                 AppUserId = userId,
                 VolumeNumber =
                     (int) await _unitOfWork.AppUserProgressRepository.GetHighestFullyReadVolumeForSeries(seriesId, userId),
@@ -348,7 +357,7 @@ public class ScrobblingService : IScrobblingService
     {
         if (!await _licenseService.HasActiveLicense()) return;
 
-        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library);
+        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.Metadata | SeriesIncludes.Library | SeriesIncludes.ExternalMetadata);
         if (series == null) throw new KavitaException(await _localizationService.Translate(userId, "series-doesnt-exist"));
 
         _logger.LogInformation("Processing Scrobbling want-to-read event for {UserId} on {SeriesName}", userId, series.Name);
@@ -363,8 +372,8 @@ public class ScrobblingService : IScrobblingService
             SeriesId = series.Id,
             LibraryId = series.LibraryId,
             ScrobbleEventType = onWantToRead ? ScrobbleEventType.AddWantToRead : ScrobbleEventType.RemoveWantToRead,
-            AniListId = ExtractId<int?>(series.Metadata.WebLinks, AniListWeblinkWebsite),
-            MalId = ExtractId<long?>(series.Metadata.WebLinks, MalWeblinkWebsite),
+            AniListId = GetAniListId(series),
+            MalId = GetMalId(series),
             AppUserId = userId,
             Format = LibraryTypeHelper.GetFormat(series.Library.Type),
         };
