@@ -662,10 +662,10 @@ public class SeriesController : BaseApiController
     public async Task<ActionResult<IList<ChapterMetadataDto>>> GetMissingUrl()
     {
         List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.Summary != "eh").AsEnumerable().Where(s => (s.WebLinks == null || s.WebLinks.Length == 0) && s.Summary != null && !s.Summary.StartsWith('#')))
+        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(s => s.Summary != "eh").AsEnumerable().Where(s => (s.WebLinks == null || s.WebLinks.Length == 0) && s.Summary != null && !s.Summary.StartsWith('#')))
         {
             ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
-            chapterMetadataDto.FilePath = await _unitOfWork.Context.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
+            chapterMetadataDto.FilePath = await _unitOfWork.DataContext.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
             chapterDtos.Add(chapterMetadataDto);
         }
         return Ok(chapterDtos);
@@ -675,10 +675,10 @@ public class SeriesController : BaseApiController
     public async Task<ActionResult<IList<ChapterMetadataDto>>> GetAllMissingUrl()
     {
         List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(s => s.WebLinks.Length == 0))
+        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(s => s.WebLinks.Length == 0))
         {
             ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
-            chapterMetadataDto.FilePath = await _unitOfWork.Context.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
+            chapterMetadataDto.FilePath = await _unitOfWork.DataContext.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
             chapterDtos.Add(chapterMetadataDto);
         }
         return Ok(chapterDtos);
@@ -688,7 +688,7 @@ public class SeriesController : BaseApiController
     public async Task<ActionResult<IList<ChapterMetadataDto>>> GetUrlSearch(string query)
     {
         List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.Context.Chapter.Where(c => c.WebLinks.Contains(query) || c.Summary.Contains(query)))
+        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(c => c.WebLinks.Contains(query) || c.Summary.Contains(query)))
         {
             chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
         }
@@ -702,7 +702,7 @@ public class SeriesController : BaseApiController
         Dictionary<string, ChapterMetadataDto> results = new Dictionary<string, ChapterMetadataDto>();
         foreach (string url in seriesByUrlDto.Urls)
         {
-            Chapter found = await _unitOfWork.Context.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).Where(f => f.FilePath.Contains(url)).Select(f => f.Chapter).FirstOrDefaultAsync();
+            Chapter found = await _unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).Where(f => f.FilePath.Contains(url)).Select(f => f.Chapter).FirstOrDefaultAsync();
             ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(found.Id);
             chapterMetadataDto.SeriesName = found.Volume.Series.Name;
             results.Add(url, chapterMetadataDto);
@@ -713,9 +713,9 @@ public class SeriesController : BaseApiController
     [HttpDelete("delete-file")]
     public async Task<ActionResult> DeleteFile(int fileId)
     {
-        MangaFile mangaFile = await _unitOfWork.Context.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
-        _unitOfWork.Context.MangaFile.Remove(mangaFile);
-        await _unitOfWork.Context.SaveChangesAsync();
+        MangaFile mangaFile = await _unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
+        _unitOfWork.DataContext.MangaFile.Remove(mangaFile);
+        await _unitOfWork.DataContext.SaveChangesAsync();
         await _metadataService.GenerateCoversForSeries(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
         await _eventHub.SendMessageAsync(MessageFactory.ScanSeries,
             MessageFactory.ScanSeriesEvent(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId, mangaFile.Chapter.Volume.Series.Name));

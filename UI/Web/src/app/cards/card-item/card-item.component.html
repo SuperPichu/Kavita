@@ -8,35 +8,33 @@
       }
 
       <div class="progress-banner">
-        @if (read > 0 && read < total && total> 0 && read !== total) {
+        @if (read > 0 && read < total && total > 0 && read !== total) {
           <p ngbTooltip="{{((read / total) * 100) | number:'1.0-1'}}% Read">
             <ngb-progressbar type="primary" height="5px" [value]="read" [max]="total"></ngb-progressbar>
           </p>
-          }
+        }
 
-          <span class="download">
-            <app-download-indicator [download$]="download$"></app-download-indicator>
-          </span>
+        <span class="download">
+          <app-download-indicator [download$]="download$"></app-download-indicator>
+        </span>
       </div>
 
       @if(total === 0 && !suppressArchiveWarning) {
-      <div class="error-banner">
-        {{t('cannot-read')}}
-      </div>
+        <div class="error-banner">
+          {{t('cannot-read')}}
+        </div>
       }
 
       @if (read === 0 && total > 0) {
-      <div class="badge-container">
-        <div class="not-read-badge"></div>
-      </div>
+        <div class="badge-container">
+          <div class="not-read-badge"></div>
+        </div>
       }
 
       @if (allowSelection) {
-      <div class="bulk-mode {{bulkSelectionService.hasSelections() ? 'always-show' : ''}}"
-        (click)="handleSelection($event)">
-        <input type="checkbox" class="form-check-input" attr.aria-labelledby="{{title}}_{{entity.id}}"
-          [ngModel]="selected" [ngModelOptions]="{standalone: true}">
-      </div>
+        <div class="bulk-mode {{bulkSelectionService.hasSelections() ? 'always-show' : ''}}" (click)="handleSelection($event)">
+          <input type="checkbox" class="form-check-input" attr.aria-labelledby="{{title}}_{{entity.id}}" [ngModel]="selected" [ngModelOptions]="{standalone: true}">
+        </div>
       }
 
       @if (count > 1) {
@@ -100,30 +98,6 @@
         }
         </span>
       </div>
-
-      @if (subtitleTemplate) {
-      <div style="text-align: center">
-        <ng-container [ngTemplateOutlet]="subtitleTemplate"
-          [ngTemplateOutletContext]="{ $implicit: entity }"></ng-container>
-      </div>
-      }
-      @if (!suppressLibraryLink && libraryName) {
-      <a class="card-title library" [routerLink]="['/library', libraryId]" routerLinkActive="router-link-active">
-        {{libraryName | sentenceCase}}
-      </a>
-      }
-    </div>
-    @if (subtitleTemplate) {
-    <div style="text-align: center">
-      <ng-container [ngTemplateOutlet]="subtitleTemplate"
-        [ngTemplateOutletContext]="{ $implicit: entity }"></ng-container>
-    </div>
-    }
-    @if (!suppressLibraryLink && libraryName) {
-    <a class="card-title library" [routerLink]="['/library', libraryId]" routerLinkActive="router-link-active">
-      {{libraryName | sentenceCase}}
-    </a>
-    }
     }
   </div>
 

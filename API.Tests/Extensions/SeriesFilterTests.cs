@@ -11,6 +11,7 @@ using API.Extensions.QueryExtensions.Filtering;
 using API.Helpers.Builders;
 using API.Services;
 using API.Services.Plus;
+using API.Services.Tasks.Scanner;
 using API.SignalR;
 using Kavita.Common;
 using Microsoft.EntityFrameworkCore;
@@ -932,7 +933,7 @@ public class SeriesFilterTests : AbstractDbTest
 
         var seriesService = new SeriesService(_unitOfWork, Substitute.For<IEventHub>(),
             Substitute.For<ITaskScheduler>(), Substitute.For<ILogger<SeriesService>>(),
-            Substitute.For<IScrobblingService>(), Substitute.For<ILocalizationService>());
+            Substitute.For<IScrobblingService>(), Substitute.For<ILocalizationService>(),Substitute.For<IProcessSeries>());
 
         // Select 0 Rating
         var zeroRating = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(2);
