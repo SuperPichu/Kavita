@@ -111,7 +111,7 @@ public class ChapterDto : IHasReadTimeEstimate, IHasCoverImage
     /// <inheritdoc cref="IHasReadTimeEstimate.MaxHoursToRead"/>
     public int MaxHoursToRead { get; set; }
     /// <inheritdoc cref="IHasReadTimeEstimate.AvgHoursToRead"/>
-    public int AvgHoursToRead { get; set; }
+    public float AvgHoursToRead { get; set; }
     /// <summary>
     /// Comma-separated link of urls to external services that have some relation to the Chapter
     /// </summary>
@@ -157,6 +157,33 @@ public class ChapterDto : IHasReadTimeEstimate, IHasCoverImage
     /// Total number of issues for the series
     /// </summary>
     public int TotalCount { get; set; }
+
+    public bool LanguageLocked { get; set; }
+    public bool SummaryLocked { get; set; }
+    /// <summary>
+    /// Locked by user so metadata updates from scan loop will not override AgeRating
+    /// </summary>
+    public bool AgeRatingLocked { get; set; }
+    /// <summary>
+    /// Locked by user so metadata updates from scan loop will not override PublicationStatus
+    /// </summary>
+    public bool PublicationStatusLocked { get; set; }
+    public bool GenresLocked { get; set; }
+    public bool TagsLocked { get; set; }
+    public bool WriterLocked { get; set; }
+    public bool CharacterLocked { get; set; }
+    public bool ColoristLocked { get; set; }
+    public bool EditorLocked { get; set; }
+    public bool InkerLocked { get; set; }
+    public bool ImprintLocked { get; set; }
+    public bool LettererLocked { get; set; }
+    public bool PencillerLocked { get; set; }
+    public bool PublisherLocked { get; set; }
+    public bool TranslatorLocked { get; set; }
+    public bool TeamLocked { get; set; }
+    public bool LocationLocked { get; set; }
+    public bool CoverArtistLocked { get; set; }
+    public bool ReleaseYearLocked { get; set; }
 
     #endregion
 

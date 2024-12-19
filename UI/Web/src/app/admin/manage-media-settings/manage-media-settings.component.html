@@ -24,10 +24,6 @@
                 </select>
               </ng-template>
             </app-setting-item>
-
-            @if (formControl.dirty) {
-              <div class="alert alert-danger mt-2" role="alert">{{t('media-warning')}}</div>
-            }
           }
         </div>
 
@@ -68,10 +64,6 @@
 
       </ng-container>
 
-
-      <div class="col-auto d-flex d-md-block justify-content-sm-center text-md-end">
-        <button type="button" class="flex-fill btn btn-secondary me-2" (click)="resetToDefaults()">{{t('reset-to-default')}}</button>
-      </div>
     </form>
 
 </ng-container>

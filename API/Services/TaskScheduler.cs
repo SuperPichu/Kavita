@@ -12,6 +12,7 @@ using API.Services.Tasks;
 using API.Services.Tasks.Metadata;
 using API.SignalR;
 using Hangfire;
+using Kavita.Common.Helpers;
 using Microsoft.Extensions.Logging;
 
 namespace API.Services;
@@ -27,8 +28,8 @@ public interface ITaskScheduler
     Task ScanLibrary(int libraryId, bool force = false);
     Task ScanLibraries(bool force = false);
     void CleanupChapters(int[] chapterIds);
-    void RefreshMetadata(int libraryId, bool forceUpdate = true);
-    void RefreshSeriesMetadata(int libraryId, int seriesId, bool forceUpdate = false);
+    void RefreshMetadata(int libraryId, bool forceUpdate = true, bool forceColorscape = true);
+    void RefreshSeriesMetadata(int libraryId, int seriesId, bool forceUpdate = false, bool forceColorscape = false);
     Task ScanSeries(int libraryId, int seriesId, bool forceUpdate = false);
     void AnalyzeFilesForSeries(int libraryId, int seriesId, bool forceUpdate = false);
     void AnalyzeFilesForLibrary(int libraryId, bool forceUpdate = false);
@@ -37,7 +38,7 @@ public interface ITaskScheduler
     void CovertAllCoversToEncoding();
     Task CleanupDbEntries();
     Task CheckForUpdate();
-
+    Task SyncThemes();
 }
 public class TaskScheduler : ITaskScheduler
 {
@@ -82,6 +83,7 @@ public class TaskScheduler : ITaskScheduler
 
     public static readonly ImmutableArray<string> ScanTasks =
         ["ScannerService", "ScanLibrary", "ScanLibraries", "ScanFolder", "ScanSeries"];
+    private static readonly ImmutableArray<string> NonCronOptions = ["disabled", "daily", "weekly"];
 
     private static readonly Random Rnd = new Random();
 
@@ -122,22 +124,31 @@ public class TaskScheduler : ITaskScheduler
     {
         _logger.LogInformation("Scheduling reoccurring tasks");
 
+
         var setting = (await _unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.TaskScan)).Value;
-        if (setting != null)
+        if (IsInvalidCronSetting(setting))
+        {
+            _logger.LogError("Scan Task has invalid cron, defaulting to Daily");
+            RecurringJob.AddOrUpdate(ScanLibrariesTaskId, () => ScanLibraries(false),
+                Cron.Daily, RecurringJobOptions);
+        }
+        else
         {
             var scanLibrarySetting = setting;
             _logger.LogDebug("Scheduling Scan Library Task for {Setting}", scanLibrarySetting);
             RecurringJob.AddOrUpdate(ScanLibrariesTaskId, () => ScanLibraries(false),
                 () => CronConverter.ConvertToCronNotation(scanLibrarySetting), RecurringJobOptions);
         }
-        else
-        {
-            RecurringJob.AddOrUpdate(ScanLibrariesTaskId, () => ScanLibraries(false),
-                Cron.Daily, RecurringJobOptions);
-        }
+
 
         setting = (await _unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.TaskBackup)).Value;
-        if (setting != null)
+        if (IsInvalidCronSetting(setting))
+        {
+            _logger.LogError("Backup Task has invalid cron, defaulting to Weekly");
+            RecurringJob.AddOrUpdate(BackupTaskId, () => _backupService.BackupDatabase(),
+                Cron.Weekly, RecurringJobOptions);
+        }
+        else
         {
             _logger.LogDebug("Scheduling Backup Task for {Setting}", setting);
             var schedule = CronConverter.ConvertToCronNotation(setting);
@@ -149,26 +160,36 @@ public class TaskScheduler : ITaskScheduler
             RecurringJob.AddOrUpdate(BackupTaskId, () => _backupService.BackupDatabase(),
                 () => schedule, RecurringJobOptions);
         }
-        else
-        {
-            RecurringJob.AddOrUpdate(BackupTaskId, () => _backupService.BackupDatabase(),
-                Cron.Weekly, RecurringJobOptions);
-        }
 
         setting = (await _unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.TaskCleanup)).Value;
-        _logger.LogDebug("Scheduling Cleanup Task for {Setting}", setting);
-        RecurringJob.AddOrUpdate(CleanupTaskId, () => _cleanupService.Cleanup(),
-            CronConverter.ConvertToCronNotation(setting), RecurringJobOptions);
+        if (IsInvalidCronSetting(setting))
+        {
+            _logger.LogError("Cleanup Task has invalid cron, defaulting to Daily");
+            RecurringJob.AddOrUpdate(CleanupTaskId, () => _cleanupService.Cleanup(),
+                Cron.Daily, RecurringJobOptions);
+        }
+        else
+        {
+            _logger.LogDebug("Scheduling Cleanup Task for {Setting}", setting);
+            RecurringJob.AddOrUpdate(CleanupTaskId, () => _cleanupService.Cleanup(),
+                CronConverter.ConvertToCronNotation(setting), RecurringJobOptions);
+        }
+
 
         RecurringJob.AddOrUpdate(RemoveFromWantToReadTaskId, () => _cleanupService.CleanupWantToRead(),
             Cron.Daily, RecurringJobOptions);
         RecurringJob.AddOrUpdate(UpdateYearlyStatsTaskId, () => _statisticService.UpdateServerStatistics(),
             Cron.Monthly, RecurringJobOptions);
 
-        RecurringJob.AddOrUpdate(SyncThemesTaskId, () => _themeService.SyncThemes(),
-            Cron.Weekly, RecurringJobOptions);
+        RecurringJob.AddOrUpdate(SyncThemesTaskId, () => SyncThemes(),
+            Cron.Daily, RecurringJobOptions);
 
         await ScheduleKavitaPlusTasks();
+    }
+
+    private static bool IsInvalidCronSetting(string setting)
+    {
+        return setting == null || (!NonCronOptions.Contains(setting) && !CronHelper.IsValidCron(setting));
     }
 
     public async Task ScheduleKavitaPlusTasks()
@@ -220,6 +241,7 @@ public class TaskScheduler : ITaskScheduler
 
     public void AnalyzeFilesForLibrary(int libraryId, bool forceUpdate = false)
     {
+        _logger.LogInformation("Enqueuing library file analysis for: {LibraryId}", libraryId);
         BackgroundJob.Enqueue(() => _wordCountAnalyzerService.ScanLibrary(libraryId, forceUpdate));
     }
 
@@ -281,19 +303,17 @@ public class TaskScheduler : ITaskScheduler
     {
         var normalizedFolder = Tasks.Scanner.Parser.Parser.NormalizePath(folderPath);
         var normalizedOriginal = Tasks.Scanner.Parser.Parser.NormalizePath(originalPath);
+
         if (HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, normalizedOriginal]) ||
             HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, string.Empty]))
         {
-            _logger.LogInformation("Skipped scheduling ScanFolder for {Folder} as a job already queued",
+            _logger.LogDebug("Skipped scheduling ScanFolder for {Folder} as a job already queued",
                 normalizedFolder);
             return;
         }
 
         // Not sure where we should put this code, but we can get a bunch of ScanFolders when original has slight variations, like
         // create a folder, add a new file, etc. All of these can be merged into just 1 request.
-
-
-
 
         _logger.LogInformation("Scheduling ScanFolder for {Folder}", normalizedFolder);
         BackgroundJob.Schedule(() => _scannerService.ScanFolder(normalizedFolder, normalizedOriginal), delay);
@@ -304,7 +324,7 @@ public class TaskScheduler : ITaskScheduler
         var normalizedFolder = Tasks.Scanner.Parser.Parser.NormalizePath(folderPath);
         if (HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, string.Empty]))
         {
-            _logger.LogInformation("Skipped scheduling ScanFolder for {Folder} as a job already queued",
+            _logger.LogDebug("Skipped scheduling ScanFolder for {Folder} as a job already queued",
                 normalizedFolder);
             return;
         }
@@ -371,12 +391,12 @@ public class TaskScheduler : ITaskScheduler
         BackgroundJob.Enqueue(() => _cacheService.CleanupChapters(chapterIds));
     }
 
-    public void RefreshMetadata(int libraryId, bool forceUpdate = true)
+    public void RefreshMetadata(int libraryId, bool forceUpdate = true, bool forceColorscape = true)
     {
         var alreadyEnqueued = HasAlreadyEnqueuedTask(MetadataService.Name, "GenerateCoversForLibrary",
-                                  [libraryId, true]) ||
+                                  [libraryId, true, true]) ||
                               HasAlreadyEnqueuedTask("MetadataService", "GenerateCoversForLibrary",
-                                  [libraryId, false]);
+                                  [libraryId, false, false]);
         if (alreadyEnqueued)
         {
             _logger.LogInformation("A duplicate request to refresh metadata for library occured. Skipping");
@@ -384,19 +404,19 @@ public class TaskScheduler : ITaskScheduler
         }
 
         _logger.LogInformation("Enqueuing library metadata refresh for: {LibraryId}", libraryId);
-        BackgroundJob.Enqueue(() => _metadataService.GenerateCoversForLibrary(libraryId, forceUpdate));
+        BackgroundJob.Enqueue(() => _metadataService.GenerateCoversForLibrary(libraryId, forceUpdate, forceColorscape));
     }
 
-    public void RefreshSeriesMetadata(int libraryId, int seriesId, bool forceUpdate = false)
+    public void RefreshSeriesMetadata(int libraryId, int seriesId, bool forceUpdate = false, bool forceColorscape = false)
     {
-        if (HasAlreadyEnqueuedTask(MetadataService.Name,"GenerateCoversForSeries", [libraryId, seriesId, forceUpdate]))
+        if (HasAlreadyEnqueuedTask(MetadataService.Name,"GenerateCoversForSeries", [libraryId, seriesId, forceUpdate, forceColorscape]))
         {
             _logger.LogInformation("A duplicate request to refresh metadata for library occured. Skipping");
             return;
         }
 
         _logger.LogInformation("Enqueuing series metadata refresh for: {SeriesId}", seriesId);
-        BackgroundJob.Enqueue(() => _metadataService.GenerateCoversForSeries(libraryId, seriesId, forceUpdate));
+        BackgroundJob.Enqueue(() => _metadataService.GenerateCoversForSeries(libraryId, seriesId, forceUpdate, forceColorscape));
     }
 
     public async Task ScanSeries(int libraryId, int seriesId, bool forceUpdate = false)
@@ -421,6 +441,12 @@ public class TaskScheduler : ITaskScheduler
         BackgroundJob.Enqueue(() => _scannerService.ScanSeries(seriesId, forceUpdate));
     }
 
+    /// <summary>
+    /// Calculates TimeToRead and bytes
+    /// </summary>
+    /// <param name="libraryId"></param>
+    /// <param name="seriesId"></param>
+    /// <param name="forceUpdate"></param>
     public void AnalyzeFilesForSeries(int libraryId, int seriesId, bool forceUpdate = false)
     {
         if (HasAlreadyEnqueuedTask("WordCountAnalyzerService", "ScanSeries", [libraryId, seriesId, forceUpdate]))
@@ -442,6 +468,11 @@ public class TaskScheduler : ITaskScheduler
         var update = await _versionUpdaterService.CheckForUpdate();
         if (update == null) return;
         await _versionUpdaterService.PushUpdate(update);
+    }
+
+    public async Task SyncThemes()
+    {
+        await _themeService.SyncThemes();
     }
 
     /// <summary>

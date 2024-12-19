@@ -53,11 +53,16 @@ public class SeriesDto : IHasReadTimeEstimate, IHasCoverImage
     /// <inheritdoc cref="IHasReadTimeEstimate.MaxHoursToRead"/>
     public int MaxHoursToRead { get; set; }
     /// <inheritdoc cref="IHasReadTimeEstimate.AvgHoursToRead"/>
-    public int AvgHoursToRead { get; set; }
+    public float AvgHoursToRead { get; set; }
     /// <summary>
     /// The highest level folder for this Series
     /// </summary>
     public string FolderPath { get; set; } = default!;
+    /// <summary>
+    /// Lowest path (that is under library root) that contains all files for the series.
+    /// </summary>
+    /// <remarks><see cref="Services.Tasks.Scanner.Parser.Parser.NormalizePath"/> must be used before setting</remarks>
+    public string? LowestFolderPath { get; set; }
     /// <summary>
     /// The last time the folder for this series was scanned
     /// </summary>

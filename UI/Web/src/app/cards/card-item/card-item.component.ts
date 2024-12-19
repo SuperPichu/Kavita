@@ -46,6 +46,10 @@ import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
 import {SafeHtmlPipe} from "../../_pipes/safe-html.pipe";
 import {PromotedIconComponent} from "../../shared/_components/promoted-icon/promoted-icon.component";
 import {SeriesFormatComponent} from "../../shared/series-format/series-format.component";
+import {BrowsePerson} from "../../_models/person/browse-person";
+import {CompactNumberPipe} from "../../_pipes/compact-number.pipe";
+
+export type CardEntity = Series | Volume | Chapter | UserCollection | PageBookmark | RecentlyAddedItem | NextExpectedChapter | BrowsePerson;
 
 @Component({
   selector: 'app-card-item',
@@ -67,7 +71,8 @@ import {SeriesFormatComponent} from "../../shared/series-format/series-format.co
     PromotedIconComponent,
     SeriesFormatComponent,
     DecimalPipe,
-    NgTemplateOutlet
+    NgTemplateOutlet,
+    CompactNumberPipe
   ],
   templateUrl: './card-item.component.html',
   styleUrls: ['./card-item.component.scss'],
@@ -116,7 +121,7 @@ export class CardItemComponent implements OnInit {
   /**
    * This is the entity we are representing. It will be returned if an action is executed.
    */
-  @Input({required: true}) entity!: Series | Volume | Chapter | UserCollection | PageBookmark | RecentlyAddedItem | NextExpectedChapter;
+  @Input({required: true}) entity!: CardEntity;
   /**
    * If the entity is selected or not.
    */
@@ -138,17 +143,25 @@ export class CardItemComponent implements OnInit {
    */
   @Input() count: number = 0;
   /**
-   * The id of the entity
+   * Show a read button. Emits on (readClicked)
    */
-  @Input() id: number = 0;
-  /**
-   * Additional information to show on the overlay area. Will always render.
-   */
-  @Input() overlayInformation: string = '';
+  @Input() showReadButton: boolean = false;
   /**
    * If overlay is enabled, should the text be centered or not
    */
   @Input() centerOverlay = false;
+  /**
+   * Will generate a button to instantly read
+   */
+  @Input() hasReadButton = false;
+  /**
+   * A method that if defined will return the url
+   */
+  @Input() linkUrl?: string;
+  /**
+   * Show the format of the series
+   */
+  @Input() showFormat: boolean = true;
   /**
    * Event emitted when item is clicked
    */
@@ -157,6 +170,7 @@ export class CardItemComponent implements OnInit {
    * When the card is selected.
    */
   @Output() selection = new EventEmitter<boolean>();
+  @Output() readClicked = new EventEmitter<CardEntity>();
   @ContentChild('subtitle') subtitleTemplate!: TemplateRef<any>;
   /**
    * Library name item belongs to
@@ -237,9 +251,10 @@ export class CardItemComponent implements OnInit {
       const nextDate = (this.entity as NextExpectedChapter);
 
       const tokens = nextDate.title.split(':');
-      this.overlayInformation = `
-              <i class="fa-regular fa-clock mb-2" style="font-size: 26px" aria-hidden="true"></i>
-              <div>${tokens[0]}</div><div>${tokens[1]}</div>`;
+      // this.overlayInformation = `
+      //         <i class="fa-regular fa-clock mb-2" style="font-size: 26px" aria-hidden="true"></i>
+      //         <div>${tokens[0]}</div><div>${tokens[1]}</div>`;
+      // // todo: figure out where this caller is
       this.centerOverlay = true;
 
       if (nextDate.expectedDate) {
@@ -248,6 +263,8 @@ export class CardItemComponent implements OnInit {
       }
 
       this.cdRef.markForCheck();
+    } else {
+      this.tooltipTitle = this.title;
     }
 
 
@@ -394,5 +411,12 @@ export class CardItemComponent implements OnInit {
     //   if (!a.isAllowed) return true;
     //   return a.isAllowed(a, this.entity);
     // });
+  }
+
+  clickRead(event: any) {
+    event.stopPropagation();
+    if (this.bulkSelectionService.hasSelections()) return;
+
+    this.readClicked.emit(this.entity);
   }
 }

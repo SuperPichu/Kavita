@@ -141,7 +141,7 @@ public class SeriesController : BaseApiController
         var username = User.GetUsername();
         _logger.LogInformation("Series {SeriesId} is being deleted by {UserName}", seriesId, username);
 
-        return Ok(await _seriesService.DeleteMultipleSeries(new[] { seriesId }));
+        return Ok(await _seriesService.DeleteMultipleSeries([seriesId]));
     }
 
     [Authorize(Policy = "RequireAdminRole")]
@@ -326,11 +326,12 @@ public class SeriesController : BaseApiController
     /// <param name="libraryId"></param>
     /// <returns></returns>
     [HttpPost("all-v2")]
-    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetAllSeriesV2(FilterV2Dto filterDto, [FromQuery] UserParams userParams, [FromQuery] int libraryId = 0)
+    public async Task<ActionResult<IEnumerable<SeriesDto>>> GetAllSeriesV2(FilterV2Dto filterDto, [FromQuery] UserParams userParams,
+        [FromQuery] int libraryId = 0, [FromQuery] QueryContext context = QueryContext.None)
     {
         var userId = User.GetUserId();
         var series =
-            await _unitOfWork.SeriesRepository.GetSeriesDtoForLibraryIdV2Async(userId, userParams, filterDto);
+            await _unitOfWork.SeriesRepository.GetSeriesDtoForLibraryIdV2Async(userId, userParams, filterDto, context);
 
         // Apply progress/rating information (I can't work out how to do this in initial query)
         if (series == null) return BadRequest(await _localizationService.Translate(User.GetUserId(), "no-series"));
@@ -350,7 +351,7 @@ public class SeriesController : BaseApiController
     /// <param name="libraryId"></param>
     /// <returns></returns>
     [HttpPost("all")]
-    [Obsolete("User all-v2")]
+    [Obsolete("Use all-v2")]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetAllSeries(FilterDto filterDto, [FromQuery] UserParams userParams, [FromQuery] int libraryId = 0)
     {
         var userId = User.GetUserId();
@@ -409,7 +410,7 @@ public class SeriesController : BaseApiController
     [HttpPost("refresh-metadata")]
     public ActionResult RefreshSeriesMetadata(RefreshSeriesDto refreshSeriesDto)
     {
-        _taskScheduler.RefreshSeriesMetadata(refreshSeriesDto.LibraryId, refreshSeriesDto.SeriesId, refreshSeriesDto.ForceUpdate);
+        _taskScheduler.RefreshSeriesMetadata(refreshSeriesDto.LibraryId, refreshSeriesDto.SeriesId, refreshSeriesDto.ForceUpdate, refreshSeriesDto.ForceColorscape);
         return Ok();
     }
 

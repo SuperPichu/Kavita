@@ -1,7 +1,7 @@
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component,
+  Component, DestroyRef,
   inject,
   OnInit
 } from '@angular/core';
@@ -19,6 +19,11 @@ import {ScrobbleEventTypePipe} from "../../_pipes/scrobble-event-type.pipe";
 import {SortableHeader} from "../../_single-module/table/_directives/sortable-header.directive";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
 import {EditDeviceModalComponent} from "../_modals/edit-device-modal/edit-device-modal.component";
+import {DefaultModalOptions} from "../../_models/default-modal-options";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {map} from "rxjs";
+import {shareReplay} from "rxjs/operators";
+import {AccountService} from "../../_services/account.service";
 
 @Component({
     selector: 'app-manage-devices',
@@ -32,15 +37,23 @@ import {EditDeviceModalComponent} from "../_modals/edit-device-modal/edit-device
 export class ManageDevicesComponent implements OnInit {
 
   private readonly cdRef = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly deviceService = inject(DeviceService);
   private readonly settingsService = inject(SettingsService);
   private readonly confirmService = inject(ConfirmService);
   private readonly modalService = inject(NgbModal);
+  private readonly accountService = inject(AccountService);
 
   devices: Array<Device> = [];
   isEditingDevice: boolean = false;
   device: Device | undefined;
   hasEmailSetup = false;
+
+  isReadOnly$ = this.accountService.currentUser$.pipe(
+    takeUntilDestroyed(this.destroyRef),
+    map(c => c && this.accountService.hasReadOnlyRole(c)),
+    shareReplay({refCount: true, bufferSize: 1}),
+  );
 
   ngOnInit(): void {
     this.settingsService.isEmailSetup().subscribe(res => {
@@ -71,7 +84,7 @@ export class ManageDevicesComponent implements OnInit {
   }
 
   addDevice() {
-    const ref = this.modalService.open(EditDeviceModalComponent, { scrollable: true, size: 'xl', fullscreen: 'md' });
+    const ref = this.modalService.open(EditDeviceModalComponent, DefaultModalOptions);
     ref.componentInstance.device = null;
 
     ref.closed.subscribe((result: Device | null) => {
@@ -82,7 +95,7 @@ export class ManageDevicesComponent implements OnInit {
   }
 
   editDevice(device: Device) {
-    const ref = this.modalService.open(EditDeviceModalComponent, { scrollable: true, size: 'xl', fullscreen: 'md' });
+    const ref = this.modalService.open(EditDeviceModalComponent, DefaultModalOptions);
     ref.componentInstance.device = device;
 
     ref.closed.subscribe((result: Device | null) => {

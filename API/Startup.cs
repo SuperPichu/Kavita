@@ -271,6 +271,12 @@ public class Startup
                     await MigrateInitialInstallData.Migrate(dataContext, logger, directoryService);
                     await MigrateSeriesLowestFolderPath.Migrate(dataContext, logger, directoryService);
 
+                    // v0.8.4
+                    await MigrateLowestSeriesFolderPath2.Migrate(dataContext, unitOfWork, logger);
+                    await ManualMigrateRemovePeople.Migrate(dataContext, logger);
+                    await MigrateDuplicateDarkTheme.Migrate(dataContext, logger);
+                    await ManualMigrateUnscrobbleBookLibraries.Migrate(dataContext, logger);
+
                     //  Update the version in the DB after all migrations are run
                     var installVersion = await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.InstallVersion);
                     installVersion.Value = BuildInfo.Version.ToString();
@@ -448,9 +454,7 @@ public class Startup
         }
         catch (Exception ex)
         {
-            if ((ex.Message.Contains("Permission denied")
-                 || ex.Message.Contains("UnauthorizedAccessException"))
-                && baseUrl.Equals(Configuration.DefaultBaseUrl) && OsInfo.IsDocker)
+            if (ex is UnauthorizedAccessException && baseUrl.Equals(Configuration.DefaultBaseUrl) && OsInfo.IsDocker)
             {
                 // Swallow the exception as the install is non-root and Docker
                 return;

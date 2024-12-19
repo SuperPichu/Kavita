@@ -291,6 +291,7 @@ public class ReaderService : IReaderService
                 _unitOfWork.AppUserProgressRepository.Update(userProgress);
             }
 
+            _logger.LogDebug("Saving Progress on Chapter {ChapterId} from Series {SeriesId} to {PageNum}", progressDto.ChapterId, progressDto.SeriesId, progressDto.PageNum);
             userProgress?.MarkModified();
 
             if (!_unitOfWork.HasChanges() || await _unitOfWork.CommitAsync())
@@ -698,21 +699,23 @@ public class ReaderService : IReaderService
         {
             var minHours = Math.Max((int) Math.Round((wordCount / MinWordsPerHour)), 0);
             var maxHours = Math.Max((int) Math.Round((wordCount / MaxWordsPerHour)), 0);
+
             return new HourEstimateRangeDto
             {
                 MinHours = Math.Min(minHours, maxHours),
                 MaxHours = Math.Max(minHours, maxHours),
-                AvgHours = (int) Math.Round((wordCount / AvgWordsPerHour))
+                AvgHours = wordCount / AvgWordsPerHour
             };
         }
 
         var minHoursPages = Math.Max((int) Math.Round((pageCount / MinPagesPerMinute / 60F)), 0);
         var maxHoursPages = Math.Max((int) Math.Round((pageCount / MaxPagesPerMinute / 60F)), 0);
+
         return new HourEstimateRangeDto
         {
             MinHours = Math.Min(minHoursPages, maxHoursPages),
             MaxHours = Math.Max(minHoursPages, maxHoursPages),
-            AvgHours = (int) Math.Round((pageCount / AvgPagesPerMinute / 60F))
+            AvgHours = pageCount / AvgPagesPerMinute / 60F
         };
     }
 
@@ -808,6 +811,7 @@ public class ReaderService : IReaderService
     {
         switch(libraryType)
         {
+            case LibraryType.Image:
             case LibraryType.Manga:
                 return "Chapter" + (includeSpace ? " " : string.Empty);
             case LibraryType.Comic:

@@ -1,10 +1,7 @@
 .invalid-feedback {
     display: inherit;
 }
-
-.alert-warning {
-    --bs-alert-color: #fff3cd;
-    --bs-alert-bg: transparent;
-    --bs-alert-border-color: #ffecb5;
-    font-size: 14px;
+.custom-position {
+  right: 5px;
+  top: -42px;
 }

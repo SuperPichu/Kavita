@@ -13,6 +13,7 @@ public static class MessageFactoryEntityTypes
     public const string Chapter = "chapter";
     public const string CollectionTag = "collection";
     public const string ReadingList = "readingList";
+    public const string Person = "person";
 }
 public static class MessageFactory
 {
@@ -138,6 +139,14 @@ public static class MessageFactory
     /// A Progress event when a smart collection is synchronizing
     /// </summary>
     public const string SmartCollectionSync = "SmartCollectionSync";
+    /// <summary>
+    /// Chapter is removed from server
+    /// </summary>
+    public const string ChapterRemoved = "ChapterRemoved";
+    /// <summary>
+    /// Volume is removed from server
+    /// </summary>
+    public const string VolumeRemoved = "VolumeRemoved";
 
     public static SignalRMessage DashboardUpdateEvent(int userId)
     {
@@ -209,6 +218,32 @@ public static class MessageFactory
                 SeriesId = seriesId,
                 SeriesName = seriesName,
                 LibraryId = libraryId
+            }
+        };
+    }
+
+    public static SignalRMessage ChapterRemovedEvent(int chapterId, int seriesId)
+    {
+        return new SignalRMessage()
+        {
+            Name = ChapterRemoved,
+            Body = new
+            {
+                SeriesId = seriesId,
+                ChapterId = chapterId
+            }
+        };
+    }
+
+    public static SignalRMessage VolumeRemovedEvent(int volumeId, int seriesId)
+    {
+        return new SignalRMessage()
+        {
+            Name = VolumeRemoved,
+            Body = new
+            {
+                SeriesId = seriesId,
+                VolumeId = volumeId
             }
         };
     }

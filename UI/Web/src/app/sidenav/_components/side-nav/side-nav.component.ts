@@ -41,9 +41,8 @@ import {SettingsTabId} from "../../preference-nav/preference-nav.component";
 })
 export class SideNavComponent implements OnInit {
 
-  protected readonly SideNavStreamType = SideNavStreamType;
   private readonly router = inject(Router);
-  private readonly utilityService = inject(UtilityService);
+  protected readonly utilityService = inject(UtilityService);
   private readonly messageHub = inject(MessageHubService);
   private readonly actionService = inject(ActionService);
   public readonly navService = inject(NavService);
@@ -52,8 +51,11 @@ export class SideNavComponent implements OnInit {
   public readonly accountService = inject(AccountService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly actionFactoryService = inject(ActionFactoryService);
+
   protected readonly WikiLink = WikiLink;
   protected readonly ItemLimit = 10;
+  protected readonly SideNavStreamType = SideNavStreamType;
+  protected readonly SettingsTabId = SettingsTabId;
 
   cachedData: SideNavStream[] | null = null;
   actions: ActionItem<Library>[] = this.actionFactoryService.getLibraryActions(this.handleAction.bind(this));
@@ -64,6 +66,7 @@ export class SideNavComponent implements OnInit {
   }
   showAll: boolean = false;
   totalSize = 0;
+  isReadOnly = false;
 
   private showAllSubject = new BehaviorSubject<boolean>(false);
   showAll$ = this.showAllSubject.asObservable();
@@ -130,8 +133,13 @@ export class SideNavComponent implements OnInit {
 
 
   constructor() {
+    // Ensure that on mobile, we are collapsed by default
+    if (this.utilityService.getActiveBreakpoint() < Breakpoint.Tablet) {
+      this.navService.collapseSideNav(true);
+    }
+
     this.collapseSideNavOnMobileNav$.subscribe(() => {
-        this.navService.toggleSideNav();
+        this.navService.collapseSideNav(false);
         this.cdRef.markForCheck();
     });
   }
@@ -139,6 +147,8 @@ export class SideNavComponent implements OnInit {
   ngOnInit(): void {
     this.accountService.currentUser$.pipe(take(1)).subscribe(user => {
       if (!user) return;
+      this.isReadOnly = this.accountService.hasReadOnlyRole(user!);
+      this.cdRef.markForCheck();
       this.loadDataSubject.next();
     });
   }
@@ -208,5 +218,5 @@ export class SideNavComponent implements OnInit {
     this.showAllSubject.next(false);
   }
 
-  protected readonly SettingsTabId = SettingsTabId;
+  protected readonly Breakpoint = Breakpoint;
 }

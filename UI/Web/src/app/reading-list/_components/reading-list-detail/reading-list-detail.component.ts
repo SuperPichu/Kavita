@@ -28,7 +28,7 @@ import {BadgeExpanderComponent} from '../../../shared/badge-expander/badge-expan
 import {ReadMoreComponent} from '../../../shared/read-more/read-more.component';
 import {NgbDropdown, NgbDropdownItem, NgbDropdownMenu, NgbDropdownToggle} from '@ng-bootstrap/ng-bootstrap';
 import {ImageComponent} from '../../../shared/image/image.component';
-import {AsyncPipe, DatePipe, DecimalPipe, NgClass, NgIf} from '@angular/common';
+import {AsyncPipe, DatePipe, DecimalPipe, NgClass} from '@angular/common';
 import {
   SideNavCompanionBarComponent
 } from '../../../sidenav/_components/side-nav-companion-bar/side-nav-companion-bar.component';
@@ -46,7 +46,7 @@ import {Title} from "@angular/platform-browser";
     styleUrls: ['./reading-list-detail.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
-  imports: [SideNavCompanionBarComponent, NgIf, CardActionablesComponent, ImageComponent, NgbDropdown,
+  imports: [SideNavCompanionBarComponent, CardActionablesComponent, ImageComponent, NgbDropdown,
     NgbDropdownToggle, NgbDropdownMenu, NgbDropdownItem, ReadMoreComponent, BadgeExpanderComponent,
     PersonBadgeComponent, A11yClickDirective, LoadingComponent, DraggableOrderedListComponent,
     ReadingListItemComponent, NgClass, AsyncPipe, DecimalPipe, DatePipe, TranslocoDirective,
@@ -174,7 +174,23 @@ export class ReadingListDetailComponent implements OnInit {
             this.readingList = rl;
             this.readingListSummary = (this.readingList.summary === null ? '' : this.readingList.summary).replace(/\n/g, '<br>');
             this.cdRef.markForCheck();
-          })
+          });
+        });
+        break;
+      case Action.Promote:
+        this.actionService.promoteMultipleReadingLists([this.readingList!], true, () => {
+          if (this.readingList) {
+            this.readingList.promoted = true;
+            this.cdRef.markForCheck();
+          }
+        });
+        break;
+      case Action.UnPromote:
+        this.actionService.promoteMultipleReadingLists([this.readingList!], false, () => {
+          if (this.readingList) {
+            this.readingList.promoted = false;
+            this.cdRef.markForCheck();
+          }
         });
         break;
     }

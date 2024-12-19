@@ -25,13 +25,21 @@ using Xunit;
 
 namespace API.Tests.Services;
 
-internal class MockReadingItemService : IReadingItemService
+public class MockReadingItemService : IReadingItemService
 {
-    private readonly IDefaultParser _defaultParser;
+    private readonly BasicParser _basicParser;
+    private readonly ComicVineParser _comicVineParser;
+    private readonly ImageParser _imageParser;
+    private readonly BookParser _bookParser;
+    private readonly PdfParser _pdfParser;
 
-    public MockReadingItemService(IDefaultParser defaultParser)
+    public MockReadingItemService(IDirectoryService directoryService, IBookService bookService)
     {
-        _defaultParser = defaultParser;
+        _imageParser = new ImageParser(directoryService);
+        _basicParser = new BasicParser(directoryService, _imageParser);
+        _bookParser = new BookParser(directoryService, bookService, _basicParser);
+        _comicVineParser = new ComicVineParser(directoryService);
+        _pdfParser = new PdfParser(directoryService);
     }
 
     public ComicInfo GetComicInfo(string filePath)
@@ -56,12 +64,33 @@ internal class MockReadingItemService : IReadingItemService
 
     public ParserInfo Parse(string path, string rootPath, string libraryRoot, LibraryType type)
     {
-        return _defaultParser.Parse(path, rootPath, libraryRoot, type);
+        if (_comicVineParser.IsApplicable(path, type))
+        {
+            return _comicVineParser.Parse(path, rootPath, libraryRoot, type, GetComicInfo(path));
+        }
+        if (_imageParser.IsApplicable(path, type))
+        {
+            return _imageParser.Parse(path, rootPath, libraryRoot, type, GetComicInfo(path));
+        }
+        if (_bookParser.IsApplicable(path, type))
+        {
+            return _bookParser.Parse(path, rootPath, libraryRoot, type, GetComicInfo(path));
+        }
+        if (_pdfParser.IsApplicable(path, type))
+        {
+            return _pdfParser.Parse(path, rootPath, libraryRoot, type, GetComicInfo(path));
+        }
+        if (_basicParser.IsApplicable(path, type))
+        {
+            return _basicParser.Parse(path, rootPath, libraryRoot, type, GetComicInfo(path));
+        }
+
+        return null;
     }
 
     public ParserInfo ParseFile(string path, string rootPath, string libraryRoot, LibraryType type)
     {
-        return _defaultParser.Parse(path, rootPath, libraryRoot, type);
+        return Parse(path, rootPath, libraryRoot, type);
     }
 }
 
@@ -175,26 +204,8 @@ public class ParseScannedFilesTests : AbstractDbTest
 
         var ds = new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), fileSystem);
         var psf = new ParseScannedFiles(Substitute.For<ILogger<ParseScannedFiles>>(), ds,
-            new MockReadingItemService(new BasicParser(ds, new ImageParser(ds))), Substitute.For<IEventHub>());
+            new MockReadingItemService(ds, Substitute.For<IBookService>()), Substitute.For<IEventHub>());
 
-        // var parsedSeries = new Dictionary<ParsedSeries, IList<ParserInfo>>();
-        //
-        // Task TrackFiles(Tuple<bool, IList<ParserInfo>> parsedInfo)
-        // {
-        //     var skippedScan = parsedInfo.Item1;
-        //     var parsedFiles = parsedInfo.Item2;
-        //     if (parsedFiles.Count == 0) return Task.CompletedTask;
-        //
-        //     var foundParsedSeries = new ParsedSeries()
-        //     {
-        //         Name = parsedFiles.First().Series,
-        //         NormalizedName = parsedFiles.First().Series.ToNormalized(),
-        //         Format = parsedFiles.First().Format
-        //     };
-        //
-        //     parsedSeries.Add(foundParsedSeries, parsedFiles);
-        //     return Task.CompletedTask;
-        // }
 
         var library =
             await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(1,
@@ -239,12 +250,12 @@ public class ParseScannedFilesTests : AbstractDbTest
         var fileSystem = CreateTestFilesystem();
         var ds = new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), fileSystem);
         var psf = new ParseScannedFiles(Substitute.For<ILogger<ParseScannedFiles>>(), ds,
-            new MockReadingItemService(new BasicParser(ds, new ImageParser(ds))), Substitute.For<IEventHub>());
+            new MockReadingItemService(ds, Substitute.For<IBookService>()), Substitute.For<IEventHub>());
 
         var directoriesSeen = new HashSet<string>();
         var library = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(1,
                 LibraryIncludes.Folders | LibraryIncludes.FileTypes);
-        var scanResults = await psf.ProcessFiles("C:/Data/", true, await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
+        var scanResults = await psf.ScanFiles("C:/Data/", true, await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
         foreach (var scanResult in scanResults)
         {
             directoriesSeen.Add(scanResult.Folder);
@@ -259,14 +270,14 @@ public class ParseScannedFilesTests : AbstractDbTest
         var fileSystem = CreateTestFilesystem();
         var ds = new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), fileSystem);
         var psf = new ParseScannedFiles(Substitute.For<ILogger<ParseScannedFiles>>(), ds,
-            new MockReadingItemService(new BasicParser(ds, new ImageParser(ds))), Substitute.For<IEventHub>());
+            new MockReadingItemService(ds, Substitute.For<IBookService>()), Substitute.For<IEventHub>());
 
         var library = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(1,
             LibraryIncludes.Folders | LibraryIncludes.FileTypes);
         Assert.NotNull(library);
 
         var directoriesSeen = new HashSet<string>();
-        var scanResults = await psf.ProcessFiles("C:/Data/", false,
+        var scanResults = await psf.ScanFiles("C:/Data/", false,
             await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
 
         foreach (var scanResult in scanResults)
@@ -294,12 +305,12 @@ public class ParseScannedFilesTests : AbstractDbTest
 
         var ds = new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), fileSystem);
         var psf = new ParseScannedFiles(Substitute.For<ILogger<ParseScannedFiles>>(), ds,
-            new MockReadingItemService(new BasicParser(ds, new ImageParser(ds))), Substitute.For<IEventHub>());
+            new MockReadingItemService(ds, Substitute.For<IBookService>()), Substitute.For<IEventHub>());
 
         var library = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(1,
             LibraryIncludes.Folders | LibraryIncludes.FileTypes);
         Assert.NotNull(library);
-        var scanResults = await psf.ProcessFiles("C:/Data", true, await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
+        var scanResults = await psf.ScanFiles("C:/Data", true, await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
 
         Assert.Equal(2, scanResults.Count);
     }
@@ -323,12 +334,12 @@ public class ParseScannedFilesTests : AbstractDbTest
 
         var ds = new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), fileSystem);
         var psf = new ParseScannedFiles(Substitute.For<ILogger<ParseScannedFiles>>(), ds,
-            new MockReadingItemService(new BasicParser(ds, new ImageParser(ds))), Substitute.For<IEventHub>());
+            new MockReadingItemService(ds, Substitute.For<IBookService>()), Substitute.For<IEventHub>());
 
         var library = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(1,
             LibraryIncludes.Folders | LibraryIncludes.FileTypes);
         Assert.NotNull(library);
-        var scanResults = await psf.ProcessFiles("C:/Data", false,
+        var scanResults = await psf.ScanFiles("C:/Data", false,
             await _unitOfWork.SeriesRepository.GetFolderPathMap(1), library);
 
         Assert.Single(scanResults);

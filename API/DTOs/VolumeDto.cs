@@ -43,7 +43,8 @@ public class VolumeDto : IHasReadTimeEstimate, IHasCoverImage
     /// <inheritdoc cref="IHasReadTimeEstimate.MaxHoursToRead"/>
     public int MaxHoursToRead { get; set; }
     /// <inheritdoc cref="IHasReadTimeEstimate.AvgHoursToRead"/>
-    public int AvgHoursToRead { get; set; }
+    public float AvgHoursToRead { get; set; }
+    public long WordCount { get; set; }
 
     /// <summary>
     /// Is this a loose leaf volume
@@ -55,7 +56,7 @@ public class VolumeDto : IHasReadTimeEstimate, IHasCoverImage
     }
 
     /// <summary>
-    /// Does this volume hold only specials?
+    /// Does this volume hold only specials
     /// </summary>
     /// <returns></returns>
     public bool IsSpecial()
@@ -64,6 +65,7 @@ public class VolumeDto : IHasReadTimeEstimate, IHasCoverImage
     }
 
     public string CoverImage { get; set; }
+    private bool CoverImageLocked { get; set; }
     public string PrimaryColor { get; set; }
     public string SecondaryColor { get; set; }
 

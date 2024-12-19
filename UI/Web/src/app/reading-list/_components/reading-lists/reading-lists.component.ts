@@ -49,19 +49,6 @@ export class ReadingListsComponent implements OnInit {
   globalActions: Array<ActionItem<any>> = [];
   trackByIdentity = (index: number, item: ReadingList) => `${item.id}_${item.title}_${item.promoted}`;
 
-  @HostListener('document:keydown.shift', ['$event'])
-  handleKeypress(event: KeyboardEvent) {
-    if (event.key === KEY_CODES.SHIFT) {
-      this.bulkSelectionService.isShiftDown = true;
-    }
-  }
-
-  @HostListener('document:keyup.shift', ['$event'])
-  handleKeyUp(event: KeyboardEvent) {
-    if (event.key === KEY_CODES.SHIFT) {
-      this.bulkSelectionService.isShiftDown = false;
-    }
-  }
 
   constructor(private readingListService: ReadingListService, public imageService: ImageService, private actionFactoryService: ActionFactoryService,
     private accountService: AccountService, private toastr: ToastrService, private router: Router,
@@ -89,16 +76,14 @@ export class ReadingListsComponent implements OnInit {
       .filter(action => this.readingListService.actionListFilter(action, readingList, this.isAdmin || this.hasPromote));
   }
 
-  performAction(action: ActionItem<ReadingList>, readingList: ReadingList) {
-    if (typeof action.callback === 'function') {
-      action.callback(action, readingList);
-    }
-  }
-
   performGlobalAction(action: ActionItem<any>) {
     if (typeof action.callback === 'function') {
       action.callback(action, undefined);
     }
+  }
+
+  handleClick(list: ReadingList) {
+    this.router.navigateByUrl('lists/' + list.id);
   }
 
   handleReadingListActionCallback(action: ActionItem<ReadingList>, readingList: ReadingList) {
@@ -157,10 +142,6 @@ export class ReadingListsComponent implements OnInit {
       this.lists.forEach(l => this.actions[l.id] = this.getActions(l));
       this.cdRef.markForCheck();
     });
-  }
-
-  handleClick(list: ReadingList) {
-    this.router.navigateByUrl('lists/' + list.id);
   }
 
   bulkActionCallback = (action: ActionItem<any>, data: any) => {

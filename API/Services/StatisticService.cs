@@ -69,7 +69,8 @@ public class StatisticService : IStatisticService
         var totalPagesRead = await _context.AppUserProgresses
             .Where(p => p.AppUserId == userId)
             .Where(p => libraryIds.Contains(p.LibraryId))
-            .SumAsync(p => p.PagesRead);
+            .Select(p => (int?) p.PagesRead)
+            .SumAsync() ?? 0;
 
         var timeSpentReading = await TimeSpentReadingForUsersAsync(new List<int>() {userId}, libraryIds);
 
@@ -88,7 +89,9 @@ public class StatisticService : IStatisticService
 
         var lastActive = await _context.AppUserProgresses
             .Where(p => p.AppUserId == userId)
-            .MaxAsync(p => p.LastModified);
+            .Select(p => p.LastModified)
+            .DefaultIfEmpty()
+            .MaxAsync();
 
 
         // First get the total pages per library
@@ -126,12 +129,23 @@ public class StatisticService : IStatisticService
 
         var earliestReadDate = await _context.AppUserProgresses
             .Where(p => p.AppUserId == userId)
-            .MinAsync(p => p.Created);
+            .Select(p => p.Created)
+            .DefaultIfEmpty()
+            .MinAsync();
 
-        var timeDifference = DateTime.Now - earliestReadDate;
-        var deltaWeeks = (int)Math.Ceiling(timeDifference.TotalDays / 7);
+        if (earliestReadDate == DateTime.MinValue)
+        {
+            averageReadingTimePerWeek = 0;
+        }
+        else
+        {
+            var timeDifference = DateTime.Now - earliestReadDate;
+            var deltaWeeks = (int)Math.Ceiling(timeDifference.TotalDays / 7);
 
-        averageReadingTimePerWeek /= deltaWeeks;
+            averageReadingTimePerWeek /= deltaWeeks;
+        }
+
+
 
 
         return new UserReadStatistics()
@@ -594,7 +608,6 @@ public class StatisticService : IStatisticService
                     .Contains(c.Id))
             })
             .OrderByDescending(d => d.Chapters.Sum(c => c.AvgHoursToRead))
-            .Take(5)
             .ToList();
 
 
@@ -614,16 +627,17 @@ public class StatisticService : IStatisticService
             chapterLibLookup.Add(cl.ChapterId, cl.LibraryId);
         }
 
-        var user = new Dictionary<int, Dictionary<LibraryType, long>>();
+        var user = new Dictionary<int, Dictionary<LibraryType, float>>();
         foreach (var userChapter in topUsersAndReadChapters)
         {
-            if (!user.ContainsKey(userChapter.User.Id)) user.Add(userChapter.User.Id, new Dictionary<LibraryType, long>());
+            if (!user.ContainsKey(userChapter.User.Id)) user.Add(userChapter.User.Id, []);
             var libraryTimes = user[userChapter.User.Id];
 
             foreach (var chapter in userChapter.Chapters)
             {
                 var library = libraries.First(l => l.Id == chapterLibLookup[chapter.Id]);
-                if (!libraryTimes.ContainsKey(library.Type)) libraryTimes.Add(library.Type, 0L);
+                libraryTimes.TryAdd(library.Type, 0f);
+
                 var existingHours = libraryTimes[library.Type];
                 libraryTimes[library.Type] = existingHours + chapter.AvgHoursToRead;
             }

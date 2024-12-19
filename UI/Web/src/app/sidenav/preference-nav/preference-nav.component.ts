@@ -2,15 +2,17 @@ import {AfterViewInit, ChangeDetectionStrategy, ChangeDetectorRef, Component, De
 import {TranslocoDirective} from "@jsverse/transloco";
 import {AsyncPipe, DOCUMENT, NgClass} from "@angular/common";
 import {NavService} from "../../_services/nav.service";
-import {AccountService, Role} from "../../_services/account.service";
+import {AccountService, allRoles, Role} from "../../_services/account.service";
 import {SideNavItemComponent} from "../_components/side-nav-item/side-nav-item.component";
-import {ActivatedRoute, RouterLink} from "@angular/router";
+import {ActivatedRoute, NavigationEnd, Router, RouterLink} from "@angular/router";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {SettingFragmentPipe} from "../../_pipes/setting-fragment.pipe";
-import {map, Observable, of, shareReplay, switchMap, take} from "rxjs";
+import {map, Observable, of, shareReplay, switchMap, take, tap} from "rxjs";
 import {ServerService} from "../../_services/server.service";
 import {ScrobblingService} from "../../_services/scrobbling.service";
 import {User} from "../../_models/user";
+import {filter} from "rxjs/operators";
+import {Breakpoint, UtilityService} from "../../shared/_services/utility.service";
 
 export enum SettingsTabId {
 
@@ -49,11 +51,16 @@ interface PrefSection {
 class SideNavItem {
   fragment: SettingsTabId;
   roles: Array<Role> = [];
+  /**
+   * If you have any of these, the item will be restricted
+   */
+  restrictRoles: Array<Role> = [];
   badgeCount$?: Observable<number> | undefined;
 
-  constructor(fragment: SettingsTabId, roles: Array<Role> = [], badgeCount$: Observable<number> | undefined = undefined) {
+  constructor(fragment: SettingsTabId, roles: Array<Role> = [], badgeCount$: Observable<number> | undefined = undefined, restrictRoles: Array<Role> = []) {
     this.fragment = fragment;
     this.roles = roles;
+    this.restrictRoles = restrictRoles;
     this.badgeCount$ = badgeCount$;
   }
 }
@@ -66,7 +73,6 @@ class SideNavItem {
     NgClass,
     AsyncPipe,
     SideNavItemComponent,
-    RouterLink,
     SettingFragmentPipe
   ],
   templateUrl: './preference-nav.component.html',
@@ -82,8 +88,11 @@ export class PreferenceNavComponent implements AfterViewInit {
   private readonly route = inject(ActivatedRoute);
   private readonly serverService = inject(ServerService);
   private readonly scrobbleService = inject(ScrobblingService);
+  private readonly router = inject(Router);
+  protected readonly utilityService = inject(UtilityService);
   private readonly document = inject(DOCUMENT);
 
+  hasActiveLicense = false;
   /**
    * This links to settings.component.html which has triggers on what underlying component to render out.
    */
@@ -93,7 +102,7 @@ export class PreferenceNavComponent implements AfterViewInit {
       children: [
         new SideNavItem(SettingsTabId.Account, []),
         new SideNavItem(SettingsTabId.Preferences),
-        new SideNavItem(SettingsTabId.Customize),
+        new SideNavItem(SettingsTabId.Customize, [], undefined, [Role.ReadOnly]),
         new SideNavItem(SettingsTabId.Clients),
         new SideNavItem(SettingsTabId.Theme),
         new SideNavItem(SettingsTabId.Devices),
@@ -106,16 +115,22 @@ export class PreferenceNavComponent implements AfterViewInit {
         new SideNavItem(SettingsTabId.General, [Role.Admin]),
         new SideNavItem(SettingsTabId.Media, [Role.Admin]),
         new SideNavItem(SettingsTabId.Email, [Role.Admin]),
-        new SideNavItem(SettingsTabId.Statistics, [Role.Admin]),
-        new SideNavItem(SettingsTabId.System, [Role.Admin]),
-
+        new SideNavItem(SettingsTabId.Users, [Role.Admin]),
+        new SideNavItem(SettingsTabId.Libraries, [Role.Admin]),
+        new SideNavItem(SettingsTabId.Tasks, [Role.Admin]),
       ]
     },
     {
-      title: 'manage-section-title',
+      title: 'import-section-title',
       children: [
-        new SideNavItem(SettingsTabId.Users, [Role.Admin]),
-        new SideNavItem(SettingsTabId.Libraries, [Role.Admin]),
+        new SideNavItem(SettingsTabId.CBLImport, [], undefined, [Role.ReadOnly]),
+      ]
+    },
+    {
+      title: 'info-section-title',
+      children: [
+        new SideNavItem(SettingsTabId.System, [Role.Admin]),
+        new SideNavItem(SettingsTabId.Statistics, [Role.Admin]),
         new SideNavItem(SettingsTabId.MediaIssues, [Role.Admin],
           this.accountService.currentUser$.pipe(
             take(1),
@@ -132,13 +147,6 @@ export class PreferenceNavComponent implements AfterViewInit {
               }
             })
           )),
-        new SideNavItem(SettingsTabId.Tasks, [Role.Admin]),
-      ]
-    },
-    {
-      title: 'import-section-title',
-      children: [
-        new SideNavItem(SettingsTabId.CBLImport, []),
       ]
     },
     {
@@ -148,13 +156,28 @@ export class PreferenceNavComponent implements AfterViewInit {
       ]
     }
   ];
+  collapseSideNavOnMobileNav$ = this.router.events.pipe(
+    filter(event => event instanceof NavigationEnd),
+    takeUntilDestroyed(this.destroyRef),
+    map(evt => evt as NavigationEnd),
+    switchMap(_ => this.utilityService.activeBreakpoint$),
+    filter((b) => b < Breakpoint.Tablet),
+    switchMap(() => this.navService.sideNavCollapsed$),
+    take(1),
+    filter(collapsed => !collapsed),
+    tap(c => {
+      this.navService.collapseSideNav(true);
+    }),
+  );
 
-
-  hasActiveLicense = false;
 
   constructor() {
+    this.collapseSideNavOnMobileNav$.subscribe();
 
-    this.navService.collapseSideNav(false);
+    // Ensure that on mobile, we are collapsed by default
+    if (this.utilityService.getActiveBreakpoint() < Breakpoint.Tablet) {
+      this.navService.collapseSideNav(true);
+    }
 
     this.accountService.hasValidLicense$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(res => {
       if (res) {
@@ -179,10 +202,10 @@ export class PreferenceNavComponent implements AfterViewInit {
                 ))
             );
           }
-          if (this.sections[3].children.length === 1) {
-            this.sections[3].children.push(new SideNavItem(SettingsTabId.MALStackImport, []));
-          }
 
+          if (this.sections[2].children.length === 1) {
+            this.sections[2].children.push(new SideNavItem(SettingsTabId.MALStackImport, []));
+          }
         }
 
         this.scrollToActiveItem();
@@ -206,7 +229,20 @@ export class PreferenceNavComponent implements AfterViewInit {
   }
 
   hasAnyChildren(user: User, section: PrefSection) {
-    return section.children.filter(item => this.accountService.hasAnyRole(user, item.roles)).length > 0;
+    // Filter out items where the user has a restricted role
+    const visibleItems = section.children.filter(item =>
+      item.restrictRoles.length === 0 || !this.accountService.hasAnyRole(user, item.restrictRoles)
+    );
+
+    // Check if the user has any allowed roles in the remaining items
+    return visibleItems.some(item =>
+      this.accountService.hasAnyRole(user, item.roles)
+    );
   }
 
+  collapse() {
+    this.navService.toggleSideNav();
+  }
+
+  protected readonly Breakpoint = Breakpoint;
 }

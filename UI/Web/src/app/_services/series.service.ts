@@ -15,11 +15,12 @@ import { Volume } from '../_models/volume';
 import { ImageService } from './image.service';
 import { TextResonse } from '../_types/text-response';
 import { SeriesFilterV2 } from '../_models/metadata/v2/series-filter-v2';
-import { UserReview } from "../_single-module/review-card/user-review";
-import { Rating } from "../_models/rating";
-import { Recommendation } from "../_models/series-detail/recommendation";
-import { ExternalSeriesDetail } from "../_models/series-detail/external-series-detail";
-import { NextExpectedChapter } from "../_models/series-detail/next-expected-chapter";
+import {UserReview} from "../_single-module/review-card/user-review";
+import {Rating} from "../_models/rating";
+import {Recommendation} from "../_models/series-detail/recommendation";
+import {ExternalSeriesDetail} from "../_models/series-detail/external-series-detail";
+import {NextExpectedChapter} from "../_models/series-detail/next-expected-chapter";
+import {QueryContext} from "../_models/metadata/v2/query-context";
 
 @Injectable({
   providedIn: 'root'
@@ -33,15 +34,15 @@ export class SeriesService {
   constructor(private httpClient: HttpClient, private imageService: ImageService,
     private utilityService: UtilityService) { }
 
-  getAllSeriesV2(pageNum?: number, itemsPerPage?: number, filter?: SeriesFilterV2) {
+  getAllSeriesV2(pageNum?: number, itemsPerPage?: number, filter?: SeriesFilterV2, context: QueryContext = QueryContext.None) {
     let params = new HttpParams();
     params = this.utilityService.addPaginationIfExists(params, pageNum, itemsPerPage);
     const data = filter || {};
 
-    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/all-v2', data, { observe: 'response', params }).pipe(
-      map((response: any) => {
-        return this.utilityService.createPaginatedResult(response, this.paginatedResults);
-      })
+    return this.httpClient.post<PaginatedResult<Series[]>>(this.baseUrl + 'series/all-v2?context=' + context, data, {observe: 'response', params}).pipe(
+        map((response: any) => {
+          return this.utilityService.createPaginatedResult(response, this.paginatedResults);
+        })
     );
   }
 
@@ -143,8 +144,8 @@ export class SeriesService {
   }
 
 
-  refreshMetadata(series: Series, force = true) {
-    return this.httpClient.post(this.baseUrl + 'series/refresh-metadata', { libraryId: series.libraryId, seriesId: series.id, forceUpdate: force });
+  refreshMetadata(series: Series, force = true, forceColorscape = true) {
+    return this.httpClient.post(this.baseUrl + 'series/refresh-metadata', {libraryId: series.libraryId, seriesId: series.id, forceUpdate: force, forceColorscape});
   }
 
   scan(libraryId: number, seriesId: number, force = false) {

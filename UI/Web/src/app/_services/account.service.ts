@@ -14,6 +14,8 @@ import { AgeRating } from '../_models/metadata/age-rating';
 import { AgeRestriction } from '../_models/metadata/age-restriction';
 import { TextResonse } from '../_types/text-response';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {Action} from "./action-factory.service";
+import {CoverImageSize} from "../admin/_models/cover-image-size";
 
 export enum Role {
   Admin = 'Admin',
@@ -25,6 +27,17 @@ export enum Role {
   Login = 'Login',
   Promote = 'Promote',
 }
+
+export const allRoles = [
+  Role.Admin,
+  Role.ChangePassword,
+  Role.Bookmark,
+  Role.Download,
+  Role.ChangeRestriction,
+  Role.ReadOnly,
+  Role.Login,
+  Role.Promote,
+]
 
 @Injectable({
   providedIn: 'root'
@@ -78,14 +91,34 @@ export class AccountService {
     });
   }
 
-  hasAnyRole(user: User, roles: Array<Role>) {
+  canInvokeAction(user: User, action: Action) {
+    const isAdmin = this.hasAdminRole(user);
+    const canDownload = this.hasDownloadRole(user);
+    const canPromote = this.hasPromoteRole(user);
+
+    if (isAdmin) return true;
+    if (action === Action.Download) return canDownload;
+    if (action === Action.Promote || action === Action.UnPromote) return canPromote;
+    if (action === Action.Delete) return isAdmin;
+    return true;
+  }
+
+  hasAnyRole(user: User, roles: Array<Role>, restrictedRoles: Array<Role> = []) {
     if (!user || !user.roles) {
       return false;
     }
+
+    // If restricted roles are provided and the user has any of them, deny access
+    if (restrictedRoles.length > 0 && restrictedRoles.some(role => user.roles.includes(role))) {
+      return false;
+    }
+
+    // If roles are empty, allow access (no restrictions by roles)
     if (roles.length === 0) {
       return true;
     }
 
+    // Allow access if the user has any of the allowed roles
     return roles.some(role => user.roles.includes(role));
   }
 
@@ -168,7 +201,7 @@ export class AccountService {
     );
   }
 
-  setCurrentUser(user?: User) {
+  setCurrentUser(user?: User, refreshConnections = true) {
     if (user) {
       user.roles = [];
       const roles = this.getDecodedToken(user.token).role;
@@ -188,6 +221,8 @@ export class AccountService {
 
     this.currentUser = user;
     this.currentUserSource.next(user);
+
+    if (!refreshConnections) return;
 
     this.stopRefreshTokenTimer();
 
@@ -311,7 +346,7 @@ export class AccountService {
     return this.httpClient.post<Preferences>(this.baseUrl + 'users/update-preferences', userPreferences).pipe(map(settings => {
       if (this.currentUser !== undefined && this.currentUser !== null) {
         this.currentUser.preferences = settings;
-        this.setCurrentUser(this.currentUser);
+        this.setCurrentUser(this.currentUser, false);
 
         // Update the locale on disk (for logout and compact-number pipe)
         localStorage.setItem(AccountService.localeKey, this.currentUser.preferences.locale);

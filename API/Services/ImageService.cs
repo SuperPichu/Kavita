@@ -7,6 +7,7 @@ using System.Numerics;
 using System.Threading.Tasks;
 using API.Constants;
 using API.DTOs;
+using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Interfaces;
 using API.Extensions;
@@ -66,22 +67,21 @@ public interface IImageService
     /// <returns>File of written encoded image</returns>
     Task<string> ConvertToEncodingFormat(string filePath, string outputPath, EncodeFormat encodeFormat);
     Task<bool> IsImage(string filePath);
-    Task<string> DownloadFaviconAsync(string url, EncodeFormat encodeFormat);
     void UpdateColorScape(IHasCoverImage entity);
 }
 
 public class ImageService : IImageService
 {
-    public const string Name = "BookmarkService";
+    public const string Name = "ImageService";
     private readonly ILogger<ImageService> _logger;
     private readonly IDirectoryService _directoryService;
-    private readonly IEasyCachingProviderFactory _cacheFactory;
+
     public const string ChapterCoverImageRegex = @"v\d+_c\d+";
     public const string SeriesCoverImageRegex = @"series\d+";
     public const string CollectionTagCoverImageRegex = @"tag\d+";
     public const string ReadingListCoverImageRegex = @"readinglist\d+";
 
-    private const double WhiteThreshold = 0.90; // Colors with lightness above this are considered too close to white
+    private const double WhiteThreshold = 0.95; // Colors with lightness above this are considered too close to white
     private const double BlackThreshold = 0.25; // Colors with lightness below this are considered too close to black
 
 
@@ -99,26 +99,10 @@ public class ImageService : IImageService
     public const int LibraryThumbnailWidth = 32;
 
 
-    private static readonly string[] ValidIconRelations = {
-        "icon",
-        "apple-touch-icon",
-        "apple-touch-icon-precomposed",
-        "apple-touch-icon icon-precomposed" // ComicVine has it combined
-    };
-
-    /// <summary>
-    /// A mapping of urls that need to get the icon from another url, due to strangeness (like app.plex.tv loading a black icon)
-    /// </summary>
-    private static readonly IDictionary<string, string> FaviconUrlMapper = new Dictionary<string, string>
-    {
-        ["https://app.plex.tv"] = "https://plex.tv"
-    };
-
-    public ImageService(ILogger<ImageService> logger, IDirectoryService directoryService, IEasyCachingProviderFactory cacheFactory)
+    public ImageService(ILogger<ImageService> logger, IDirectoryService directoryService)
     {
         _logger = logger;
         _directoryService = directoryService;
-        _cacheFactory = cacheFactory;
     }
 
     public void ExtractImages(string? fileFilePath, string targetDirectory, int fileCount = 1)
@@ -334,104 +318,7 @@ public class ImageService : IImageService
         return false;
     }
 
-    public async Task<string> DownloadFaviconAsync(string url, EncodeFormat encodeFormat)
-    {
-        // Parse the URL to get the domain (including subdomain)
-        var uri = new Uri(url);
-        var domain = uri.Host.Replace(Environment.NewLine, string.Empty);
-        var baseUrl = uri.Scheme + "://" + uri.Host;
 
-
-        var provider = _cacheFactory.GetCachingProvider(EasyCacheProfiles.Favicon);
-        var res = await provider.GetAsync<string>(baseUrl);
-        if (res.HasValue)
-        {
-            _logger.LogInformation("Kavita has already tried to fetch from {BaseUrl} and failed. Skipping duplicate check", baseUrl);
-            throw new KavitaException($"Kavita has already tried to fetch from {baseUrl} and failed. Skipping duplicate check");
-        }
-
-        await provider.SetAsync(baseUrl, string.Empty, TimeSpan.FromDays(10));
-        if (FaviconUrlMapper.TryGetValue(baseUrl, out var value))
-        {
-            url = value;
-        }
-
-        var correctSizeLink = string.Empty;
-
-        try
-        {
-            var htmlContent = url.GetStringAsync().Result;
-            var htmlDocument = new HtmlDocument();
-            htmlDocument.LoadHtml(htmlContent);
-            var pngLinks = htmlDocument.DocumentNode.Descendants("link")
-                .Where(link => ValidIconRelations.Contains(link.GetAttributeValue("rel", string.Empty)))
-                .Select(link => link.GetAttributeValue("href", string.Empty))
-                .Where(href => href.Split("?")[0].EndsWith(".png", StringComparison.InvariantCultureIgnoreCase))
-                .ToList();
-
-            correctSizeLink = (pngLinks?.Find(pngLink => pngLink.Contains("32")) ?? pngLinks?.FirstOrDefault());
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error downloading favicon.png for {Domain}, will try fallback methods", domain);
-        }
-
-        try
-        {
-            if (string.IsNullOrEmpty(correctSizeLink))
-            {
-                correctSizeLink = FallbackToKavitaReaderFavicon(baseUrl);
-            }
-            if (string.IsNullOrEmpty(correctSizeLink))
-            {
-                throw new KavitaException($"Could not grab favicon from {baseUrl}");
-            }
-
-            var finalUrl = correctSizeLink;
-
-            // If starts with //, it's coming usually from an offsite cdn
-            if (correctSizeLink.StartsWith("//"))
-            {
-                finalUrl = "https:" + correctSizeLink;
-            }
-            else if (!correctSizeLink.StartsWith(uri.Scheme))
-            {
-                finalUrl = Url.Combine(baseUrl, correctSizeLink);
-            }
-
-            _logger.LogTrace("Fetching favicon from {Url}", finalUrl);
-            // Download the favicon.ico file using Flurl
-            var faviconStream = await finalUrl
-                .AllowHttpStatus("2xx,304")
-                .GetStreamAsync();
-
-            // Create the destination file path
-            using var image = Image.PngloadStream(faviconStream);
-            var filename = ImageService.GetWebLinkFormat(baseUrl, encodeFormat);
-            switch (encodeFormat)
-            {
-                case EncodeFormat.PNG:
-                    image.Pngsave(Path.Combine(_directoryService.FaviconDirectory, filename));
-                    break;
-                case EncodeFormat.WEBP:
-                    image.Webpsave(Path.Combine(_directoryService.FaviconDirectory, filename));
-                    break;
-                case EncodeFormat.AVIF:
-                    image.Heifsave(Path.Combine(_directoryService.FaviconDirectory, filename));
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(encodeFormat), encodeFormat, null);
-            }
-
-
-            _logger.LogDebug("Favicon.png for {Domain} downloaded and saved successfully", domain);
-            return filename;
-        } catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error downloading favicon.png for {Domain}", domain);
-            throw;
-        }
-    }
 
     private static (Vector3?, Vector3?) GetPrimarySecondaryColors(string imagePath)
     {
@@ -439,9 +326,11 @@ public class ImageService : IImageService
         // Resize the image to speed up processing
         var resizedImage = image.Resize(0.1);
 
+        var processedImage = PreProcessImage(resizedImage);
+
 
         // Convert image to RGB array
-        var pixels = resizedImage.WriteToMemory().ToArray();
+        var pixels = processedImage.WriteToMemory().ToArray();
 
         // Convert to list of Vector3 (RGB)
         var rgbPixels = new List<Vector3>();
@@ -454,6 +343,9 @@ public class ImageService : IImageService
         var clusters = KMeansClustering(rgbPixels, 4);
 
         var sorted = SortByVibrancy(clusters);
+
+        // Ensure white and black are not selected as primary/secondary colors
+        sorted = sorted.Where(c => !IsCloseToWhiteOrBlack(c)).ToList();
 
         if (sorted.Count >= 2)
         {
@@ -488,17 +380,18 @@ public class ImageService : IImageService
 
     private static Image PreProcessImage(Image image)
     {
+        return image;
         // Create a mask for white and black pixels
         var whiteMask = image.Colourspace(Enums.Interpretation.Lab)[0] > (WhiteThreshold * 100);
         var blackMask = image.Colourspace(Enums.Interpretation.Lab)[0] < (BlackThreshold * 100);
 
         // Create a replacement color (e.g., medium gray)
-        var replacementColor = new[] { 128.0, 128.0, 128.0 };
+        var replacementColor = new[] { 240.0, 240.0, 240.0 };
 
         // Apply the masks to replace white and black pixels
         var processedImage = image.Copy();
         processedImage = processedImage.Ifthenelse(whiteMask, replacementColor);
-        processedImage = processedImage.Ifthenelse(blackMask, replacementColor);
+        //processedImage = processedImage.Ifthenelse(blackMask, replacementColor);
 
         return processedImage;
     }
@@ -565,25 +458,26 @@ public class ImageService : IImageService
         return centroids;
     }
 
-    // public static Vector3 GetComplementaryColor(Vector3 color)
-    // {
-    //     // Simple complementary color calculation
-    //     return new Vector3(255 - color.X, 255 - color.Y, 255 - color.Z);
-    // }
-
     public static List<Vector3> SortByBrightness(List<Vector3> colors)
     {
         return colors.OrderBy(c => 0.299 * c.X + 0.587 * c.Y + 0.114 * c.Z).ToList();
     }
 
-    public static List<Vector3> SortByVibrancy(List<Vector3> colors)
+    private static List<Vector3> SortByVibrancy(List<Vector3> colors)
     {
         return colors.OrderByDescending(c =>
         {
-            float max = Math.Max(c.X, Math.Max(c.Y, c.Z));
-            float min = Math.Min(c.X, Math.Min(c.Y, c.Z));
+            var max = Math.Max(c.X, Math.Max(c.Y, c.Z));
+            var min = Math.Min(c.X, Math.Min(c.Y, c.Z));
             return (max - min) / max;
         }).ToList();
+    }
+
+    private static bool IsCloseToWhiteOrBlack(Vector3 color)
+    {
+        var threshold = 30;
+        return (color.X > 255 - threshold && color.Y > 255 - threshold && color.Z > 255 - threshold) ||
+               (color.X < threshold && color.Y < threshold && color.Z < threshold);
     }
 
     private static string RgbToHex(Vector3 color)
@@ -686,33 +580,12 @@ public class ImageService : IImageService
         };
     }
 
-    private static string FallbackToKavitaReaderFavicon(string baseUrl)
-    {
-        var correctSizeLink = string.Empty;
-        var allOverrides = "https://kavitareader.com/assets/favicons/urls.txt".GetStringAsync().Result;
-        if (!string.IsNullOrEmpty(allOverrides))
-        {
-            var cleanedBaseUrl = baseUrl.Replace("https://", string.Empty);
-            var externalFile = allOverrides
-                .Split("\n")
-                .FirstOrDefault(url =>
-                    cleanedBaseUrl.Equals(url.Replace(".png", string.Empty)) ||
-                    cleanedBaseUrl.Replace("www.", string.Empty).Equals(url.Replace(".png", string.Empty)
-                    ));
-            if (string.IsNullOrEmpty(externalFile))
-            {
-                throw new KavitaException($"Could not grab favicon from {baseUrl}");
-            }
 
-            correctSizeLink = "https://kavitareader.com/assets/favicons/" + externalFile;
-        }
-
-        return correctSizeLink;
-    }
 
     /// <inheritdoc />
     public string CreateThumbnailFromBase64(string encodedImage, string fileName, EncodeFormat encodeFormat, int thumbnailWidth = ThumbnailWidth)
     {
+        // TODO: This code has no concept of cropping nor Thumbnail Size
         try
         {
             using var thumbnail = Image.ThumbnailBuffer(Convert.FromBase64String(encodedImage), thumbnailWidth);
@@ -737,6 +610,16 @@ public class ImageService : IImageService
     public static string GetChapterFormat(int chapterId, int volumeId)
     {
         return $"v{volumeId}_c{chapterId}";
+    }
+
+    /// <summary>
+    /// Returns the name format for a volume cover image (custom)
+    /// </summary>
+    /// <param name="volumeId"></param>
+    /// <returns></returns>
+    public static string GetVolumeFormat(int volumeId)
+    {
+        return $"v{volumeId}";
     }
 
     /// <summary>
@@ -790,9 +673,24 @@ public class ImageService : IImageService
         return $"thumbnail{chapterId}";
     }
 
+    /// <summary>
+    /// Returns the name format for a person cover
+    /// </summary>
+    /// <param name="personId"></param>
+    /// <returns></returns>
+    public static string GetPersonFormat(int personId)
+    {
+        return $"person{personId}";
+    }
+
     public static string GetWebLinkFormat(string url, EncodeFormat encodeFormat)
     {
         return $"{new Uri(url).Host.Replace("www.", string.Empty)}{encodeFormat.GetExtension()}";
+    }
+
+    public static string GetPublisherFormat(string publisher, EncodeFormat encodeFormat)
+    {
+        return $"{publisher}{encodeFormat.GetExtension()}";
     }
 
 
@@ -881,4 +779,6 @@ public class ImageService : IImageService
 
         return Color.FromArgb(r, g, b);
     }
+
+
 }

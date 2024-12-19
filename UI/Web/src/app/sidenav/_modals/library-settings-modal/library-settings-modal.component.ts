@@ -347,7 +347,7 @@ export class LibrarySettingsModalComponent implements OnInit {
   }
 
   resetCoverImage() {
-    this.uploadService.updateLibraryCoverImage(this.library!.id, '').subscribe(() => {});
+    this.uploadService.updateLibraryCoverImage(this.library!.id, '', false).subscribe(() => {});
   }
 
   openDirectoryPicker() {
@@ -397,6 +397,9 @@ export class LibrarySettingsModalComponent implements OnInit {
         break;
       case Action.GenerateColorScape:
         await this.actionService.refreshLibraryMetadata(this.library!, undefined, false);
+        break;
+      case (Action.AnalyzeFiles):
+        await this.actionService.analyzeFiles(this.library!);
         break;
       case Action.Delete:
         await this.actionService.deleteLibrary(this.library!, () => {

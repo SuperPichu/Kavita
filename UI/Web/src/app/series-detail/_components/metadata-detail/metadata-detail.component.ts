@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, Component, ContentChild, inject, Input, TemplateRef} from '@angular/core';
-import {CommonModule, NgTemplateOutlet} from '@angular/common';
+import {NgTemplateOutlet} from '@angular/common';
 import {A11yClickDirective} from "../../../shared/a11y-click.directive";
 import {BadgeExpanderComponent} from "../../../shared/badge-expander/badge-expander.component";
 import {TagBadgeComponent, TagBadgeCursor} from "../../../shared/tag-badge/tag-badge.component";
@@ -28,6 +28,7 @@ export class MetadataDetailComponent {
   @Input({required: true}) libraryId!: number;
   @Input({required: true}) heading!: string;
   @Input() queryParam: FilterField = FilterField.None;
+  @Input() includeComma: boolean = true;
   @ContentChild('titleTemplate') titleTemplate!: TemplateRef<any>;
   @ContentChild('itemTemplate') itemTemplate?: TemplateRef<any>;
 

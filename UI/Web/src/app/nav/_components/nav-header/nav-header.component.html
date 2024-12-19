@@ -5,17 +5,18 @@
         <a class="visually-hidden-focusable focus-visible" href="javascript:void(0);" (click)="moveFocus()">{{t('skip-alt')}}</a>
 
         @if (navService.sideNavVisibility$ | async) {
-          <a class="side-nav-toggle" (click)="hideSideNav()"><i class="fas fa-bars"></i></a>
+          <a class="side-nav-toggle" (click)="toggleSideNav($event)"><i class="fas fa-bars" aria-hidden="true"></i></a>
         }
 
-
         <a class="navbar-brand dark-exempt" routerLink="/home" routerLinkActive="active">
-          <app-image width="28px" height="28px" imageUrl="assets/images/logo-32.png" classes="logo" />
-          <span class="d-none d-md-inline logo"> Kavita</span>
+          <app-image width="24px" height="24px" imageUrl="assets/images/logo-32.png" classes="logo-icon" />
+          <div class="d-none d-md-inline logo">
+            <span>Kavita</span>
+          </div>
         </a>
         <ul class="navbar-nav col me-auto">
           @if (accountService.currentUser$ | async; as user) {
-            <div class="nav-item">
+            <div class="nav-item search">
               <label for="nav-search" class="form-label visually-hidden">{{t('search-series-alt')}}</label>
               <div class="ng-autocomplete">
                 <app-grouped-typeahead
@@ -32,7 +33,7 @@
                 >
 
                   <ng-template #libraryTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickLibraryResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickLibraryResult(item)">
                       <div class="ms-1">
                         <span>{{item.name}}</span>
                       </div>
@@ -40,7 +41,7 @@
                   </ng-template>
 
                   <ng-template #seriesTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickSeriesSearchResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickSeriesSearchResult(item)">
                       <div style="width: 24px" class="me-1">
                         <app-image class="me-3 search-result" width="24px" [imageUrl]="imageService.getSeriesCoverImage(item.seriesId)"></app-image>
                       </div>
@@ -59,7 +60,7 @@
                   </ng-template>
 
                   <ng-template #bookmarkTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickBookmarkSearchResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickBookmarkSearchResult(item)">
                       <div style="width: 24px" class="me-1">
                         <app-image class="me-3 search-result" width="24px" [imageUrl]="imageService.getSeriesCoverImage(item.seriesId)"></app-image>
                       </div>
@@ -78,7 +79,7 @@
                   </ng-template>
 
                   <ng-template #collectionTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickCollectionSearchResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickCollectionSearchResult(item)">
                       <div style="width: 24px" class="me-1">
                         <app-image class="me-3 search-result" width="24px" [imageUrl]="imageService.getCollectionCoverImage(item.id)"></app-image>
                       </div>
@@ -93,7 +94,7 @@
                   </ng-template>
 
                   <ng-template #readingListTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickReadingListSearchResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickReadingListSearchResult(item)">
                       <div class="ms-1">
                         <span>{{item.title}}</span>
                         <app-promoted-icon [promoted]="item.promoted"></app-promoted-icon>
@@ -102,22 +103,25 @@
                   </ng-template>
 
                   <ng-template #tagTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="goToOther(FilterField.Tags, item.id)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="goToOther(FilterField.Tags, item.id)">
                       <div class="ms-1">
                         <span>{{item.title}}</span>
                       </div>
                     </div>
                   </ng-template>
 
-                  <ng-template #personTemplate let-item>
-                    <div style="display: flex;padding: 5px;" class="clickable" (click)="goToPerson(item.role, item.id)">
-                      <div class="ms-1">
-
-                        <div [innerHTML]="item.name"></div>
-                        <div class="text-light fst-italic">{{item.role | personRole}}</div>
-                      </div>
-                    </div>
-                  </ng-template>
+              <ng-template #personTemplate let-item>
+                <div style="display: flex;padding: 5px;" class="clickable" (click)="goToPerson(item)">
+                  <div style="width: 24px" class="me-1">
+                    <app-image class="me-3 search-result"
+                               [styles]="{'background': 'none', 'max-height': '24px', 'height': '24px', 'width': '24px', 'border-radius': '50%'}"
+                               width="24px" [imageUrl]="imageService.getPersonImage(item.id)" [errorImage]="imageService.noPersonImage"></app-image>
+                  </div>
+                  <div class="ms-1">
+                    <div>{{item.name}}</div>
+                  </div>
+                </div>
+              </ng-template>
 
                   <ng-template #genreTemplate let-item>
                     <div style="display: flex;padding: 5px;" class="clickable" (click)="goToOther(FilterField.Genres, item.id)">
@@ -142,7 +146,7 @@
                   </ng-template>
 
                   <ng-template #fileTemplate let-item>
-                    <div style="display: flex;padding: 5px;" (click)="clickFileSearchResult(item)">
+                    <div class="clickable" style="display: flex;padding: 5px;" (click)="clickFileSearchResult(item)">
                       <div class="ms-1">
                         <app-series-format [format]="item.format"></app-series-format>
                         <span>{{item.filePath}}</span>
@@ -159,8 +163,6 @@
           }
         </ul>
 
-
-        @if (!searchFocused) {
           @if((breakpoint$ | async)! > Breakpoint.Tablet) {
             @if (backToTopNeeded) {
               <div class="back-to-top">
@@ -173,14 +175,14 @@
           }
 
           @if (accountService.currentUser$ | async; as user) {
-            <div class="nav-item">
+            <div class="nav-item me-2">
               <app-nav-events-toggle [user]="user"></app-nav-events-toggle>
             </div>
 
             @if((breakpoint$ | async)! <= Breakpoint.Mobile) {
               <button class="btn btn-outline-secondary primary-text" (click)="openLinkSelectionMenu()">
                 <i class="fa-solid fa-user-circle align-self-center phone-hidden d-xs-inline-block d-sm-inline-block d-md-none"></i>
-                <span class="d-none d-xs-none d-sm-none d-md-inline-block">{{user.username | sentenceCase}}</span>
+                <span class="d-none d-xs-none d-sm-none d-md-inline-block fw-bold">{{user.username | sentenceCase}}</span>
               </button>
             } @else {
               <div class="nav-item not-xs-only">
@@ -193,7 +195,7 @@
               <div ngbDropdown class="nav-item dropdown d-sm-none d-md-block" display="dynamic" placement="bottom-right">
                 <button class="btn btn-outline-secondary primary-text" ngbDropdownToggle>
                   <i class="fa-solid fa-user-circle align-self-center phone-hidden d-xs-inline-block d-sm-inline-block d-md-none"></i>
-                  <span class="d-none d-xs-none d-sm-none d-md-inline-block">{{user.username | sentenceCase}}</span>
+                  <span class="d-none d-xs-none d-sm-none d-md-inline-block fw-bold">{{user.username | sentenceCase}}</span>
                 </button>
                 <div ngbDropdownMenu>
                   <a ngbDropdownItem routerLink="/all-filters/">{{t('all-filters')}}</a>
@@ -204,7 +206,7 @@
               </div>
             }
           }
-        }
+        
 
       </div>
     </nav>

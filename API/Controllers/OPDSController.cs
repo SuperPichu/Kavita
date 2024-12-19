@@ -549,12 +549,15 @@ public class OpdsController : BaseApiController
                 Id = readingListDto.Id.ToString(),
                 Title = readingListDto.Title,
                 Summary = readingListDto.Summary,
-                Links = new List<FeedLink>()
-                {
-                    CreateLink(FeedLinkRelation.SubSection, FeedLinkType.AtomNavigation, $"{prefix}{apiKey}/reading-list/{readingListDto.Id}"),
-                    CreateLink(FeedLinkRelation.Image, FeedLinkType.Image, $"{baseUrl}api/image/readinglist-cover?readingListId={readingListDto.Id}&apiKey={apiKey}"),
-                    CreateLink(FeedLinkRelation.Thumbnail, FeedLinkType.Image, $"{baseUrl}api/image/readinglist-cover?readingListId={readingListDto.Id}&apiKey={apiKey}")
-                }
+                Links =
+                [
+                    CreateLink(FeedLinkRelation.SubSection, FeedLinkType.AtomNavigation,
+                        $"{prefix}{apiKey}/reading-list/{readingListDto.Id}"),
+                    CreateLink(FeedLinkRelation.Image, FeedLinkType.Image,
+                        $"{baseUrl}api/image/readinglist-cover?readingListId={readingListDto.Id}&apiKey={apiKey}"),
+                    CreateLink(FeedLinkRelation.Thumbnail, FeedLinkType.Image,
+                        $"{baseUrl}api/image/readinglist-cover?readingListId={readingListDto.Id}&apiKey={apiKey}")
+                ]
             });
         }
 
@@ -573,7 +576,7 @@ public class OpdsController : BaseApiController
 
     [HttpGet("{apiKey}/reading-list/{readingListId}")]
     [Produces("application/xml")]
-    public async Task<IActionResult> GetReadingListItems(int readingListId, string apiKey)
+    public async Task<IActionResult> GetReadingListItems(int readingListId, string apiKey, [FromQuery] int pageNumber = 0)
     {
         var userId = await GetUser(apiKey);
         if (!(await _unitOfWork.SettingsRepository.GetSettingsDtoAsync()).EnableOpds)
@@ -592,7 +595,7 @@ public class OpdsController : BaseApiController
         var feed = CreateFeed(readingList.Title + " " + await _localizationService.Translate(userId, "reading-list"), $"{apiKey}/reading-list/{readingListId}", apiKey, prefix);
         SetFeedId(feed, $"reading-list-{readingListId}");
 
-        var items = (await _unitOfWork.ReadingListRepository.GetReadingListItemDtosByIdAsync(readingListId, userId)).ToList();
+        var items = await _unitOfWork.ReadingListRepository.GetReadingListItemDtosByIdAsync(readingListId, userId);
         foreach (var item in items)
         {
             var chapterDto = await _unitOfWork.ChapterRepository.GetChapterDtoAsync(item.ChapterId);
@@ -873,6 +876,7 @@ public class OpdsController : BaseApiController
         feed.Links.Add(CreateLink(FeedLinkRelation.Image, FeedLinkType.Image, $"{baseUrl}api/image/series-cover?seriesId={seriesId}&apiKey={apiKey}"));
 
         var chapterDict = new Dictionary<int, short>();
+        var fileDict = new Dictionary<int, short>();
         var seriesDetail =  await _seriesService.GetSeriesDetail(seriesId, userId);
         foreach (var volume in seriesDetail.Volumes)
         {
@@ -881,15 +885,18 @@ public class OpdsController : BaseApiController
             foreach (var chapter in chaptersForVolume)
             {
                 var chapterId = chapter.Id;
+                if (!chapterDict.TryAdd(chapterId, 0)) continue;
+
                 var chapterDto = _mapper.Map<ChapterDto>(chapter);
                 foreach (var mangaFile in chapter.Files)
                 {
-                    chapterDict.Add(chapterId, 0);
+                    // If a chapter has multiple files that are within one chapter, this dict prevents duplicate key exception
+                    if (!fileDict.TryAdd(mangaFile.Id, 0)) continue;
+
                     feed.Entries.Add(await CreateChapterWithFile(userId, seriesId, volume.Id, chapterId, _mapper.Map<MangaFileDto>(mangaFile), series,
                         chapterDto, apiKey, prefix, baseUrl));
                 }
             }
-
         }
 
         var chapters = seriesDetail.StorylineChapters;
@@ -904,6 +911,8 @@ public class OpdsController : BaseApiController
             var chapterDto = _mapper.Map<ChapterDto>(chapter);
             foreach (var mangaFile in files)
             {
+                // If a chapter has multiple files that are within one chapter, this dict prevents duplicate key exception
+                if (!fileDict.TryAdd(mangaFile.Id, 0)) continue;
                 feed.Entries.Add(await CreateChapterWithFile(userId, seriesId, chapter.VolumeId, chapter.Id, _mapper.Map<MangaFileDto>(mangaFile), series,
                     chapterDto, apiKey, prefix, baseUrl));
             }
@@ -915,6 +924,9 @@ public class OpdsController : BaseApiController
             var chapterDto = _mapper.Map<ChapterDto>(special);
             foreach (var mangaFile in files)
             {
+                // If a chapter has multiple files that are within one chapter, this dict prevents duplicate key exception
+                if (!fileDict.TryAdd(mangaFile.Id, 0)) continue;
+
                 feed.Entries.Add(await CreateChapterWithFile(userId, seriesId, special.VolumeId, special.Id, _mapper.Map<MangaFileDto>(mangaFile), series,
                     chapterDto, apiKey, prefix, baseUrl));
             }
@@ -934,9 +946,7 @@ public class OpdsController : BaseApiController
         var series = await _unitOfWork.SeriesRepository.GetSeriesDtoByIdAsync(seriesId, userId);
         var libraryType = await _unitOfWork.LibraryRepository.GetLibraryTypeAsync(series.LibraryId);
         var volume = await _unitOfWork.VolumeRepository.GetVolumeAsync(volumeId, VolumeIncludes.Chapters);
-        // var chapters =
-        //     (await _unitOfWork.ChapterRepository.GetChaptersAsync(volumeId))
-        //     .OrderBy(x => x.MinNumber, _chapterSortComparerDefaultLast);
+
         var feed = CreateFeed(series.Name + " - Volume " + volume!.Name + $" - {_seriesService.FormatChapterName(userId, libraryType)}s ",
             $"{apiKey}/series/{seriesId}/volume/{volumeId}", apiKey, prefix);
         SetFeedId(feed, $"series-{series.Id}-volume-{volume.Id}-{_seriesService.FormatChapterName(userId, libraryType)}s");
@@ -1082,15 +1092,6 @@ public class OpdsController : BaseApiController
         };
     }
 
-    private static FeedAuthor CreateAuthor(PersonDto person)
-    {
-        return new FeedAuthor()
-        {
-            Name = person.Name,
-            Uri = "http://opds-spec.org/author/" + person.Id
-        };
-    }
-
     private static FeedEntry CreateSeries(SearchResultDto searchResultDto, string apiKey, string prefix, string baseUrl)
     {
         return new FeedEntry()
@@ -1107,6 +1108,15 @@ public class OpdsController : BaseApiController
                 CreateLink(FeedLinkRelation.Thumbnail, FeedLinkType.Image,
                     $"{baseUrl}api/image/series-cover?seriesId={searchResultDto.SeriesId}&apiKey={apiKey}")
             ]
+        };
+    }
+
+    private static FeedAuthor CreateAuthor(PersonDto person)
+    {
+        return new FeedAuthor()
+        {
+            Name = person.Name,
+            Uri = "http://opds-spec.org/author/" + person.Id
         };
     }
 

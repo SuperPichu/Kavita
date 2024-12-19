@@ -1,8 +1,5 @@
+@use '../../series-detail-common';
 
-.title {
-  color: white;
-}
-
-.subtitle {
-  color: lightgrey;
+:host ::ng-deep .card-actions .btn.btn-actions {
+  padding: 0.375rem 0.75rem;
 }

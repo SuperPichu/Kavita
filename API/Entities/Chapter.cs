@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.IO;
 using API.Entities.Enums;
 using API.Entities.Interfaces;
 using API.Extensions;
@@ -118,17 +117,43 @@ public class Chapter : IEntityDate, IHasReadTimeEstimate, IHasCoverImage
     /// <inheritdoc cref="IHasReadTimeEstimate"/>
     public int MaxHoursToRead { get; set; }
     /// <inheritdoc cref="IHasReadTimeEstimate"/>
-    public int AvgHoursToRead { get; set; }
+    public float AvgHoursToRead { get; set; }
     /// <summary>
     /// Comma-separated link of urls to external services that have some relation to the Chapter
     /// </summary>
     public string WebLinks { get; set; } = string.Empty;
     public string ISBN { get; set; } = string.Empty;
 
+    #region Locks
+
+    public bool AgeRatingLocked { get; set; }
+    public bool TitleNameLocked { get; set; }
+    public bool GenresLocked { get; set; }
+    public bool TagsLocked { get; set; }
+    public bool WriterLocked { get; set; }
+    public bool CharacterLocked { get; set; }
+    public bool ColoristLocked { get; set; }
+    public bool EditorLocked { get; set; }
+    public bool InkerLocked { get; set; }
+    public bool ImprintLocked { get; set; }
+    public bool LettererLocked { get; set; }
+    public bool PencillerLocked { get; set; }
+    public bool PublisherLocked { get; set; }
+    public bool TranslatorLocked { get; set; }
+    public bool TeamLocked { get; set; }
+    public bool LocationLocked { get; set; }
+    public bool CoverArtistLocked { get; set; }
+    public bool LanguageLocked { get; set; }
+    public bool SummaryLocked { get; set; }
+    public bool ISBNLocked { get; set; }
+    public bool ReleaseDateLocked { get; set; }
+
+    #endregion
+
     /// <summary>
     /// All people attached at a Chapter level. Usually Comics will have different people per issue.
     /// </summary>
-    public ICollection<Person> People { get; set; } = new List<Person>();
+    public ICollection<ChapterPeople> People { get; set; } = new List<ChapterPeople>();
     /// <summary>
     /// Genres for the Chapter
     /// </summary>
@@ -167,22 +192,32 @@ public class Chapter : IEntityDate, IHasReadTimeEstimate, IHasCoverImage
     /// <returns></returns>
     public string GetNumberTitle()
     {
-        if (MinNumber.Is(MaxNumber))
+        // BUG: TODO: On non-english locales, for floats, the range will be 20,5 but the NumberTitle will return 20.5
+        // Have I fixed this with TryParse CultureInvariant
+        try
         {
-            if (MinNumber.Is(Parser.DefaultChapterNumber) && IsSpecial)
+            if (MinNumber.Is(MaxNumber))
             {
-                return Parser.RemoveExtensionIfSupported(Title);
+                if (MinNumber.Is(Parser.DefaultChapterNumber) && IsSpecial)
+                {
+                    return Parser.RemoveExtensionIfSupported(Title);
+                }
+
+                if (MinNumber.Is(0f) && !float.TryParse(Range, CultureInfo.InvariantCulture, out _))
+                {
+                    return $"{Range.ToString(CultureInfo.InvariantCulture)}";
+                }
+
+                return $"{MinNumber.ToString(CultureInfo.InvariantCulture)}";
+
             }
 
-            if (MinNumber.Is(0) && !float.TryParse(Range, CultureInfo.InvariantCulture, out _))
-            {
-                return $"{Range}";
-            }
-
-            return $"{MinNumber}";
-
+            return $"{MinNumber.ToString(CultureInfo.InvariantCulture)}-{MaxNumber.ToString(CultureInfo.InvariantCulture)}";
         }
-        return $"{MinNumber}-{MaxNumber}";
+        catch (Exception)
+        {
+            return MinNumber.ToString(CultureInfo.InvariantCulture);
+        }
     }
 
     /// <summary>

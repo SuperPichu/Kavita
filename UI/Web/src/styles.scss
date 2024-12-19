@@ -85,29 +85,39 @@ label, select, .clickable {
 
 // Needed for fullscreen
 app-root {
-  background-color: transparent;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary-color-scrollbar);
+  scrollbar-color: rgba(255,255,255,0.3);
 }
 
 ::-webkit-scrollbar {
-  width: 14px;
+  width: 10px !important;
 }
 
 ::-webkit-scrollbar-thumb {
   background-clip: padding-box;
-  background-color: var(--primary-color-scrollbar);
   border: 3px solid transparent;
   border-radius: 8px;
   min-height: 50px;
 }
 
 body {
-  scrollbar-gutter: stable both-edges;
+  font-family: 'Poppins', sans-serif;
+  overflow: hidden; // When this is enabled, it will break the webtoon reader. The nav.service will automatically remove/apply on toggling them
+  scrollbar-color: rgba(255,255,255,0.3) rgba(0, 0, 0, 0.1);
+  scrollbar-width: thin;
+  padding: 0;
+  margin: 0;
+
+  @media (max-width: $grid-breakpoints-lg) {
+    /* Setting this break the readers */
+    //margin-top: var(--nav-mobile-offset) !important;
+    //height: calc(var(--vh)* 100 - var(--nav-mobile-offset)) !important;
+  }
+
 }
 
 .setting-section-break {
   height: 1px;
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: var(--setting-break-color);
   margin: 30px 0;
 }

@@ -57,7 +57,20 @@ public static class IncludesExtensions
         if (includes.HasFlag(ChapterIncludes.People))
         {
             queryable = queryable
-                .Include(c => c.People);
+                .Include(c => c.People)
+                .ThenInclude(cp => cp.Person);
+        }
+
+        if (includes.HasFlag(ChapterIncludes.Genres))
+        {
+            queryable = queryable
+                .Include(c => c.Genres);
+        }
+
+        if (includes.HasFlag(ChapterIncludes.Tags))
+        {
+            queryable = queryable
+                .Include(c => c.Tags);
         }
 
         return queryable.AsSplitQuery();
@@ -69,25 +82,25 @@ public static class IncludesExtensions
         if (includes.HasFlag(VolumeIncludes.Files))
         {
             queryable = queryable
-                .Include(vol => vol.Chapters.OrderBy(c => c.SortOrder))
+                .Include(vol => vol.Chapters)
                 .ThenInclude(c => c.Files);
         } else if (includes.HasFlag(VolumeIncludes.Chapters))
         {
             queryable = queryable
-                .Include(vol => vol.Chapters.OrderBy(c => c.SortOrder));
+                .Include(vol => vol.Chapters);
         }
 
         if (includes.HasFlag(VolumeIncludes.People))
         {
             queryable = queryable
-                .Include(vol => vol.Chapters.OrderBy(c => c.SortOrder))
+                .Include(vol => vol.Chapters)
                 .ThenInclude(c => c.People);
         }
 
         if (includes.HasFlag(VolumeIncludes.Tags))
         {
             queryable = queryable
-                .Include(vol => vol.Chapters.OrderBy(c => c.SortOrder))
+                .Include(vol => vol.Chapters)
                 .ThenInclude(c => c.Tags);
         }
 
@@ -150,16 +163,15 @@ public static class IncludesExtensions
 
         if (includeFlags.HasFlag(SeriesIncludes.Metadata))
         {
-            query = query.Include(s => s.Metadata)
-                .ThenInclude(m => m.CollectionTags.OrderBy(g => g.NormalizedTitle))
+            query = query
                 .Include(s => s.Metadata)
                 .ThenInclude(m => m.Genres.OrderBy(g => g.NormalizedTitle))
                 .Include(s => s.Metadata)
                 .ThenInclude(m => m.People)
+                .ThenInclude(smp => smp.Person)
                 .Include(s => s.Metadata)
                 .ThenInclude(m => m.Tags.OrderBy(g => g.NormalizedTitle));
         }
-
 
         return query.AsSplitQuery();
     }

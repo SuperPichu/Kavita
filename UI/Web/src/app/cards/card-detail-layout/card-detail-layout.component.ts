@@ -3,7 +3,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ContentChild,
+  ContentChild, DestroyRef,
   ElementRef,
   EventEmitter,
   HostListener,
@@ -12,12 +12,12 @@ import {
   Input,
   OnChanges,
   OnInit,
-  Output,
+  Output, SimpleChange, SimpleChanges,
   TemplateRef,
   TrackByFunction,
   ViewChild
 } from '@angular/core';
-import {Router} from '@angular/router';
+import {NavigationStart, Router} from '@angular/router';
 import {VirtualScrollerComponent, VirtualScrollerModule} from '@iharbeck/ngx-virtual-scroller';
 import {FilterSettings} from 'src/app/metadata-filter/filter-settings';
 import {FilterUtilitiesService} from 'src/app/shared/_services/filter-utilities.service';
@@ -36,6 +36,9 @@ import {MetadataFilterComponent} from "../../metadata-filter/metadata-filter.com
 import {TranslocoDirective} from "@jsverse/transloco";
 import {CardActionablesComponent} from "../../_single-module/card-actionables/card-actionables.component";
 import {SeriesFilterV2} from "../../_models/metadata/v2/series-filter-v2";
+import {filter, map} from "rxjs/operators";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {tap} from "rxjs";
 
 
 const ANIMATION_TIME_MS = 0;
@@ -56,6 +59,7 @@ export class CardDetailLayoutComponent implements OnInit, OnChanges {
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly jumpbarService = inject(JumpbarService);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly Breakpoint = Breakpoint;
 
@@ -138,16 +142,32 @@ export class CardDetailLayoutComponent implements OnInit, OnChanges {
         this.virtualScroller.refresh();
       });
     }
+
+    this.router.events.pipe(
+      filter(event => event instanceof NavigationStart),
+      takeUntilDestroyed(this.destroyRef),
+      map(evt => evt as NavigationStart),
+      tap(_ => this.tryToSaveJumpKey()),
+    ).subscribe();
+
   }
 
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges): void {
     this.jumpBarKeysToRender = [...this.jumpBarKeys];
     this.resizeJumpBar();
 
     const startIndex = this.jumpbarService.getResumePosition(this.router.url);
     if (startIndex > 0) {
       setTimeout(() => this.virtualScroller.scrollToIndex(startIndex, true, 0, ANIMATION_TIME_MS), 10);
+      return;
+    }
+
+    if (changes.hasOwnProperty('isLoading')) {
+      const loadingChange = changes['isLoading'] as SimpleChange;
+      if (loadingChange.previousValue === true && loadingChange.currentValue === false) {
+        setTimeout(() => this.virtualScroller.scrollToIndex(0, true, 0, ANIMATION_TIME_MS), 10);
+      }
     }
   }
 
