@@ -1,11 +1,4 @@
-import {
-  AsyncPipe,
-  DOCUMENT,
-  Location,
-  NgClass,
-  NgStyle,
-  NgTemplateOutlet
-} from '@angular/common';
+import {AsyncPipe, DOCUMENT, Location, NgClass, NgStyle, NgTemplateOutlet} from '@angular/common';
 import {
   AfterContentChecked,
   ChangeDetectionStrategy,
@@ -120,6 +113,8 @@ import {CollectionTagService} from "../../../_services/collection-tag.service";
 import {UserCollection} from "../../../_models/collection-tag";
 import {CoverImageComponent} from "../../../_single-module/cover-image/cover-image.component";
 import {DefaultModalOptions} from "../../../_models/default-modal-options";
+import {LicenseService} from "../../../_services/license.service";
+import {PageBookmark} from "../../../_models/readers/page-bookmark";
 
 
 enum TabID {
@@ -164,6 +159,7 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
   private readonly modalService = inject(NgbModal);
   private readonly toastr = inject(ToastrService);
   protected readonly accountService = inject(AccountService);
+  protected readonly licenseService = inject(LicenseService);
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly libraryService = inject(LibraryService);
   private readonly titleService = inject(Title);
@@ -230,6 +226,7 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
 
   reviews: Array<UserReview> = [];
   plusReviews: Array<UserReview> = [];
+  bookmarks: Array<PageBookmark> = [];
   ratings: Array<Rating> = [];
   libraryType: LibraryType = LibraryType.Manga;
   seriesMetadata: SeriesMetadata | null = null;
@@ -477,7 +474,6 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
       } else if (event.event === EVENTS.ScanSeries) {
         const seriesScanEvent = event.payload as ScanSeriesEvent;
         if (seriesScanEvent.seriesId === this.seriesId) {
-          //this.loadSeries(this.seriesId);
           this.loadPageSource.next(false);
         }
       } else if (event.event === EVENTS.CoverUpdate) {
@@ -488,7 +484,6 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
       } else if (event.event === EVENTS.ChapterRemoved) {
         const removedEvent = event.payload as ChapterRemovedEvent;
         if (removedEvent.seriesId !== this.seriesId) return;
-        //this.loadSeries(this.seriesId, false);
         this.loadPageSource.next(false);
       }
     });
@@ -584,6 +579,13 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
       case Action.Download:
         if (this.downloadInProgress) return;
         this.downloadSeries();
+        break;
+      case Action.Match:
+        this.actionService.matchSeries(this.series, (refreshNeeded) => {
+          if (refreshNeeded) {
+            this.loadSeries(this.series.id, refreshNeeded);
+          }
+        });
         break;
       case Action.SendTo:
         {
@@ -704,7 +706,24 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
     this.collectionTagService.allCollectionsForSeries(seriesId, false).subscribe(tags => {
       this.collections = tags;
       this.cdRef.markForCheck();
-    })
+    });
+
+
+    this.readerService.getBookmarksForSeries(seriesId).subscribe(bookmarks => {
+      if (bookmarks.length > 0) {
+        this.bookmarks = Object.values(
+          bookmarks.reduce((acc, bookmark) => {
+            if (!acc[bookmark.seriesId]) {
+              acc[bookmark.seriesId] = bookmark; // Select the first one per seriesId
+            }
+            return acc;
+          }, {} as Record<number, PageBookmark>)
+        );
+      } else {
+        this.bookmarks = [];
+      }
+      this.cdRef.markForCheck();
+    });
 
     this.readerService.getTimeLeft(seriesId).subscribe((timeLeft) => {
       this.readingTimeLeft = timeLeft;
@@ -740,6 +759,13 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
       this.chapterActions = this.actionFactoryService.getChapterActions(this.handleChapterActionCallback.bind(this));
       this.seriesActions = this.actionFactoryService.getSeriesActions(this.handleSeriesActionCallback.bind(this))
               .filter(action => action.action !== Action.Edit);
+
+      this.licenseService.hasValidLicense$.subscribe(hasLic => {
+        if (!hasLic) {
+          this.seriesActions = this.seriesActions.filter(action => action.action !== Action.Match);
+          this.cdRef.markForCheck();
+        }
+      });
 
 
       this.seriesService.getRelatedForSeries(this.seriesId).subscribe((relations: RelatedSeries) => {
@@ -803,7 +829,34 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
 
         if (!this.router.url.includes('#')) {
           this.updateSelectedTab();
+        } else if (this.activeTabId != TabID.Storyline) {
+          // Validate that the tab we are selected is still there (in case this comes from a messageHub)
+          switch (this.activeTabId) {
+            case TabID.Related:
+              if (!this.hasRelations) this.updateSelectedTab();
+              break;
+            case TabID.Specials:
+              if (!this.hasSpecials) this.updateSelectedTab();
+              break;
+            case TabID.Volumes:
+              if (this.volumes.length === 0) this.updateSelectedTab();
+              break;
+            case TabID.Chapters:
+              if (this.chapters.length === 0) this.updateSelectedTab();
+              break;
+            case TabID.Recommendations:
+              if (!this.hasRecommendations) this.updateSelectedTab();
+              break;
+            case TabID.Reviews:
+              if (this.reviews.length === 0) this.updateSelectedTab();
+              break;
+            case TabID.Details:
+              break;
+          }
+          this.cdRef.markForCheck();
         }
+
+
 
 
 
@@ -890,6 +943,8 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
         this.activeTabId = TabID.Storyline;
       }
     }
+
+    // BUG: Related or other tab can be in history but no longer there, need to default
 
     this.updateUrl(this.activeTabId);
     this.cdRef.markForCheck();
@@ -1158,4 +1213,6 @@ export class SeriesDetailComponent implements OnInit, AfterContentChecked {
       }
     }, 10);
   }
+
+    protected readonly encodeURIComponent = encodeURIComponent;
 }

@@ -8,8 +8,11 @@ using API.DTOs.Collection;
 using API.DTOs.CollectionTags;
 using API.DTOs.Dashboard;
 using API.DTOs.Device;
+using API.DTOs.Email;
 using API.DTOs.Filtering;
 using API.DTOs.Filtering.v2;
+using API.DTOs.KavitaPlus.Manage;
+using API.DTOs.KavitaPlus.Metadata;
 using API.DTOs.MediaErrors;
 using API.DTOs.Metadata;
 using API.DTOs.Progress;
@@ -32,6 +35,8 @@ using API.Helpers.Converters;
 using API.Services;
 using AutoMapper;
 using CollectionTag = API.Entities.CollectionTag;
+using EmailHistory = API.Entities.EmailHistory;
+using ExternalSeriesMetadata = API.Entities.Metadata.ExternalSeriesMetadata;
 using MediaError = API.Entities.MediaError;
 using PublicationStatus = API.Entities.Enums.PublicationStatus;
 using SiteTheme = API.Entities.SiteTheme;
@@ -116,8 +121,8 @@ public class AutoMapperProfiles : Profile
             // Map Characters
             .ForMember(dest => dest.Characters, opt => opt.MapFrom(src => src.People
                 .Where(cp => cp.Role == PersonRole.Character)
-                .Select(cp => cp.Person)
-                .OrderBy(p => p.NormalizedName)))
+                .OrderBy(cp => cp.OrderWeight)
+                .Select(cp => cp.Person)))
             // Map Pencillers
             .ForMember(dest => dest.Pencillers, opt => opt.MapFrom(src => src.People
                 .Where(cp => cp.Role == PersonRole.Penciller)
@@ -334,14 +339,40 @@ public class AutoMapperProfiles : Profile
                     opt.MapFrom(src => ReviewService.GetCharacters(src.Body)));
 
         CreateMap<ExternalRecommendation, ExternalSeriesDto>();
+        CreateMap<Series, ManageMatchSeriesDto>()
+            .ForMember(dest => dest.Series,
+                opt =>
+                    opt.MapFrom(src => src))
+            .ForMember(dest => dest.IsMatched,
+                opt =>
+                    opt.MapFrom(src => src.ExternalSeriesMetadata != null && src.ExternalSeriesMetadata.AniListId != 0
+                                                                          && src.ExternalSeriesMetadata.ValidUntilUtc > DateTime.MinValue))
+            .ForMember(dest => dest.ValidUntilUtc,
+                opt => opt.MapFrom(src =>
+                    src.ExternalSeriesMetadata != null
+                        ? src.ExternalSeriesMetadata.ValidUntilUtc
+                        : DateTime.MinValue));
 
 
         CreateMap<MangaFile, FileExtensionExportDto>();
+        CreateMap<EmailHistory, EmailHistoryDto>()
+            .ForMember(dest => dest.ToUserName, opt => opt.MapFrom(src => src.AppUser.UserName));
 
         CreateMap<Chapter, StandaloneChapterDto>()
             .ForMember(dest => dest.SeriesId, opt => opt.MapFrom(src => src.Volume.SeriesId))
             .ForMember(dest => dest.VolumeTitle, opt => opt.MapFrom(src => src.Volume.Name))
             .ForMember(dest => dest.LibraryId, opt => opt.MapFrom(src => src.Volume.Series.LibraryId))
             .ForMember(dest => dest.LibraryType, opt => opt.MapFrom(src => src.Volume.Series.Library.Type));
+
+        CreateMap<MetadataFieldMapping, MetadataFieldMappingDto>();
+
+        CreateMap<MetadataSettings, MetadataSettingsDto>()
+            .ForMember(dest => dest.Blacklist, opt => opt.MapFrom(src => src.Blacklist ?? new List<string>()))
+            .ForMember(dest => dest.Whitelist, opt => opt.MapFrom(src => src.Whitelist ?? new List<string>()))
+            .ForMember(dest => dest.Overrides, opt => opt.MapFrom(src => src.Overrides ?? new List<MetadataSettingField>()))
+            .ForMember(dest => dest.AgeRatingMappings, opt => opt.MapFrom(src => src.AgeRatingMappings ?? new Dictionary<string, AgeRating>()));
+
+
+
     }
 }

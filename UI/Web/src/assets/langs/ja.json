@@ -22,11 +22,10 @@
         "username": "{{common.username}}",
         "required": "{{validation.required-field}}",
         "email": "{{common.email}}",
-        "not-valid-email": "{{validation.valid-email}}",
         "cancel": "{{common.cancel}}",
         "saving": "保存中…",
         "update": "更新",
-        "account-detail-title": "口座の詳細"
+        "account-detail-title": "アカウントの詳細"
     },
     "user-scrobble-history": {
         "title": "Scrobble 履歴",
@@ -47,7 +46,8 @@
         "not-applicable": "該当なし",
         "processed": "処理済み",
         "not-processed": "未処理",
-        "special": "{{entity-title.special}}"
+        "special": "{{entity-title.special}}",
+        "scrobbling-disabled": "Scrobbleはアカウント設定で無効になっています。"
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "読書の進捗状況",
@@ -168,7 +168,8 @@
         "clients-api-key-label": "APIキー",
         "clients-opds-url-tooltip": "サポートされている OPDS クライアントのリストを参照してください ",
         "reset": "{{common.reset}}",
-        "save": "{{common.save}}"
+        "save": "{{common.save}}",
+        "kavitaplus-settings-title": "Kavita+"
     },
     "user-holds": {
         "title": "Scrobble Holds",
@@ -561,10 +562,7 @@
         "installed": "インストール済",
         "download": "ダウンロード",
         "nightly": "ナイトリー: {{バージョン}}",
-        "published-label": "出版: ",
-        "available": "利用可能",
-        "description": "{{installed}}が表示されない場合",
-        "description-continued": "タグは、毎晩リリースされます。 メジャーバージョンのみが公開されます。 夜間のタグは、その安定から夜間に表示されます."
+        "available": "利用可能"
     },
     "invite-user": {
         "title": "ユーザーを招待",
@@ -616,8 +614,7 @@
         "kavita+-desc-part-1": "Kavita+ は、この Kavita インスタンスのすべてのユーザーのための機能のロックを解除するプレミアムサブスクリプションサービスです。 サブスクリプションを購入してロック解除 ",
         "kavita+-desc-part-2": "プレミアム特典",
         "kavita+-desc-part-3": "今日は!",
-        "kavita+-requirement": "Kavita+ は、最新リリース (2 つのバージョン) でのみ動作するように設計されています。それ以外のものは動作しない可能性があります。",
-        "kavita+-releases": "リリースを参照"
+        "kavita+-requirement": "Kavita+ は、最新リリース (2 つのバージョン) でのみ動作するように設計されています。それ以外のものは動作しない可能性があります。"
     },
     "book-line-overlay": {
         "copy": "コピー",
@@ -1091,7 +1088,7 @@
         "port-label": "ポート",
         "port-tooltip": "サーバーがリッスンするIPアドレスのカンマ区切りのリストです。Dockerで実行している場合は固定されています。有効にするには再起動が必要です。",
         "backup-label": "日次バックアップ",
-        "backup-tooltip": "維持するバックアップの数。 デフォルトは30、最小は1、最大は30です.",
+        "backup-tooltip": "維持するバックアップの数。 デフォルトは30、最小は1、最大は30です。",
         "log-label": "ログの日数",
         "log-tooltip": "維持するログの数。 デフォルトは30、最小は1、最大は30です。",
         "logging-level-label": "ログレベル",
@@ -1408,7 +1405,8 @@
         "import-step": "CBLを読み込む",
         "validate-cbl-step": "有効なCBL",
         "dry-run-step": "ドライラン",
-        "final-import-step": "最終ステップ"
+        "final-import-step": "最終ステップ",
+        "comicvine-parsing-label": "Comic Vine シリーズのマッチングを使用"
     },
     "pdf-reader": {
         "loading-message": "ローディング...... PDF は期待以上の時間がかかる場合があります",
@@ -1587,7 +1585,8 @@
         "force-refresh": "強制リフレッシュ",
         "force-refresh-tooltip": "Kavita+ から外部メタデータを強制的に更新します",
         "release-year-validation": "{{validation.year-validation}}",
-        "volumes-title": "{{tab.volumes-tab}}"
+        "volumes-title": "{{tab.volumes-tab}}",
+        "specials-volume": "特装版"
     },
     "edit-chapter-modal": {
         "close": "{{common.close}}",
@@ -1677,7 +1676,8 @@
         "last-30-days": "{{time-periods.last-30-days}}",
         "last-90-days": "{{time-periods.last-90-days}}",
         "last-year": "{{time-periods.last-year}}",
-        "all-time": "{{time-periods.all-time}}"
+        "all-time": "{{time-periods.all-time}}",
+        "all-users": "すべてのユーザー"
     },
     "manga-format-stats": {
         "title": "フォーマット",
@@ -1858,7 +1858,8 @@
         "file-path": "ファイルパス",
         "want-to-read": "読みたい",
         "read-date": "読書日付",
-        "average-rating": "平均評価"
+        "average-rating": "平均評価",
+        "location": "ロケーション"
     },
     "filter-comparison-pipe": {
         "begins-with": "はじめに",
@@ -1925,7 +1926,6 @@
         "email-sent": "{{email}}にメールが送信されました｡",
         "email-not-sent": "ファイルにあるメールは有効なメールではなく、送信できません｡ログにリンクが出力されました｡管理者はこのリンクを提供してフローを完了できます｡",
         "k+-license-saved": "ライセンスキーが保存されましたが､無効です｡[確認]をクリックしてサブスクリプションを再検証してください｡初回の登録には少し時間がかかる場合があります",
-        "k+-unlocked": "Kavita+はアンロックされました!",
         "k+-error": "ライセンスの有効化時にエラーがありました。 お問い合わせ.",
         "k+-delete-key": "これはKavitaのライセンスキーのみを削除し、購入リンクを表示できるようにします。 サブスクリプションをキャンセルしません! サポートを指示すればこれだけを使う!",
         "k+-reset-key": "これにより、サーバーからキーを外し、Kavitaインスタンスを再登録することができます.",
@@ -2023,7 +2023,7 @@
     "validation": {
         "required-field": "必須項目",
         "valid-email": "これは有効な電子メールでなければなりません",
-        "password-validation": "パスワードは6文字と32文字の間の長さでなければなりません"
+        "password-validation": "パスワードは6文字と256文字の間の長さでなければなりません"
     },
     "entity-type": {
         "volume": "ボリューム",
@@ -2063,5 +2063,8 @@
         "issue-num": "問題",
         "chapter-num": "チャプター",
         "volume-num": "ボリューム"
+    },
+    "tabs": {
+        "details-tab": "詳細"
     }
 }

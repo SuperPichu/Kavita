@@ -12,6 +12,10 @@ public static class EasyCacheProfiles
     /// </summary>
     public const string License = "license";
     /// <summary>
+    /// License Information
+    /// </summary>
+    public const string LicenseInfo = "licenseInfo";
+    /// <summary>
     /// Cache the libraries on the server
     /// </summary>
     public const string Library = "library";
@@ -19,4 +23,8 @@ public static class EasyCacheProfiles
     /// External Series metadata for Kavita+ recommendation
     /// </summary>
     public const string KavitaPlusExternalSeries = "kavita+externalSeries";
+    /// <summary>
+    /// Match Series metadata for Kavita+ metadata download
+    /// </summary>
+    public const string KavitaPlusMatchSeries = "kavita+matchSeries";
 }

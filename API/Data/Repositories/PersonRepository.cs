@@ -43,6 +43,7 @@ public interface IPersonRepository
     Task<IEnumerable<SeriesDto>> GetSeriesKnownFor(int personId);
     Task<IEnumerable<StandaloneChapterDto>> GetChaptersForPersonByRole(int personId, int userId, PersonRole role);
     Task<IList<Person>> GetPeopleByNames(List<string> normalizedNames);
+    Task<Person?> GetPersonByAniListId(int aniListId);
 }
 
 public class PersonRepository : IPersonRepository
@@ -229,9 +230,10 @@ public class PersonRepository : IPersonRepository
 
     public async Task<IEnumerable<SeriesDto>> GetSeriesKnownFor(int personId)
     {
+        List<PersonRole> notValidRoles = [PersonRole.Location, PersonRole.Team, PersonRole.Other, PersonRole.Publisher, PersonRole.Translator];
         return await _context.Person
             .Where(p => p.Id == personId)
-            .SelectMany(p => p.SeriesMetadataPeople)
+            .SelectMany(p => p.SeriesMetadataPeople.Where(smp => !notValidRoles.Contains(smp.Role)))
             .Select(smp => smp.SeriesMetadata)
             .Select(sm => sm.Series)
             .Distinct()
@@ -261,6 +263,13 @@ public class PersonRepository : IPersonRepository
             .Where(p => normalizedNames.Contains(p.NormalizedName))
             .OrderBy(p => p.Name)
             .ToListAsync();
+    }
+
+    public async Task<Person?> GetPersonByAniListId(int aniListId)
+    {
+        return await _context.Person
+            .Where(p => p.AniListId == aniListId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IList<Person>> GetAllPeople()

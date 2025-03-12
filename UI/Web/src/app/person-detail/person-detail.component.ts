@@ -40,6 +40,8 @@ import {ChapterCardComponent} from "../cards/chapter-card/chapter-card.component
 import {ThemeService} from "../_services/theme.service";
 import {DefaultModalOptions} from "../_models/default-modal-options";
 import {ToastrService} from "ngx-toastr";
+import {LicenseService} from "../_services/license.service";
+import {SafeUrlPipe} from "../_pipes/safe-url.pipe";
 
 @Component({
   selector: 'app-person-detail',
@@ -48,16 +50,15 @@ import {ToastrService} from "ngx-toastr";
     AsyncPipe,
     ImageComponent,
     SideNavCompanionBarComponent,
-    NgStyle,
     ReadMoreComponent,
     TagBadgeComponent,
     PersonRolePipe,
     CarouselReelComponent,
-    SeriesCardComponent,
     CardItemComponent,
     CardActionablesComponent,
     TranslocoDirective,
-    ChapterCardComponent
+    ChapterCardComponent,
+    SafeUrlPipe
   ],
   templateUrl: './person-detail.component.html',
   styleUrl: './person-detail.component.scss',
@@ -74,6 +75,7 @@ export class PersonDetailComponent {
   private readonly modalService = inject(NgbModal);
   protected readonly imageService = inject(ImageService);
   protected readonly accountService = inject(AccountService);
+  protected readonly licenseService = inject(LicenseService);
   private readonly themeService = inject(ThemeService);
   private readonly toastr = inject(ToastrService);
 
@@ -91,8 +93,14 @@ export class PersonDetailComponent {
   filter: SeriesFilterV2 | null = null;
   personActions: Array<ActionItem<Person>> = this.actionService.getPersonActions(this.handleAction.bind(this));
   chaptersByRole: any = {};
+  anilistUrl: string = '';
   private readonly personSubject = new BehaviorSubject<Person | null>(null);
-  protected readonly person$ = this.personSubject.asObservable();
+  protected readonly person$ = this.personSubject.asObservable().pipe(tap(p => {
+    if (p?.aniListId) {
+      this.anilistUrl = translate('person-detail.anilist-url').replace('{AniListId}', p!.aniListId! + '');
+      this.cdRef.markForCheck();
+    }
+  }));
 
   get HasCoverImage() {
     return (this.person as Person).coverImage;

@@ -38,9 +38,6 @@ public class Program
 
     public static async Task Main(string[] args)
     {
-        CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
-        CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
-
         Console.OutputEncoding = System.Text.Encoding.UTF8;
         Log.Logger = new LoggerConfiguration()
             .WriteTo.Console()
@@ -132,6 +129,7 @@ public class Program
                 await Seed.SeedDefaultStreams(unitOfWork);
                 await Seed.SeedDefaultSideNavStreams(unitOfWork);
                 await Seed.SeedUserApiKeys(context);
+                await Seed.SeedMetadataSettings(context);
             }
             catch (Exception ex)
             {

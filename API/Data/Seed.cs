@@ -262,12 +262,11 @@ public static class Seed
             new() {Key = ServerSettingKey.EmailCustomizedTemplates, Value = "false"},
             new() {Key = ServerSettingKey.FirstInstallVersion, Value = BuildInfo.Version.ToString()},
             new() {Key = ServerSettingKey.FirstInstallDate, Value = DateTime.UtcNow.ToString()},
-
         }.ToArray());
 
         foreach (var defaultSetting in DefaultSettings)
         {
-            var existing = context.ServerSetting.FirstOrDefault(s => s.Key == defaultSetting.Key);
+            var existing = await context.ServerSetting.FirstOrDefaultAsync(s => s.Key == defaultSetting.Key);
             if (existing == null)
             {
                 await context.ServerSetting.AddAsync(defaultSetting);
@@ -277,16 +276,46 @@ public static class Seed
         await context.SaveChangesAsync();
 
         // Port, IpAddresses and LoggingLevel are managed in appSettings.json. Update the DB values to match
-        context.ServerSetting.First(s => s.Key == ServerSettingKey.Port).Value =
+        (await context.ServerSetting.FirstAsync(s => s.Key == ServerSettingKey.Port)).Value =
             Configuration.Port + string.Empty;
-        context.ServerSetting.First(s => s.Key == ServerSettingKey.IpAddresses).Value =
+        (await context.ServerSetting.FirstAsync(s => s.Key == ServerSettingKey.IpAddresses)).Value =
             Configuration.IpAddresses;
-        context.ServerSetting.First(s => s.Key == ServerSettingKey.CacheDirectory).Value =
+        (await context.ServerSetting.FirstAsync(s => s.Key == ServerSettingKey.CacheDirectory)).Value =
             directoryService.CacheDirectory + string.Empty;
-        context.ServerSetting.First(s => s.Key == ServerSettingKey.BackupDirectory).Value =
+        (await context.ServerSetting.FirstAsync(s => s.Key == ServerSettingKey.BackupDirectory)).Value =
             DirectoryService.BackupDirectory + string.Empty;
-        context.ServerSetting.First(s => s.Key == ServerSettingKey.CacheSize).Value =
+        (await context.ServerSetting.FirstAsync(s => s.Key == ServerSettingKey.CacheSize)).Value =
             Configuration.CacheSize + string.Empty;
+
+        await context.SaveChangesAsync();
+    }
+
+    public static async Task SeedMetadataSettings(DataContext context)
+    {
+        await context.Database.EnsureCreatedAsync();
+
+        var existing = await context.MetadataSettings.FirstOrDefaultAsync();
+        if (existing == null)
+        {
+            existing = new MetadataSettings()
+            {
+                Enabled = true,
+                EnablePeople = true,
+                EnableRelationships = true,
+                EnableSummary = true,
+                EnablePublicationStatus = true,
+                EnableStartDate = true,
+                EnableTags = false,
+                EnableGenres = true,
+                EnableLocalizedName = false,
+                FirstLastPeopleNaming = true,
+                EnableCoverImage = true,
+                PersonRoles = [PersonRole.Writer, PersonRole.CoverArtist, PersonRole.Character]
+            };
+            await context.MetadataSettings.AddAsync(existing);
+        }
+
+
         await context.SaveChangesAsync();
 
     }

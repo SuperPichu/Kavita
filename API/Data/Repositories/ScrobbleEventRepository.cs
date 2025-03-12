@@ -19,16 +19,19 @@ public interface IScrobbleRepository
     void Attach(ScrobbleError error);
     void Remove(ScrobbleEvent evt);
     void Remove(IEnumerable<ScrobbleEvent> events);
+    void Remove(IEnumerable<ScrobbleError> errors);
     void Update(ScrobbleEvent evt);
     Task<IList<ScrobbleEvent>> GetByEvent(ScrobbleEventType type, bool isProcessed = false);
     Task<IList<ScrobbleEvent>> GetProcessedEvents(int daysAgo);
     Task<bool> Exists(int userId, int seriesId, ScrobbleEventType eventType);
     Task<IEnumerable<ScrobbleErrorDto>> GetScrobbleErrors();
+    Task<IList<ScrobbleError>> GetAllScrobbleErrorsForSeries(int seriesId);
     Task ClearScrobbleErrors();
     Task<bool> HasErrorForSeries(int seriesId);
     Task<ScrobbleEvent?> GetEvent(int userId, int seriesId, ScrobbleEventType eventType);
     Task<IEnumerable<ScrobbleEvent>> GetUserEventsForSeries(int userId, int seriesId);
     Task<PagedList<ScrobbleEventDto>> GetUserEvents(int userId, ScrobbleEventFilter filter, UserParams pagination);
+    Task<IList<ScrobbleEvent>> GetAllEventsForSeries(int seriesId);
 }
 
 /// <summary>
@@ -65,6 +68,11 @@ public class ScrobbleRepository : IScrobbleRepository
         _context.ScrobbleEvent.RemoveRange(events);
     }
 
+    public void Remove(IEnumerable<ScrobbleError> errors)
+    {
+        _context.ScrobbleError.RemoveRange(errors);
+    }
+
     public void Update(ScrobbleEvent evt)
     {
         _context.Entry(evt).State = EntityState.Modified;
@@ -78,6 +86,7 @@ public class ScrobbleRepository : IScrobbleRepository
             .Include(s => s.Series)
             .ThenInclude(s => s.Metadata)
             .Include(s => s.AppUser)
+            .ThenInclude(u => u.UserPreferences)
             .Where(s => s.ScrobbleEventType == type)
             .Where(s => s.IsProcessed == isProcessed)
             .AsSplitQuery()
@@ -108,6 +117,13 @@ public class ScrobbleRepository : IScrobbleRepository
         return await _context.ScrobbleError
             .OrderBy(e => e.LastModifiedUtc)
             .ProjectTo<ScrobbleErrorDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<IList<ScrobbleError>> GetAllScrobbleErrorsForSeries(int seriesId)
+    {
+        return await _context.ScrobbleError
+            .Where(e => e.SeriesId == seriesId)
             .ToListAsync();
     }
 
@@ -153,4 +169,11 @@ public class ScrobbleRepository : IScrobbleRepository
 
         return await PagedList<ScrobbleEventDto>.CreateAsync(query, pagination.PageNumber, pagination.PageSize);
     }
+
+    public async Task<IList<ScrobbleEvent>> GetAllEventsForSeries(int seriesId)
+    {
+        return await _context.ScrobbleEvent.Where(e => e.SeriesId == seriesId)
+            .ToListAsync();
+    }
+
 }

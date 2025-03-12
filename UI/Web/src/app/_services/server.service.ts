@@ -54,7 +54,7 @@ export class ServerService {
   }
 
   checkHowOutOfDate() {
-    return this.http.get<string>(this.baseUrl + 'server/checkHowOutOfDate', TextResonse)
+    return this.http.get<string>(this.baseUrl + 'server/check-out-of-date', TextResonse)
       .pipe(map(r => parseInt(r, 10)));
   }
 
@@ -62,8 +62,8 @@ export class ServerService {
     return this.http.get<UpdateVersionEvent>(this.baseUrl + 'server/check-for-updates', {});
   }
 
-  getChangelog() {
-    return this.http.get<UpdateVersionEvent[]>(this.baseUrl + 'server/changelog', {});
+  getChangelog(count: number = 0) {
+    return this.http.get<UpdateVersionEvent[]>(this.baseUrl + 'server/changelog?count=' + count, {});
   }
 
   getRecurringJobs() {

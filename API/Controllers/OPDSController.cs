@@ -4,6 +4,7 @@ using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Serialization;
 using API.Comparators;
 using API.Data;
@@ -764,6 +765,12 @@ public class OpdsController : BaseApiController
         return CreateXmlResult(SerializeXml(feed));
     }
 
+    /// <summary>
+    /// OPDS Search endpoint
+    /// </summary>
+    /// <param name="apiKey"></param>
+    /// <param name="query"></param>
+    /// <returns></returns>
     [HttpGet("{apiKey}/series")]
     [Produces("application/xml")]
     public async Task<IActionResult> SearchSeries(string apiKey, [FromQuery] string query)
@@ -781,20 +788,21 @@ public class OpdsController : BaseApiController
         query = query.Replace(@"%", string.Empty);
         // Get libraries user has access to
         var libraries = (await _unitOfWork.LibraryRepository.GetLibrariesForUserIdAsync(userId)).ToList();
-        if (!libraries.Any()) return BadRequest(await _localizationService.Translate(userId, "libraries-restricted"));
+        if (libraries.Count == 0) return BadRequest(await _localizationService.Translate(userId, "libraries-restricted"));
 
         var isAdmin = await _unitOfWork.UserRepository.IsUserAdminAsync(user);
 
-        var series = await _unitOfWork.SeriesRepository.SearchSeries(userId, isAdmin, libraries.Select(l => l.Id).ToArray(), query);
+        var searchResults = await _unitOfWork.SeriesRepository.SearchSeries(userId, isAdmin,
+            libraries.Select(l => l.Id).ToArray(), query, includeChapterAndFiles: false);
 
         var feed = CreateFeed(query, $"{apiKey}/series?query=" + query, apiKey, prefix);
         SetFeedId(feed, "search-series");
-        foreach (var seriesDto in series.Series)
+        foreach (var seriesDto in searchResults.Series)
         {
             feed.Entries.Add(CreateSeries(seriesDto, apiKey, prefix, baseUrl));
         }
 
-        foreach (var collection in series.Collections)
+        foreach (var collection in searchResults.Collections)
         {
             feed.Entries.Add(new FeedEntry()
             {
@@ -813,7 +821,7 @@ public class OpdsController : BaseApiController
             });
         }
 
-        foreach (var readingListDto in series.ReadingLists)
+        foreach (var readingListDto in searchResults.ReadingLists)
         {
             feed.Entries.Add(new FeedEntry()
             {
@@ -827,6 +835,7 @@ public class OpdsController : BaseApiController
             });
         }
 
+        // TODO: Search should allow Chapters/Files and more
 
         return CreateXmlResult(SerializeXml(feed));
     }
@@ -1355,9 +1364,48 @@ public class OpdsController : BaseApiController
     {
         if (feed == null) return string.Empty;
 
+        // Remove invalid XML characters from the feed object
+        SanitizeFeed(feed);
+
         using var sm = new StringWriter();
         _xmlSerializer.Serialize(sm, feed);
 
-        return sm.ToString().Replace("utf-16", "utf-8"); // Chunky cannot accept UTF-16 feeds
+        var ret = sm.ToString().Replace("utf-16", "utf-8"); // Chunky cannot accept UTF-16 feeds
+
+        return ret;
+    }
+
+    // Recursively sanitize all string properties in the object
+    private static void SanitizeFeed(object? obj)
+    {
+        if (obj == null) return;
+
+        var properties = obj.GetType().GetProperties();
+        foreach (var property in properties)
+        {
+            // Skip properties that require an index (e.g., indexed collections)
+            if (property.GetIndexParameters().Length > 0)
+                continue;
+
+            if (property.PropertyType == typeof(string) && property.CanWrite)
+            {
+                var value = (string?)property.GetValue(obj);
+                if (!string.IsNullOrEmpty(value))
+                {
+                    property.SetValue(obj, RemoveInvalidXmlChars(value));
+                }
+            }
+            else if (property.PropertyType.IsClass) // Handle nested objects
+            {
+                var nestedObject = property.GetValue(obj);
+                if (nestedObject != null)
+                    SanitizeFeed(nestedObject);
+            }
+        }
+    }
+
+    private static string RemoveInvalidXmlChars(string input)
+    {
+        return new string(input.Where(XmlConvert.IsXmlChar).ToArray());
     }
 }

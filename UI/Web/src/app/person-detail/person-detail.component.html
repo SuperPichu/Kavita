@@ -7,6 +7,13 @@
           <h2 class="title text-break">
             <app-card-actionables (actionHandler)="performAction($event)" [actions]="personActions" [labelBy]="person.name" iconClass="fa-ellipsis-v"></app-card-actionables>
             <span>{{person.name}}</span>
+
+            @if (person.aniListId) {
+              <a class="ms-1" [href]="anilistUrl | safeUrl"  target="_blank" rel="noopener noreferrer">
+                <app-image height="24px" width="24px" aria-hidden="true" [imageUrl]="imageService.getWebLinkImage(anilistUrl)"
+                           [errorImage]="imageService.errorWebLinkImage"></app-image>
+              </a>
+            }
           </h2>
         </ng-container>
       </app-side-nav-companion-bar>
@@ -19,6 +26,7 @@
             <div class="person-badge">
               <app-image
                       objectFit="cover"
+                      [styles]="{'object-position': 'top'}"
                       height="200px"
                       width="200px"
                       [imageUrl]="imageService.getPersonImage(person.id)"
@@ -45,6 +53,7 @@
                 }
               </div>
             }
+
           </div>
         </div>
       </div>
@@ -52,6 +61,7 @@
 
     @if (works$ | async; as works) {
       <div class="row mt-2">
+        <!-- TODO: If the person is JUST a character, then switch this title to: 'A character in` -->
         <app-carousel-reel [items]="works" [title]="t('known-for-title')" (sectionClick)="loadFilterByPerson()">
           <ng-template #carouselItem let-item>
             <app-card-item [entity]="item"
@@ -96,7 +106,7 @@
     </div>
 
     <!-- External Series including Author -->
-    @if (accountService.hasValidLicense$ | async) {
+    @if (licenseService.hasValidLicense$ | async) {
       <div class="row mt-2">
 
       </div>

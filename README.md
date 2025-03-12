@@ -32,6 +32,7 @@ your reading collection with your friends and family!
 - Rich web readers supporting webtoon, continuous reading mode (continue without leaving the reader), virtual pages (epub), etc
 - Ability to customize your dashboard and side nav with smart filters, custom order and visibility toggles
 - Full Localization Support
+- Ability to download metadata (available via [Kavita+](https://wiki.kavitareader.com/kavita+))
 
 
 ## Support
@@ -49,7 +50,7 @@ Password: Demouser64
 ## Setup
 The easiest way to get started is to visit our Wiki which has up-to-date information on a variety of
 install methods and platforms.
-[https://wiki.kavitareader.com/installation/getting-started](https://wiki.kavitareader.com/installation/getting-started)
+[https://wiki.kavitareader.com/getting-started](https://wiki.kavitareader.com/getting-started)
 
 ## Feature Requests
 Got a great idea? Throw it up on [Discussions](https://github.com/Kareadita/Kavita/discussions/2529) or vote on another idea. Many great features in Kavita are driven by our community. 

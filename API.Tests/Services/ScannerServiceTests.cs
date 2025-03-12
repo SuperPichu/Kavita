@@ -101,7 +101,22 @@ public class ScannerServiceTests : AbstractDbTest
     [Fact]
     public async Task ScanLibrary_FlatSeriesWithSpecialFolder()
     {
-        var testcase = "Flat Series with Specials Folder - Manga.json";
+        var testcase = "Flat Series with Specials Folder Alt Naming - Manga.json";
+        var library = await _scannerHelper.GenerateScannerData(testcase);
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Single(postLib.Series);
+        Assert.Equal(4, postLib.Series.First().Volumes.Count);
+        Assert.NotNull(postLib.Series.First().Volumes.FirstOrDefault(v => v.Chapters.FirstOrDefault(c => c.IsSpecial) != null));
+    }
+
+    [Fact]
+    public async Task ScanLibrary_FlatSeriesWithSpecialFolder_AlternativeNaming()
+    {
+        var testcase = "Flat Series with Specials Folder Alt Naming - Manga.json";
         var library = await _scannerHelper.GenerateScannerData(testcase);
         var scanner = _scannerHelper.CreateServices();
         await scanner.ScanLibrary(library.Id);
@@ -283,38 +298,38 @@ public class ScannerServiceTests : AbstractDbTest
     }
 
 
-    [Fact]
-    public async Task ScanLibrary_PublishersInheritFromChapters()
-    {
-        const string testcase = "Flat Special - Manga.json";
-
-        var infos = new Dictionary<string, ComicInfo>();
-        infos.Add("Uzaki-chan Wants to Hang Out! v01 (2019) (Digital) (danke-Empire).cbz", new ComicInfo()
+        [Fact]
+        public async Task ScanLibrary_PublishersInheritFromChapters()
         {
-            Publisher = "Correct Publisher"
-        });
-        infos.Add("Uzaki-chan Wants to Hang Out! - 2022 New Years Special SP01.cbz", new ComicInfo()
-        {
-            Publisher = "Special Publisher"
-        });
-        infos.Add("Uzaki-chan Wants to Hang Out! - Ch. 103 - Kouhai and Control.cbz", new ComicInfo()
-        {
-            Publisher = "Chapter Publisher"
-        });
+            const string testcase = "Flat Special - Manga.json";
 
-        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+            var infos = new Dictionary<string, ComicInfo>();
+            infos.Add("Uzaki-chan Wants to Hang Out! v01 (2019) (Digital) (danke-Empire).cbz", new ComicInfo()
+            {
+                Publisher = "Correct Publisher"
+            });
+            infos.Add("Uzaki-chan Wants to Hang Out! - 2022 New Years Special SP01.cbz", new ComicInfo()
+            {
+                Publisher = "Special Publisher"
+            });
+            infos.Add("Uzaki-chan Wants to Hang Out! - Ch. 103 - Kouhai and Control.cbz", new ComicInfo()
+            {
+                Publisher = "Chapter Publisher"
+            });
+
+            var library = await _scannerHelper.GenerateScannerData(testcase, infos);
 
 
-        var scanner = _scannerHelper.CreateServices();
-        await scanner.ScanLibrary(library.Id);
-        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+            var scanner = _scannerHelper.CreateServices();
+            await scanner.ScanLibrary(library.Id);
+            var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
 
-        Assert.NotNull(postLib);
-        Assert.Single(postLib.Series);
-        var publishers = postLib.Series.First().Metadata.People
-            .Where(p => p.Role == PersonRole.Publisher);
-        Assert.Equal(3, publishers.Count());
-    }
+            Assert.NotNull(postLib);
+            Assert.Single(postLib.Series);
+            var publishers = postLib.Series.First().Metadata.People
+                .Where(p => p.Role == PersonRole.Publisher);
+            Assert.Equal(3, publishers.Count());
+        }
 
 
     /// <summary>
@@ -397,5 +412,269 @@ public class ScannerServiceTests : AbstractDbTest
         Assert.Single(postLib.Series);
         Assert.Equal(3, series.Volumes.Count);
         Assert.Equal(2, series.Volumes.First(v => v.MinNumber.Is(Parser.LooseLeafVolumeNumber)).Chapters.Count);
+    }
+
+    [Fact]
+    public async Task ScanLibrary_LocalizedSeries_MatchesFilename()
+    {
+        const string testcase = "Localized Name matches Filename - Manga.json";
+
+        // Get the first file and generate a ComicInfo
+        var infos = new Dictionary<string, ComicInfo>();
+        infos.Add("Futoku no Guild v01.cbz", new ComicInfo()
+        {
+            Series = "Immoral Guild",
+            LocalizedSeries = "Futoku no Guild"
+        });
+
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Single(postLib.Series);
+        var s = postLib.Series.First();
+        Assert.Equal("Immoral Guild", s.Name);
+        Assert.Equal("Futoku no Guild", s.LocalizedName);
+        Assert.Single(s.Volumes);
+    }
+
+    [Fact]
+    public async Task ScanLibrary_LocalizedSeries_MatchesFilename_SameNames()
+    {
+        const string testcase = "Localized Name matches Filename - Manga.json";
+
+        // Get the first file and generate a ComicInfo
+        var infos = new Dictionary<string, ComicInfo>();
+        infos.Add("Futoku no Guild v01.cbz", new ComicInfo()
+        {
+            Series = "Futoku no Guild",
+            LocalizedSeries = "Futoku no Guild"
+        });
+
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Single(postLib.Series);
+        var s = postLib.Series.First();
+        Assert.Equal("Futoku no Guild", s.Name);
+        Assert.Equal("Futoku no Guild", s.LocalizedName);
+        Assert.Single(s.Volumes);
+    }
+
+    [Fact]
+    public async Task ScanLibrary_ExcludePattern_Works()
+    {
+        const string testcase = "Exclude Pattern 1 - Manga.json";
+
+        // Get the first file and generate a ComicInfo
+        var infos = new Dictionary<string, ComicInfo>();
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+        library.LibraryExcludePatterns = [new LibraryExcludePattern() {Pattern = "**/Extra/*"}];
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Single(postLib.Series);
+        var s = postLib.Series.First();
+        Assert.Equal(2, s.Volumes.Count);
+    }
+
+    [Fact]
+    public async Task ScanLibrary_ExcludePattern_FlippedSlashes_Works()
+    {
+        const string testcase = "Exclude Pattern 1 - Manga.json";
+
+        // Get the first file and generate a ComicInfo
+        var infos = new Dictionary<string, ComicInfo>();
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+        library.LibraryExcludePatterns = [new LibraryExcludePattern() {Pattern = "**\\Extra\\*"}];
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Single(postLib.Series);
+        var s = postLib.Series.First();
+        Assert.Equal(2, s.Volumes.Count);
+    }
+
+    [Fact]
+    public async Task ScanLibrary_MultipleRoots_MultipleScans_DataPersists()
+    {
+        const string testcase = "Multiple Roots - Manga.json";
+
+        // Get the first file and generate a ComicInfo
+        var infos = new Dictionary<string, ComicInfo>();
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+        var testDirectoryPath =
+            Path.Join(
+                Path.Join(Directory.GetCurrentDirectory(), "../../../Services/Test Data/ScannerService/ScanTests"),
+                testcase.Replace(".json", string.Empty));
+        library.Folders =
+        [
+            new FolderPath() {Path = Path.Join(testDirectoryPath, "Root 1")},
+            new FolderPath() {Path = Path.Join(testDirectoryPath, "Root 2")}
+        ];
+
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+
+        var scanner = _scannerHelper.CreateServices();
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Equal(2, postLib.Series.Count);
+        var s = postLib.Series.First(s => s.Name == "Plush");
+        Assert.Equal(2, s.Volumes.Count);
+        var s2 = postLib.Series.First(s => s.Name == "Accel");
+        Assert.Single(s2.Volumes);
+
+        // Rescan to ensure nothing changes yet again
+        await scanner.ScanLibrary(library.Id, true);
+
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+        Assert.Equal(2, postLib.Series.Count);
+        s = postLib.Series.First(s => s.Name == "Plush");
+        Assert.Equal(2, s.Volumes.Count);
+        s2 = postLib.Series.First(s => s.Name == "Accel");
+        Assert.Single(s2.Volumes);
+    }
+
+    //[Fact]
+    public async Task ScanLibrary_AlternatingRemoval_IssueReplication()
+    {
+        // https://github.com/Kareadita/Kavita/issues/3476#issuecomment-2661635558
+        // TODO: Come back to this, it's complicated
+        const string testcase = "Alternating Removal - Manga.json";
+
+        // Setup: Generate test library
+        var infos = new Dictionary<string, ComicInfo>();
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+        var testDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(),
+            "../../../Services/Test Data/ScannerService/ScanTests",
+            testcase.Replace(".json", string.Empty));
+
+        library.Folders =
+        [
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 1") },
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 2") }
+        ];
+
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+        var scanner = _scannerHelper.CreateServices();
+
+        // First Scan: Everything should be added
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Contains(postLib.Series, s => s.Name == "Accel");
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
+
+        // Second Scan: Remove Root 2, expect Accel to be removed
+        library.Folders = [new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 1") }];
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+        await scanner.ScanLibrary(library.Id);
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.DoesNotContain(postLib.Series, s => s.Name == "Accel"); // Ensure Accel is gone
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
+
+        // Third Scan: Re-add Root 2, Accel should come back
+        library.Folders =
+        [
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 1") },
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 2") }
+        ];
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+        await scanner.ScanLibrary(library.Id);
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.Contains(postLib.Series, s => s.Name == "Accel"); // Accel should be back
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
+
+        // Fourth Scan: Run again to check stability (should not remove Accel)
+        await scanner.ScanLibrary(library.Id);
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.Contains(postLib.Series, s => s.Name == "Accel");
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
+    }
+
+    [Fact]
+    public async Task ScanLibrary_DeleteSeriesInUI_ComeBack()
+    {
+        const string testcase = "Delete Series In UI - Manga.json";
+
+        // Setup: Generate test library
+        var infos = new Dictionary<string, ComicInfo>();
+        var library = await _scannerHelper.GenerateScannerData(testcase, infos);
+
+        var testDirectoryPath = Path.Combine(Directory.GetCurrentDirectory(),
+            "../../../Services/Test Data/ScannerService/ScanTests",
+            testcase.Replace(".json", string.Empty));
+
+        library.Folders =
+        [
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 1") },
+            new FolderPath() { Path = Path.Combine(testDirectoryPath, "Root 2") }
+        ];
+
+        _unitOfWork.LibraryRepository.Update(library);
+        await _unitOfWork.CommitAsync();
+
+        var scanner = _scannerHelper.CreateServices();
+
+        // First Scan: Everything should be added
+        await scanner.ScanLibrary(library.Id);
+        var postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.NotNull(postLib);
+        Assert.Contains(postLib.Series, s => s.Name == "Accel");
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
+
+        // Second Scan: Delete the Series
+        library.Series = [];
+        await _unitOfWork.CommitAsync();
+
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+        Assert.NotNull(postLib);
+        Assert.Empty(postLib.Series);
+
+        await scanner.ScanLibrary(library.Id);
+        postLib = await _unitOfWork.LibraryRepository.GetLibraryForIdAsync(library.Id, LibraryIncludes.Series);
+
+        Assert.Contains(postLib.Series, s => s.Name == "Accel"); // Ensure Accel is gone
+        Assert.Contains(postLib.Series, s => s.Name == "Plush");
     }
 }

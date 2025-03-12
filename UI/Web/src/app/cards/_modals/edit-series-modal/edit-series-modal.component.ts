@@ -62,6 +62,7 @@ import {ActionService} from "../../../_services/action.service";
 import {DownloadService} from "../../../shared/_services/download.service";
 import {SettingItemComponent} from "../../../settings/_components/setting-item/setting-item.component";
 import {ReadTimePipe} from "../../../_pipes/read-time.pipe";
+import {LicenseService} from "../../../_services/license.service";
 
 enum TabID {
   General = 0,
@@ -102,9 +103,7 @@ const blackList = [Action.Edit, Action.Info, Action.IncognitoRead, Action.Read, 
     MangaFormatPipe,
     DefaultDatePipe,
     TimeAgoPipe,
-    TagBadgeComponent,
     PublicationStatusPipe,
-    NgbTooltip,
     BytesPipe,
     ImageComponent,
     NgbCollapse,
@@ -116,7 +115,6 @@ const blackList = [Action.Edit, Action.Info, Action.IncognitoRead, Action.Read, 
     EditListComponent,
     SettingButtonComponent,
     SettingItemComponent,
-    ReadTimePipe,
   ],
   templateUrl: './edit-series-modal.component.html',
   styleUrls: ['./edit-series-modal.component.scss'],
@@ -134,6 +132,7 @@ export class EditSeriesModalComponent implements OnInit {
   private readonly metadataService = inject(MetadataService);
   private readonly cdRef = inject(ChangeDetectorRef);
   public readonly accountService = inject(AccountService);
+  protected readonly licenseService = inject(LicenseService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly toastr = inject(ToastrService);
   private readonly actionFactoryService = inject(ActionFactoryService);
@@ -652,6 +651,11 @@ export class EditSeriesModalComponent implements OnInit {
         break;
       case Action.Download:
         this.downloadService.download('series', this.series);
+        break;
+      case Action.Match:
+        this.actionService.matchSeries(this.series, _ => {
+          this.modal.close({success: true, series: this.series, coverImageUpdate: false, updateExternal: true});
+        });
         break;
     }
   }

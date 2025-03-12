@@ -2,11 +2,13 @@
 using System.Threading.Tasks;
 using API.Constants;
 using API.Data;
-using API.DTOs.License;
+using API.DTOs.KavitaPlus.License;
 using API.Entities.Enums;
 using API.Extensions;
 using API.Services;
 using API.Services.Plus;
+using EasyCaching.Core;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -20,7 +22,8 @@ public class LicenseController(
     ILogger<LicenseController> logger,
     ILicenseService licenseService,
     ILocalizationService localizationService,
-    ITaskScheduler taskScheduler)
+    ITaskScheduler taskScheduler,
+    IEasyCachingProviderFactory cachingProviderFactory)
     : BaseApiController
 {
     /// <summary>
@@ -31,8 +34,13 @@ public class LicenseController(
     [ResponseCache(CacheProfileName = ResponseCacheProfiles.LicenseCache)]
     public async Task<ActionResult<bool>> HasValidLicense(bool forceCheck = false)
     {
+
         var result = await licenseService.HasActiveLicense(forceCheck);
-        if (result)
+
+        var licenseInfoProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.License);
+        var cacheValue = await licenseInfoProvider.GetAsync<bool>(LicenseService.CacheKey);
+
+        if (result && !cacheValue.IsNull && !cacheValue.Value)
         {
             await taskScheduler.ScheduleKavitaPlusTasks();
         }
@@ -41,7 +49,7 @@ public class LicenseController(
     }
 
     /// <summary>
-    /// Has any license
+    /// Has any license registered with the instance. Does not check Kavita+ API
     /// </summary>
     /// <returns></returns>
     [Authorize("RequireAdminRole")]
@@ -51,6 +59,26 @@ public class LicenseController(
     {
         return Ok(!string.IsNullOrEmpty(
             (await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey)).Value));
+    }
+
+    /// <summary>
+    /// Asks Kavita+ for the latest license info
+    /// </summary>
+    /// <param name="forceCheck">Force checking the API and skip the 8 hour cache</param>
+    /// <returns></returns>
+    [Authorize("RequireAdminRole")]
+    [HttpGet("info")]
+    [ResponseCache(CacheProfileName = ResponseCacheProfiles.LicenseCache)]
+    public async Task<ActionResult<LicenseInfoDto?>> GetLicenseInfo(bool forceCheck = false)
+    {
+        try
+        {
+            return Ok(await licenseService.GetLicenseInfo(forceCheck));
+        }
+        catch (Exception)
+        {
+            return Ok(null);
+        }
     }
 
     [Authorize("RequireAdminRole")]
@@ -66,6 +94,7 @@ public class LicenseController(
         await taskScheduler.ScheduleKavitaPlusTasks();
         return Ok();
     }
+
 
     [Authorize("RequireAdminRole")]
     [HttpPost("reset")]

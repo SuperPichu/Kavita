@@ -6,12 +6,14 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml;
 using API.Data.Metadata;
 using API.DTOs.Reader;
 using API.Entities;
 using API.Entities.Enums;
 using API.Extensions;
 using API.Services.Tasks.Scanner.Parser;
+using API.Helpers;
 using Docnet.Core;
 using Docnet.Core.Converters;
 using Docnet.Core.Models;
@@ -69,6 +71,8 @@ public class BookService : IBookService
     private static readonly RecyclableMemoryStreamManager StreamManager = new ();
     private const string CssScopeClass = ".book-content";
     private const string BookApiUrl = "book-resources?file=";
+    private readonly PdfComicInfoExtractor _pdfComicInfoExtractor;
+
     public static readonly EpubReaderOptions BookReaderOptions = new()
     {
         PackageReaderOptions = new PackageReaderOptions
@@ -84,6 +88,7 @@ public class BookService : IBookService
         _directoryService = directoryService;
         _imageService = imageService;
         _mediaErrorService = mediaErrorService;
+        _pdfComicInfoExtractor = new PdfComicInfoExtractor(_logger, _mediaErrorService);
     }
 
     private static bool HasClickableHrefPart(HtmlNode anchor)
@@ -306,8 +311,16 @@ public class BookService : IBookService
 
             var imageFile = GetKeyForImage(book, image.Attributes[key].Value);
             image.Attributes.Remove(key);
-            // UrlEncode here to transform ../ into an escaped version, which avoids blocking on nginx
-            image.Attributes.Add(key, $"{apiBase}" + Uri.EscapeDataString(imageFile));
+
+            if (!imageFile.StartsWith("http"))
+            {
+                // UrlEncode here to transform ../ into an escaped version, which avoids blocking on nginx
+                image.Attributes.Add(key, $"{apiBase}" + Uri.EscapeDataString(imageFile));
+            }
+            else
+            {
+                image.Attributes.Add(key, imageFile);
+            }
 
             // Add a custom class that the reader uses to ensure images stay within reader
             parent.AddClass("kavita-scale-width-container");
@@ -425,10 +438,8 @@ public class BookService : IBookService
         }
     }
 
-    public ComicInfo? GetComicInfo(string filePath)
+    private ComicInfo? GetEpubComicInfo(string filePath)
     {
-        if (!IsValidFile(filePath) || Parser.IsPdf(filePath)) return null;
-
         try
         {
             using var epubBook = EpubReader.OpenBook(filePath, BookReaderOptions);
@@ -442,7 +453,7 @@ public class BookService : IBookService
             var (year, month, day) = GetPublicationDate(publicationDate);
 
             var summary = epubBook.Schema.Package.Metadata.Descriptions.FirstOrDefault();
-            var info =  new ComicInfo
+            var info = new ComicInfo
             {
                 Summary = string.IsNullOrEmpty(summary?.Description) ? string.Empty : summary.Description,
                 Publisher = string.Join(",", epubBook.Schema.Package.Metadata.Publishers.Select(p => p.Publisher)),
@@ -583,6 +594,20 @@ public class BookService : IBookService
         return null;
     }
 
+    public ComicInfo? GetComicInfo(string filePath)
+    {
+        if (!IsValidFile(filePath)) return null;
+
+        if (Parser.IsPdf(filePath))
+        {
+            return _pdfComicInfoExtractor.GetComicInfo(filePath);
+        }
+        else
+        {
+            return GetEpubComicInfo(filePath);
+        }
+    }
+
     private static void ExtractSortTitle(EpubMetadataMeta metadataItem, EpubBookRef epubBook, ComicInfo info)
     {
         var titleId = metadataItem.Refines?.Replace("#", string.Empty);
@@ -685,7 +710,7 @@ public class BookService : IBookService
         return (year, month, day);
     }
 
-    private static string ValidateLanguage(string? language)
+    public static string ValidateLanguage(string? language)
     {
         if (string.IsNullOrEmpty(language)) return string.Empty;
 

@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using API.Data.Misc;
 using API.Data.Repositories;
 using API.DTOs.Filtering;
+using API.DTOs.KavitaPlus.Manage;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Scrobble;
@@ -280,5 +281,22 @@ public static class QueryableExtensions
     public static IQueryable<T> DoOrderBy<T, TKey>(this IQueryable<T> query, Expression<Func<T, TKey>> keySelector, SortOptions sortOptions)
     {
         return sortOptions.IsAscending ? query.OrderBy(keySelector) : query.OrderByDescending(keySelector);
+    }
+
+    public static IQueryable<Series> FilterMatchState(this IQueryable<Series> query, MatchStateOption stateOption)
+    {
+        return stateOption switch
+        {
+            MatchStateOption.All => query,
+            MatchStateOption.Matched => query
+                .Include(s => s.ExternalSeriesMetadata)
+                .Where(s => s.ExternalSeriesMetadata != null && s.ExternalSeriesMetadata.ValidUntilUtc > DateTime.MinValue && !s.IsBlacklisted),
+            MatchStateOption.NotMatched => query.
+                Include(s => s.ExternalSeriesMetadata)
+                .Where(s => (s.ExternalSeriesMetadata == null || s.ExternalSeriesMetadata.ValidUntilUtc == DateTime.MinValue) && !s.IsBlacklisted && !s.DontMatch),
+            MatchStateOption.Error => query.Where(s => s.IsBlacklisted && !s.DontMatch),
+            MatchStateOption.DontMatch => query.Where(s => s.DontMatch),
+            _ => query
+        };
     }
 }

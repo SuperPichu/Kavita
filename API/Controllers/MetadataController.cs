@@ -32,12 +32,15 @@ public class MetadataController(IUnitOfWork unitOfWork, ILocalizationService loc
     /// Fetches genres from the instance
     /// </summary>
     /// <param name="libraryIds">String separated libraryIds or null for all genres</param>
+    /// <param name="context">Context from which this API was invoked</param>
     /// <returns></returns>
     [HttpGet("genres")]
     [ResponseCache(CacheProfileName = ResponseCacheProfiles.Instant, VaryByQueryKeys = ["libraryIds", "context"])]
     public async Task<ActionResult<IList<GenreTagDto>>> GetAllGenres(string? libraryIds, QueryContext context = QueryContext.None)
     {
-        var ids = libraryIds?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries).Select(int.Parse).ToList();
+        var ids = libraryIds?.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(int.Parse)
+            .ToList();
 
         return Ok(await unitOfWork.GenreRepository.GetAllGenreDtosForLibrariesAsync(User.GetUserId(), ids, context));
     }
@@ -189,12 +192,12 @@ public class MetadataController(IUnitOfWork unitOfWork, ILocalizationService loc
     /// </summary>
     /// <param name="seriesId"></param>
     /// <returns></returns>
-    [HttpPost("force-refresh")]
-    public async Task<ActionResult> ForceRefresh(int seriesId)
-    {
-        await metadataService.ForceKavitaPlusRefresh(seriesId);
-        return Ok();
-    }
+    // [HttpPost("force-refresh")]
+    // public async Task<ActionResult> ForceRefresh(int seriesId)
+    // {
+    //     await metadataService.ForceKavitaPlusRefresh(seriesId);
+    //     return Ok();
+    // }
 
     /// <summary>
     /// Fetches the details needed from Kavita+ for Series Detail page

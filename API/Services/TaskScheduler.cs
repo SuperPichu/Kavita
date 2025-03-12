@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using API.Data;
 using API.Data.Repositories;
 using API.Entities.Enums;
+using API.Extensions;
 using API.Helpers.Converters;
 using API.Services.Plus;
 using API.Services.Tasks;
@@ -60,6 +61,7 @@ public class TaskScheduler : ITaskScheduler
     private readonly ILicenseService _licenseService;
     private readonly IExternalMetadataService _externalMetadataService;
     private readonly ISmartCollectionSyncService _smartCollectionSyncService;
+    private readonly IWantToReadSyncService _wantToReadSyncService;
     private readonly IEventHub _eventHub;
 
     public static BackgroundJobServer Client => new ();
@@ -80,6 +82,7 @@ public class TaskScheduler : ITaskScheduler
     public const string LicenseCheckId = "license-check";
     public const string KavitaPlusDataRefreshId = "kavita+-data-refresh";
     public const string KavitaPlusStackSyncId = "kavita+-stack-sync";
+    public const string KavitaPlusWantToReadSyncId = "kavita+-want-to-read-sync";
 
     public static readonly ImmutableArray<string> ScanTasks =
         ["ScannerService", "ScanLibrary", "ScanLibraries", "ScanFolder", "ScanSeries"];
@@ -98,7 +101,8 @@ public class TaskScheduler : ITaskScheduler
         ICleanupService cleanupService, IStatsService statsService, IVersionUpdaterService versionUpdaterService,
         IThemeService themeService, IWordCountAnalyzerService wordCountAnalyzerService, IStatisticService statisticService,
         IMediaConversionService mediaConversionService, IScrobblingService scrobblingService, ILicenseService licenseService,
-        IExternalMetadataService externalMetadataService, ISmartCollectionSyncService smartCollectionSyncService, IEventHub eventHub)
+        IExternalMetadataService externalMetadataService, ISmartCollectionSyncService smartCollectionSyncService,
+        IWantToReadSyncService wantToReadSyncService, IEventHub eventHub)
     {
         _cacheService = cacheService;
         _logger = logger;
@@ -117,6 +121,7 @@ public class TaskScheduler : ITaskScheduler
         _licenseService = licenseService;
         _externalMetadataService = externalMetadataService;
         _smartCollectionSyncService = smartCollectionSyncService;
+        _wantToReadSyncService = wantToReadSyncService;
         _eventHub = eventHub;
     }
 
@@ -204,22 +209,30 @@ public class TaskScheduler : ITaskScheduler
         RecurringJob.AddOrUpdate(CheckScrobblingTokensId, () => _scrobblingService.CheckExternalAccessTokens(),
             Cron.Daily, RecurringJobOptions);
         BackgroundJob.Enqueue(() => _scrobblingService.CheckExternalAccessTokens()); // We also kick off an immediate check on startup
-        RecurringJob.AddOrUpdate(LicenseCheckId, () => _licenseService.HasActiveLicense(true),
+
+        // Get the License Info (and cache it) on first load. This will internally cache the Github releases for the Version Service
+        await _licenseService.GetLicenseInfo(true); // Kick this off first to cache it then let it refresh every 9 hours (8 hour cache)
+        RecurringJob.AddOrUpdate(LicenseCheckId, () => _licenseService.GetLicenseInfo(false),
             LicenseService.Cron, RecurringJobOptions);
 
-        // KavitaPlus Scrobbling (every 4 hours)
+        // KavitaPlus Scrobbling (every hour)
         RecurringJob.AddOrUpdate(ProcessScrobblingEventsId, () => _scrobblingService.ProcessUpdatesSinceLastSync(),
-            "0 */4 * * *", RecurringJobOptions);
+            "0 */1 * * *", RecurringJobOptions);
         RecurringJob.AddOrUpdate(ProcessProcessedScrobblingEventsId, () => _scrobblingService.ClearProcessedEvents(),
             Cron.Daily, RecurringJobOptions);
 
         // Backfilling/Freshening Reviews/Rating/Recommendations
         RecurringJob.AddOrUpdate(KavitaPlusDataRefreshId,
-            () => _externalMetadataService.FetchExternalDataTask(), Cron.Daily(Rnd.Next(1, 4)),
+            () => _externalMetadataService.FetchExternalDataTask(), Cron.Daily(Rnd.Next(1, 5)),
             RecurringJobOptions);
 
+        // This shouldn't be so close to fetching data due to Rate limit concerns
         RecurringJob.AddOrUpdate(KavitaPlusStackSyncId,
-            () => _smartCollectionSyncService.Sync(), Cron.Daily(Rnd.Next(1, 4)),
+            () => _smartCollectionSyncService.Sync(), Cron.Daily(Rnd.Next(6, 10)),
+            RecurringJobOptions);
+
+        RecurringJob.AddOrUpdate(KavitaPlusWantToReadSyncId,
+            () => _wantToReadSyncService.Sync(), Cron.Weekly(DayOfWeekHelper.Random()),
             RecurringJobOptions);
     }
 

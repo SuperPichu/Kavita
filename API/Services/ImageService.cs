@@ -1,26 +1,20 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
-using API.Constants;
 using API.DTOs;
-using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Interfaces;
 using API.Extensions;
-using EasyCaching.Core;
-using Flurl;
-using Flurl.Http;
-using HtmlAgilityPack;
-using Kavita.Common;
 using Microsoft.Extensions.Logging;
 using NetVips;
+using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
+using Color = System.Drawing.Color;
 using Image = NetVips.Image;
 
 namespace API.Services;
@@ -58,6 +52,7 @@ public interface IImageService
     /// <param name="encodeFormat"></param>
     /// <returns></returns>
     string WriteCoverThumbnail(string sourceFile, string fileName, string outputDirectory, EncodeFormat encodeFormat, CoverImageSize size = CoverImageSize.Default);
+
     /// <summary>
     /// Converts the passed image to encoding and outputs it in the same directory
     /// </summary>
@@ -601,6 +596,7 @@ public class ImageService : IImageService
         return string.Empty;
     }
 
+
     /// <summary>
     /// Returns the name format for a chapter cover image
     /// </summary>
@@ -752,6 +748,7 @@ public class ImageService : IImageService
         entity.PrimaryColor = colors.Primary;
         entity.SecondaryColor = colors.Secondary;
     }
+
 
     public static Color HexToRgb(string? hex)
     {

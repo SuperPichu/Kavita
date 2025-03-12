@@ -1,10 +1,14 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using API.DTOs.KavitaPlus.Metadata;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Enums.UserPreferences;
+using API.Entities.History;
 using API.Entities.Interfaces;
 using API.Entities.Metadata;
 using API.Entities.Scrobble;
@@ -12,6 +16,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace API.Data;
 
@@ -68,7 +73,9 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
     public DbSet<AppUserCollection> AppUserCollection { get; set; } = null!;
     public DbSet<ChapterPeople> ChapterPeople { get; set; } = null!;
     public DbSet<SeriesMetadataPeople> SeriesMetadataPeople { get; set; } = null!;
-
+    public DbSet<EmailHistory> EmailHistory { get; set; } = null!;
+    public DbSet<MetadataSettings> MetadataSettings { get; set; } = null!;
+    public DbSet<MetadataFieldMapping> MetadataFieldMapping { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -118,9 +125,18 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
             .Property(b => b.Locale)
             .IsRequired(true)
             .HasDefaultValue("en");
+        builder.Entity<AppUserPreferences>()
+            .Property(b => b.AniListScrobblingEnabled)
+            .HasDefaultValue(true);
+        builder.Entity<AppUserPreferences>()
+            .Property(b => b.WantToReadSync)
+            .HasDefaultValue(true);
 
         builder.Entity<Library>()
             .Property(b => b.AllowScrobbling)
+            .HasDefaultValue(true);
+        builder.Entity<Library>()
+            .Property(b => b.AllowMetadataMatching)
             .HasDefaultValue(true);
 
         builder.Entity<Chapter>()
@@ -187,6 +203,51 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
             .WithMany(p => p.SeriesMetadataPeople)
             .HasForeignKey(smp => smp.PersonId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<SeriesMetadataPeople>()
+            .Property(b => b.OrderWeight)
+            .HasDefaultValue(0);
+
+        builder.Entity<MetadataSettings>()
+            .Property(x => x.AgeRatingMappings)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                v => JsonSerializer.Deserialize<Dictionary<string, AgeRating>>(v, JsonSerializerOptions.Default) ?? new Dictionary<string, AgeRating>()
+            );
+
+        // Ensure blacklist is stored as a JSON array
+        builder.Entity<MetadataSettings>()
+            .Property(x => x.Blacklist)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default) ?? new List<string>()
+            );
+        builder.Entity<MetadataSettings>()
+            .Property(x => x.Whitelist)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default) ?? new List<string>()
+            );
+        builder.Entity<MetadataSettings>()
+            .Property(x => x.Overrides)
+            .HasConversion(
+                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
+                v => JsonSerializer.Deserialize<List<MetadataSettingField>>(v, JsonSerializerOptions.Default) ?? new List<MetadataSettingField>()
+            );
+
+        // Configure one-to-many relationship
+        builder.Entity<MetadataSettings>()
+            .HasMany(x => x.FieldMappings)
+            .WithOne(x => x.MetadataSettings)
+            .HasForeignKey(x => x.MetadataSettingsId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<MetadataSettings>()
+            .Property(b => b.Enabled)
+            .HasDefaultValue(true);
+        builder.Entity<MetadataSettings>()
+            .Property(b => b.EnableCoverImage)
+            .HasDefaultValue(true);
     }
 
     #nullable enable

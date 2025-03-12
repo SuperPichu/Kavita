@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Comparators;
-using API.Constants;
-using API.Controllers;
 using API.Data;
 using API.Data.Repositories;
 using API.DTOs;
-using API.DTOs.CollectionTags;
 using API.DTOs.SeriesDetail;
 using API.Entities;
 using API.Entities.Enums;
@@ -22,7 +18,6 @@ using API.Services.Plus;
 using API.Services.Tasks.Scanner;
 using API.Services.Tasks.Scanner.Parser;
 using API.SignalR;
-using EasyCaching.Core;
 using Hangfire;
 using Kavita.Common;
 using Microsoft.Extensions.Logging;
@@ -46,6 +41,7 @@ public interface ISeriesService
         bool withHash);
     Task<string> FormatChapterName(int userId, LibraryType libraryType, bool withHash = false);
     Task<NextExpectedChapterDto> GetEstimatedChapterCreationDate(int seriesId, int userId);
+
 }
 
 public class SeriesService : ISeriesService
@@ -209,12 +205,6 @@ public class SeriesService : ISeriesService
             series.Metadata ??= new SeriesMetadataBuilder()
                 .Build();
 
-            if (series.Metadata.AgeRating != updateSeriesMetadataDto.SeriesMetadata.AgeRating)
-            {
-                series.Metadata.AgeRating = updateSeriesMetadataDto.SeriesMetadata.AgeRating;
-                series.Metadata.AgeRatingLocked = true;
-            }
-
             if (NumberHelper.IsValidYear(updateSeriesMetadataDto.SeriesMetadata.ReleaseYear) && series.Metadata.ReleaseYear != updateSeriesMetadataDto.SeriesMetadata.ReleaseYear)
             {
                 series.Metadata.ReleaseYear = updateSeriesMetadataDto.SeriesMetadata.ReleaseYear;
@@ -262,7 +252,7 @@ public class SeriesService : ISeriesService
                 updateSeriesMetadataDto.SeriesMetadata.Genres.Count != 0)
             {
                 var allGenres = (await _unitOfWork.GenreRepository.GetAllGenresByNamesAsync(updateSeriesMetadataDto.SeriesMetadata.Genres.Select(t => Parser.Normalize(t.Title)))).ToList();
-                series.Metadata.Genres ??= new List<Genre>();
+                series.Metadata.Genres ??= [];
                 GenreHelper.UpdateGenreList(updateSeriesMetadataDto.SeriesMetadata?.Genres, series, allGenres, genre =>
                 {
                     series.Metadata.Genres.Add(genre);
@@ -270,7 +260,7 @@ public class SeriesService : ISeriesService
             }
             else
             {
-                series.Metadata.Genres = new List<Genre>();
+                series.Metadata.Genres = [];
             }
 
 
@@ -279,7 +269,7 @@ public class SeriesService : ISeriesService
                 var allTags = (await _unitOfWork.TagRepository
                     .GetAllTagsByNameAsync(updateSeriesMetadataDto.SeriesMetadata.Tags.Select(t => Parser.Normalize(t.Title))))
                     .ToList();
-                series.Metadata.Tags ??= new List<Tag>();
+                series.Metadata.Tags ??= [];
                 TagHelper.UpdateTagList(updateSeriesMetadataDto.SeriesMetadata?.Tags, series, allTags, tag =>
                 {
                     series.Metadata.Tags.Add(tag);
@@ -287,85 +277,110 @@ public class SeriesService : ISeriesService
             }
             else
             {
-                series.Metadata.Tags = new List<Tag>();
+                series.Metadata.Tags = [];
+            }
+
+            if (series.Metadata.AgeRating != updateSeriesMetadataDto.SeriesMetadata?.AgeRating)
+            {
+                series.Metadata.AgeRating = updateSeriesMetadataDto.SeriesMetadata?.AgeRating ?? AgeRating.Unknown;
+                series.Metadata.AgeRatingLocked = true;
+            }
+            else
+            {
+                if (!series.Metadata.AgeRatingLocked)
+                {
+                    var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettingDto();
+                    var allTags = series.Metadata.Tags.Select(t => t.Title).Concat(series.Metadata.Genres.Select(g => g.Title));
+                    var updatedRating = ExternalMetadataService.DetermineAgeRating(allTags, metadataSettings.AgeRatingMappings);
+                    if (updatedRating > series.Metadata.AgeRating)
+                    {
+                        series.Metadata.AgeRating = updatedRating;
+                    }
+                }
             }
 
             if (updateSeriesMetadataDto.SeriesMetadata != null)
             {
                 if (PersonHelper.HasAnyPeople(updateSeriesMetadataDto.SeriesMetadata))
                 {
-                    series.Metadata.People ??= new List<SeriesMetadataPeople>();
+                    series.Metadata.People ??= [];
 
                     // Writers
                     if (!series.Metadata.WriterLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Writers, PersonRole.Writer);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Writers, PersonRole.Writer, _unitOfWork);
                     }
 
                     // Cover Artists
                     if (!series.Metadata.CoverArtistLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.CoverArtists, PersonRole.CoverArtist);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.CoverArtists, PersonRole.CoverArtist, _unitOfWork);
                     }
 
                     // Colorists
                     if (!series.Metadata.ColoristLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Colorists, PersonRole.Colorist);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Colorists, PersonRole.Colorist, _unitOfWork);
                     }
 
                     // Editors
                     if (!series.Metadata.EditorLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Editors, PersonRole.Editor);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Editors, PersonRole.Editor, _unitOfWork);
                     }
 
                     // Inkers
                     if (!series.Metadata.InkerLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Inkers, PersonRole.Inker);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Inkers, PersonRole.Inker, _unitOfWork);
                     }
 
                     // Letterers
                     if (!series.Metadata.LettererLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Letterers, PersonRole.Letterer);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Letterers, PersonRole.Letterer, _unitOfWork);
                     }
 
                     // Pencillers
                     if (!series.Metadata.PencillerLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Pencillers, PersonRole.Penciller);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Pencillers, PersonRole.Penciller, _unitOfWork);
                     }
 
                     // Publishers
                     if (!series.Metadata.PublisherLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Publishers, PersonRole.Publisher);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Publishers, PersonRole.Publisher, _unitOfWork);
                     }
 
                     // Imprints
                     if (!series.Metadata.ImprintLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Imprints, PersonRole.Imprint);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Imprints, PersonRole.Imprint, _unitOfWork);
                     }
 
                     // Teams
                     if (!series.Metadata.TeamLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Teams, PersonRole.Team);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Teams, PersonRole.Team, _unitOfWork);
                     }
 
                     // Locations
                     if (!series.Metadata.LocationLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Locations, PersonRole.Location);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Locations, PersonRole.Location, _unitOfWork);
                     }
 
                     // Translators
                     if (!series.Metadata.TranslatorLocked)
                     {
-                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Translators, PersonRole.Translator);
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Translators, PersonRole.Translator, _unitOfWork);
+                    }
+
+                    // Characters
+                    if (!series.Metadata.CharacterLocked)
+                    {
+                        await HandlePeopleUpdateAsync(series.Metadata, updateSeriesMetadataDto.SeriesMetadata.Characters, PersonRole.Character, _unitOfWork);
                     }
 
                 }
@@ -384,6 +399,7 @@ public class SeriesService : ISeriesService
                 series.Metadata.PencillerLocked = updateSeriesMetadataDto.SeriesMetadata.PencillerLocked;
                 series.Metadata.PublisherLocked = updateSeriesMetadataDto.SeriesMetadata.PublisherLocked;
                 series.Metadata.TranslatorLocked = updateSeriesMetadataDto.SeriesMetadata.TranslatorLocked;
+                series.Metadata.LocationLocked = updateSeriesMetadataDto.SeriesMetadata.LocationLocked;
                 series.Metadata.CoverArtistLocked = updateSeriesMetadataDto.SeriesMetadata.CoverArtistLocked;
                 series.Metadata.WriterLocked = updateSeriesMetadataDto.SeriesMetadata.WriterLocked;
                 series.Metadata.SummaryLocked = updateSeriesMetadataDto.SeriesMetadata.SummaryLocked;
@@ -424,8 +440,10 @@ public class SeriesService : ISeriesService
     /// <param name="metadata"></param>
     /// <param name="peopleDtos"></param>
     /// <param name="role"></param>
-    private async Task HandlePeopleUpdateAsync(SeriesMetadata metadata, ICollection<PersonDto> peopleDtos, PersonRole role)
+    public static async Task HandlePeopleUpdateAsync(SeriesMetadata metadata, ICollection<PersonDto> peopleDtos, PersonRole role, IUnitOfWork unitOfWork)
     {
+        // TODO: Cleanup this code so we aren't using UnitOfWork like this
+
         // Normalize all names from the DTOs
         var normalizedNames = peopleDtos
             .Select(p => Parser.Normalize(p.Name))
@@ -433,10 +451,11 @@ public class SeriesService : ISeriesService
             .ToList();
 
         // Bulk select people who already exist in the database
-        var existingPeople = await _unitOfWork.PersonRepository.GetPeopleByNames(normalizedNames);
+        var existingPeople = await unitOfWork.PersonRepository.GetPeopleByNames(normalizedNames);
 
         // Use a dictionary for quick lookups
-        var existingPeopleDictionary = existingPeople.DistinctBy(p => p.NormalizedName).ToDictionary(p => p.NormalizedName, p => p);
+        var existingPeopleDictionary = existingPeople.DistinctBy(p => p.NormalizedName)
+            .ToDictionary(p => p.NormalizedName, p => p);
 
         // List to track people that will be added to the metadata
         var peopleToAdd = new List<Person>();
@@ -446,13 +465,28 @@ public class SeriesService : ISeriesService
             var normalizedPersonName = Parser.Normalize(personDto.Name);
 
             // Check if the person exists in the dictionary
-            if (existingPeopleDictionary.TryGetValue(normalizedPersonName, out _)) continue;
+            if (existingPeopleDictionary.TryGetValue(normalizedPersonName, out var p))
+            {
+                // TODO: Should I add more controls here to map back?
+                if (personDto.AniListId > 0 && p.AniListId <= 0 && p.AniListId != personDto.AniListId)
+                {
+                    p.AniListId = personDto.AniListId;
+                }
+                p.Description = string.IsNullOrEmpty(p.Description) ? personDto.Description : p.Description;
+                continue; // If we ever want to update metadata for existing people, we'd do it here
+            }
 
             // Person doesn't exist, so create a new one
             var newPerson = new Person
             {
                 Name = personDto.Name,
-                NormalizedName = normalizedPersonName
+                NormalizedName = normalizedPersonName,
+                AniListId = personDto.AniListId,
+                Description = personDto.Description,
+                Asin = personDto.Asin,
+                CoverImage = personDto.CoverImage,
+                MalId =  personDto.MalId,
+                HardcoverId = personDto.HardcoverId,
             };
 
             peopleToAdd.Add(newPerson);
@@ -462,7 +496,7 @@ public class SeriesService : ISeriesService
         // Add any new people to the database in bulk
         if (peopleToAdd.Count != 0)
         {
-            _unitOfWork.PersonRepository.Attach(peopleToAdd);
+            unitOfWork.PersonRepository.Attach(peopleToAdd);
         }
 
         // Now that we have all the people (new and existing), update the SeriesMetadataPeople

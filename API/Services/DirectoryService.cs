@@ -31,9 +31,17 @@ public interface IDirectoryService
     string TemplateDirectory { get; }
     string PublisherDirectory { get; }
     /// <summary>
+    /// Used for caching documents that may need to stay on disk for more than a day
+    /// </summary>
+    string LongTermCacheDirectory { get; }
+    /// <summary>
     /// Original BookmarkDirectory. Only used for resetting directory. Use <see cref="ServerSettingKey.BackupDirectory"/> for actual path.
     /// </summary>
     string BookmarkDirectory { get; }
+    /// <summary>
+    /// Used for random files needed, like images to check against, list of countries, etc
+    /// </summary>
+    string AssetsDirectory { get; }
     /// <summary>
     /// Lists out top-level folders for a given directory. Filters out System and Hidden folders.
     /// </summary>
@@ -83,12 +91,14 @@ public class DirectoryService : IDirectoryService
     public string TempDirectory { get; }
     public string ConfigDirectory { get; }
     public string BookmarkDirectory { get; }
+    public string AssetsDirectory { get; }
     public string SiteThemeDirectory { get; }
     public string FaviconDirectory { get; }
     public string LocalizationDirectory { get; }
     public string CustomizedTemplateDirectory { get; }
     public string TemplateDirectory { get; }
     public string PublisherDirectory { get; }
+    public string LongTermCacheDirectory { get; }
     private readonly ILogger<DirectoryService> _logger;
     private const RegexOptions MatchOptions = RegexOptions.Compiled | RegexOptions.IgnoreCase;
 
@@ -115,6 +125,8 @@ public class DirectoryService : IDirectoryService
         ExistOrCreate(TempDirectory);
         BookmarkDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "config", "bookmarks");
         ExistOrCreate(BookmarkDirectory);
+        AssetsDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "Assets");
+        ExistOrCreate(AssetsDirectory);
         SiteThemeDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "config", "themes");
         ExistOrCreate(SiteThemeDirectory);
         FaviconDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "config", "favicons");
@@ -126,6 +138,8 @@ public class DirectoryService : IDirectoryService
         ExistOrCreate(TemplateDirectory);
         PublisherDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "config", "images", "publishers");
         ExistOrCreate(PublisherDirectory);
+        LongTermCacheDirectory = FileSystem.Path.Join(FileSystem.Directory.GetCurrentDirectory(), "config", "cache-long");
+        ExistOrCreate(LongTermCacheDirectory);
     }
 
     /// <summary>

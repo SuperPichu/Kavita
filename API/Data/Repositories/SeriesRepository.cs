@@ -15,6 +15,7 @@ using API.DTOs.Filtering;
 using API.DTOs.Filtering.v2;
 using API.DTOs.Metadata;
 using API.DTOs.ReadingLists;
+using API.DTOs.Recommendation;
 using API.DTOs.Scrobbling;
 using API.DTOs.Search;
 using API.DTOs.SeriesDetail;
@@ -74,6 +75,7 @@ public interface ISeriesRepository
 {
     void Add(Series series);
     void Attach(Series series);
+    void Attach(SeriesRelation relation);
     void Update(Series series);
     void Remove(Series series);
     void Remove(IEnumerable<Series> series);
@@ -145,7 +147,10 @@ public interface ISeriesRepository
     Task<IEnumerable<Series>> GetAllSeriesByNameAsync(IList<string> normalizedNames,
         int userId, SeriesIncludes includes = SeriesIncludes.None);
     Task<Series?> GetFullSeriesByAnyName(string seriesName, string localizedName, int libraryId, MangaFormat format, bool withFullIncludes = true);
-    Task<Series?> GetSeriesByAnyName(string seriesName, string localizedName, IList<MangaFormat> formats, int userId);
+
+    Task<Series?> GetSeriesByAnyName(IList<string> names, IList<MangaFormat> formats,
+        int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None);
+    Task<Series?> GetSeriesByAnyName(string seriesName, string localizedName, IList<MangaFormat> formats, int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None);
     public Task<IList<Series>> GetAllSeriesByAnyName(string seriesName, string localizedName, int libraryId,
         MangaFormat format);
     Task<IList<Series>> RemoveSeriesNotInList(IList<ParsedSeries> seenSeries, int libraryId);
@@ -163,8 +168,9 @@ public interface ISeriesRepository
     Task RemoveFromOnDeck(int seriesId, int userId);
     Task ClearOnDeckRemoval(int seriesId, int userId);
     Task<PagedList<SeriesDto>> GetSeriesDtoForLibraryIdV2Async(int userId, UserParams userParams, FilterV2Dto filterDto, QueryContext queryContext = QueryContext.None);
-    Task<PlusSeriesDto?> GetPlusSeriesDto(int seriesId);
+    Task<PlusSeriesRequestDto?> GetPlusSeriesDto(int seriesId);
     Task<int> GetCountAsync();
+    Task<Series?> MatchSeries(ExternalSeriesDetailDto externalSeries);
 }
 
 public class SeriesRepository : ISeriesRepository
@@ -191,6 +197,11 @@ public class SeriesRepository : ISeriesRepository
     public void Attach(Series series)
     {
         _context.Series.Attach(series);
+    }
+
+    public void Attach(SeriesRelation relation)
+    {
+        _context.SeriesRelation.Attach(relation);
     }
 
     public void Attach(ExternalSeriesMetadata metadata)
@@ -697,19 +708,18 @@ public class SeriesRepository : ISeriesRepository
 
         var retSeries = query
             .ProjectTo<SeriesDto>(_mapper.ConfigurationProvider)
-            //.AsSplitQuery()
             .AsNoTracking();
 
         return await PagedList<SeriesDto>.CreateAsync(retSeries, userParams.PageNumber, userParams.PageSize);
     }
 
-    public async Task<PlusSeriesDto?> GetPlusSeriesDto(int seriesId)
+    public async Task<PlusSeriesRequestDto?> GetPlusSeriesDto(int seriesId)
     {
         return await _context.Series
             .Where(s => s.Id == seriesId)
-            .Select(series => new PlusSeriesDto()
+            .Select(series => new PlusSeriesRequestDto()
             {
-                MediaFormat = LibraryTypeHelper.GetFormat(series.Library.Type),
+                MediaFormat = series.Library.Type.ConvertToPlusMediaFormat(series.Format),
                 SeriesName = series.Name,
                 AltSeriesName = series.LocalizedName,
                 AniListId = ScrobblingService.ExtractId<int?>(series.Metadata.WebLinks,
@@ -1723,24 +1733,71 @@ public class SeriesRepository : ISeriesRepository
     #nullable enable
     }
 
-    public async Task<Series?> GetSeriesByAnyName(string seriesName, string localizedName, IList<MangaFormat> formats, int userId)
+    public async Task<Series?> GetSeriesByAnyName(string seriesName, string localizedName, IList<MangaFormat> formats,
+        int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None)
     {
         var libraryIds = GetLibraryIdsForUser(userId);
         var normalizedSeries = seriesName.ToNormalized();
         var normalizedLocalized = localizedName.ToNormalized();
 
-        return await _context.Series
+        var query = _context.Series
             .Where(s => libraryIds.Contains(s.LibraryId))
-            .Where(s => formats.Contains(s.Format))
-            .Where(s =>
+            .Where(s => formats.Contains(s.Format));
+
+        if (aniListId.HasValue && aniListId.Value > 0)
+        {
+            // If AniList ID is provided, override name checks
+            query = query.Where(s => s.ExternalSeriesMetadata.AniListId == aniListId.Value);
+        }
+        else
+        {
+            // Otherwise, use name checks
+            query = query.Where(s =>
                 s.NormalizedName.Equals(normalizedSeries)
                 || s.NormalizedName.Equals(normalizedLocalized)
-
                 || s.NormalizedLocalizedName.Equals(normalizedSeries)
                 || (!string.IsNullOrEmpty(normalizedLocalized) && s.NormalizedLocalizedName.Equals(normalizedLocalized))
-
                 || (s.OriginalName != null && s.OriginalName.Equals(seriesName))
-            )
+            );
+        }
+
+        return await query
+            .Includes(includes)
+            .FirstOrDefaultAsync();
+    }
+
+
+    public async Task<Series?> GetSeriesByAnyName(IList<string> names, IList<MangaFormat> formats,
+        int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None)
+    {
+        var libraryIds = GetLibraryIdsForUser(userId);
+        names = names.Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
+        var normalizedNames = names.Select(s => s.ToNormalized()).ToList();
+
+
+        var query = _context.Series
+            .Where(s => libraryIds.Contains(s.LibraryId))
+            .Where(s => formats.Contains(s.Format));
+
+        if (aniListId.HasValue && aniListId.Value > 0)
+        {
+            // If AniList ID is provided, override name checks
+            query = query.Where(s => s.ExternalSeriesMetadata.AniListId == aniListId.Value ||
+                                     normalizedNames.Contains(s.NormalizedName)
+                                     || normalizedNames.Contains(s.NormalizedLocalizedName)
+                                     || names.Contains(s.OriginalName));
+        }
+        else
+        {
+            // Otherwise, use name checks
+            query = query.Where(s =>
+                normalizedNames.Contains(s.NormalizedName)
+                || normalizedNames.Contains(s.NormalizedLocalizedName)
+                || names.Contains(s.OriginalName));
+        }
+
+        return await query
+            .Includes(includes)
             .FirstOrDefaultAsync();
     }
 
@@ -1791,7 +1848,7 @@ public class SeriesRepository : ISeriesRepository
                 .ToList();
 
             // Prefer the first match or handle duplicates by choosing the last one
-            if (matchingSeries.Any())
+            if (matchingSeries.Count != 0)
             {
                 ids.Add(matchingSeries.Last().Id);
             }
@@ -2037,9 +2094,6 @@ public class SeriesRepository : ISeriesRepository
     /// Uses multiple names to find a match against a series. If not, returns null.
     /// </summary>
     /// <remarks>This does not restrict to the user at all. That is handled at the API level.</remarks>
-    /// <param name="userId"></param>
-    /// <param name="names"></param>
-    /// <returns></returns>
     public async Task<SeriesDto?> GetSeriesDtoByNamesAndMetadataIds(IEnumerable<string> names, LibraryType libraryType, string aniListUrl, string malUrl)
     {
         var libraryIds = await _context.Library
@@ -2070,6 +2124,47 @@ public class SeriesRepository : ISeriesRepository
             .Where(s => libraryIds.Contains(s.Library.Id))
             .ProjectTo<SeriesDto>(_mapper.ConfigurationProvider)
             .AsSplitQuery()
+            .FirstOrDefaultAsync(); // Some users may have improperly configured libraries
+    }
+
+    public async Task<Series?> MatchSeries(ExternalSeriesDetailDto externalSeries)
+    {
+        var libraryIds = await _context.Library
+            .Where(lib => externalSeries.PlusMediaFormat.ConvertToLibraryTypes().Contains(lib.Type))
+            .Select(l => l.Id)
+            .ToListAsync();
+
+        var normalizedNames = (externalSeries.Synonyms ?? Enumerable.Empty<string>())
+            .Prepend(externalSeries.Name)
+            .Select(n => n.ToNormalized())
+            .ToList();
+
+        var aniListWebLink =
+            ScrobblingService.CreateUrl(ScrobblingService.AniListWeblinkWebsite, externalSeries.AniListId);
+        var malWebLink =
+            ScrobblingService.CreateUrl(ScrobblingService.MalWeblinkWebsite, externalSeries.MALId);
+
+        Series? result = null;
+        if (!string.IsNullOrEmpty(aniListWebLink) || !string.IsNullOrEmpty(malWebLink))
+        {
+            result = await _context.Series
+                .Where(s => !string.IsNullOrEmpty(s.Metadata.WebLinks))
+                .Where(s => libraryIds.Contains(s.Library.Id))
+                .WhereIf(!string.IsNullOrEmpty(aniListWebLink), s => s.Metadata.WebLinks.Contains(aniListWebLink))
+                .WhereIf(!string.IsNullOrEmpty(malWebLink), s => s.Metadata.WebLinks.Contains(malWebLink))
+                .Include(s => s.Metadata)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync();
+        }
+
+        if (result != null) return result;
+
+        return await _context.Series
+            .Where(s => normalizedNames.Contains(s.NormalizedName) ||
+                        normalizedNames.Contains(s.NormalizedLocalizedName))
+            .Where(s => libraryIds.Contains(s.Library.Id))
+            .AsSplitQuery()
+            .Include(s => s.Metadata)
             .FirstOrDefaultAsync(); // Some users may have improperly configured libraries
     }
 

@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Constants;
+using API.Data;
 using API.Data.Repositories;
 using API.Entities;
 using API.Entities.Enums;
 using API.Extensions;
+using API.SignalR;
 using EasyCaching.Core;
 using Flurl;
 using Flurl.Http;
@@ -17,13 +19,18 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using NetVips;
 
+
 namespace API.Services.Tasks.Metadata;
+#nullable enable
 
 public interface ICoverDbService
 {
     Task<string> DownloadFaviconAsync(string url, EncodeFormat encodeFormat);
     Task<string> DownloadPublisherImageAsync(string publisherName, EncodeFormat encodeFormat);
     Task<string?> DownloadPersonImageAsync(Person person, EncodeFormat encodeFormat);
+    Task<string?> DownloadPersonImageAsync(Person person, EncodeFormat encodeFormat, string url);
+    Task SetPersonCoverByUrl(Person person, string url, bool fromBase64 = true, bool checkNoImagePlaceholder = false);
+    Task SetSeriesCoverByUrl(Series series, string url, bool fromBase64 = true, bool chooseBetterImage = false);
 }
 
 
@@ -33,6 +40,9 @@ public class CoverDbService : ICoverDbService
     private readonly IDirectoryService _directoryService;
     private readonly IEasyCachingProviderFactory _cacheFactory;
     private readonly IHostEnvironment _env;
+    private readonly IImageService _imageService;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IEventHub _eventHub;
 
     private const string NewHost = "https://www.kavitareader.com/CoversDB/";
 
@@ -50,14 +60,22 @@ public class CoverDbService : ICoverDbService
     {
         ["https://app.plex.tv"] = "https://plex.tv"
     };
+    /// <summary>
+    /// Cache of the publisher/favicon list
+    /// </summary>
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromDays(1);
 
     public CoverDbService(ILogger<CoverDbService> logger, IDirectoryService directoryService,
-        IEasyCachingProviderFactory cacheFactory, IHostEnvironment env)
+        IEasyCachingProviderFactory cacheFactory, IHostEnvironment env, IImageService imageService,
+        IUnitOfWork unitOfWork, IEventHub eventHub)
     {
         _logger = logger;
         _directoryService = directoryService;
         _cacheFactory = cacheFactory;
         _env = env;
+        _imageService = imageService;
+        _unitOfWork = unitOfWork;
+        _eventHub = eventHub;
     }
 
     public async Task<string> DownloadFaviconAsync(string url, EncodeFormat encodeFormat)
@@ -220,35 +238,36 @@ public class CoverDbService : ICoverDbService
             {
                 throw new KavitaException($"Could not grab person image for {person.Name}");
             }
+            return await DownloadPersonImageAsync(person, encodeFormat, personImageLink);
+        } catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error downloading image for {PersonName}", person.Name);
+        }
 
-            // Create the destination file path
-            var filename = ImageService.GetPersonFormat(person.Id) + encodeFormat.GetExtension();
-            var targetFile = Path.Combine(_directoryService.CoverImageDirectory, filename);
+        return null;
+    }
 
-            // Ensure if file exists, we delete to overwrite
-
-
-            _logger.LogTrace("Fetching publisher image from {Url}", personImageLink.Sanitize());
-            // Download the publisher file using Flurl
-            var personStream = await personImageLink
-                .AllowHttpStatus("2xx,304")
-                .GetStreamAsync();
-
-            using var image = Image.NewFromStream(personStream);
-            switch (encodeFormat)
+    /// <summary>
+    /// Attempts to download the Person cover image from a Url
+    /// </summary>
+    /// <param name="person"></param>
+    /// <param name="encodeFormat"></param>
+    /// <param name="url"></param>
+    /// <returns></returns>
+    /// <exception cref="KavitaException"></exception>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
+    public async Task<string?> DownloadPersonImageAsync(Person person, EncodeFormat encodeFormat, string url)
+    {
+        try
+        {
+            var personImageLink = await GetCoverPersonImagePath(person);
+            if (string.IsNullOrEmpty(personImageLink))
             {
-                case EncodeFormat.PNG:
-                    image.Pngsave(targetFile);
-                    break;
-                case EncodeFormat.WEBP:
-                    image.Webpsave(targetFile);
-                    break;
-                case EncodeFormat.AVIF:
-                    image.Heifsave(targetFile);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(encodeFormat), encodeFormat, null);
+                throw new KavitaException($"Could not grab person image for {person.Name}");
             }
+
+
+            var filename = await DownloadImageFromUrl(ImageService.GetPersonFormat(person.Id), encodeFormat, personImageLink);
 
             _logger.LogDebug("Person image for {PersonName} downloaded and saved successfully", person.Name);
 
@@ -261,9 +280,42 @@ public class CoverDbService : ICoverDbService
         return null;
     }
 
+    private async Task<string> DownloadImageFromUrl(string filenameWithoutExtension, EncodeFormat encodeFormat, string url)
+    {
+        // Create the destination file path
+        var filename = filenameWithoutExtension + encodeFormat.GetExtension();
+        var targetFile = Path.Combine(_directoryService.CoverImageDirectory, filename);
+
+        // Ensure if file exists, we delete to overwrite
+
+        _logger.LogTrace("Fetching person image from {Url}", url.Sanitize());
+        // Download the file using Flurl
+        var personStream = await url
+            .AllowHttpStatus("2xx,304")
+            .GetStreamAsync();
+
+        using var image = Image.NewFromStream(personStream);
+        switch (encodeFormat)
+        {
+            case EncodeFormat.PNG:
+                image.Pngsave(targetFile);
+                break;
+            case EncodeFormat.WEBP:
+                image.Webpsave(targetFile);
+                break;
+            case EncodeFormat.AVIF:
+                image.Heifsave(targetFile);
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(encodeFormat), encodeFormat, null);
+        }
+
+        return filename;
+    }
+
     private async Task<string> GetCoverPersonImagePath(Person person)
     {
-        var tempFile = Path.Join(_directoryService.TempDirectory, "people.yml");
+        var tempFile = Path.Join(_directoryService.LongTermCacheDirectory, "people.yml");
 
         // Check if the file already exists and skip download in Development environment
         if (File.Exists(tempFile))
@@ -286,7 +338,7 @@ public class CoverDbService : ICoverDbService
         if (!File.Exists(tempFile))
         {
             var masterPeopleFile = await $"{NewHost}people/people.yml"
-                .DownloadFileAsync(_directoryService.TempDirectory);
+                .DownloadFileAsync(_directoryService.LongTermCacheDirectory);
 
             if (!File.Exists(tempFile) || string.IsNullOrEmpty(masterPeopleFile))
             {
@@ -307,12 +359,16 @@ public class CoverDbService : ICoverDbService
         return $"{NewHost}{coverAuthor.ImagePath}";
     }
 
-    private static async Task<string> FallbackToKavitaReaderFavicon(string baseUrl)
+    private async Task<string> FallbackToKavitaReaderFavicon(string baseUrl)
     {
+        const string urlsFileName = "publishers.txt";
         var correctSizeLink = string.Empty;
-        // TODO: Pull this down and store it in temp/ to save on requests
-        var allOverrides = await $"{NewHost}favicons/urls.txt"
-            .GetStringAsync();
+        var allOverrides = await GetCachedData(urlsFileName) ??
+                           await $"{NewHost}favicons/{urlsFileName}".GetStringAsync();
+
+        // Cache immediately
+        await CacheDataAsync(urlsFileName, allOverrides);
+
 
         if (!string.IsNullOrEmpty(allOverrides))
         {
@@ -335,11 +391,16 @@ public class CoverDbService : ICoverDbService
         return correctSizeLink;
     }
 
-    private static async Task<string> FallbackToKavitaReaderPublisher(string publisherName)
+    private async Task<string> FallbackToKavitaReaderPublisher(string publisherName)
     {
+        const string publisherFileName = "publishers.txt";
         var externalLink = string.Empty;
-        // TODO: Pull this down and store it in temp/ to save on requests
-        var allOverrides = await $"{NewHost}publishers/publishers.txt".GetStringAsync();
+        var allOverrides = await GetCachedData(publisherFileName) ??
+                           await $"{NewHost}publishers/{publisherFileName}".GetStringAsync();
+
+        // Cache immediately
+        await CacheDataAsync(publisherFileName, allOverrides);
+
 
         if (!string.IsNullOrEmpty(allOverrides))
         {
@@ -368,5 +429,160 @@ public class CoverDbService : ICoverDbService
         }
 
         return externalLink;
+    }
+
+    private async Task CacheDataAsync(string fileName, string? content)
+    {
+        if (content == null) return;
+
+        try
+        {
+            var filePath = _directoryService.FileSystem.Path.Join(_directoryService.LongTermCacheDirectory, fileName);
+            await File.WriteAllTextAsync(filePath, content);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to cache {FileName}", fileName);
+        }
+    }
+
+
+    private async Task<string?> GetCachedData(string cacheFile)
+    {
+        // Form the full file path:
+        var filePath = _directoryService.FileSystem.Path.Join(_directoryService.LongTermCacheDirectory, cacheFile);
+        if (!File.Exists(filePath)) return null;
+
+        var fileInfo = new FileInfo(filePath);
+        if (DateTime.UtcNow - fileInfo.LastWriteTimeUtc <= CacheDuration)
+        {
+            return await File.ReadAllTextAsync(filePath);
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///
+    /// </summary>
+    /// <param name="person"></param>
+    /// <param name="url"></param>
+    /// <param name="fromBase64"></param>
+    /// <param name="checkNoImagePlaceholder">Will check against all known null image placeholders to avoid writing it</param>
+    public async Task SetPersonCoverByUrl(Person person, string url, bool fromBase64 = true, bool checkNoImagePlaceholder = false)
+    {
+        // TODO: Refactor checkNoImagePlaceholder bool to an action that evaluates how to process Image
+        if (!string.IsNullOrEmpty(url))
+        {
+            var filePath = await CreateThumbnail(url, $"{ImageService.GetPersonFormat(person.Id)}", fromBase64);
+
+            // Additional check to see if downloaded image is similar and we have a higher resolution
+            if (checkNoImagePlaceholder)
+            {
+                var matchRating = Path.Join(_directoryService.AssetsDirectory, "anilist-no-image-placeholder.jpg").GetSimilarity(Path.Join(_directoryService.CoverImageDirectory, filePath))!;
+
+                if (matchRating >= 0.9f)
+                {
+                    if (string.IsNullOrEmpty(person.CoverImage))
+                    {
+                        filePath = null;
+                    }
+                    else
+                    {
+                        filePath = Path.GetFileName(Path.Join(_directoryService.CoverImageDirectory, person.CoverImage));
+                    }
+
+                }
+            }
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                person.CoverImage = filePath;
+                person.CoverImageLocked = true;
+                _imageService.UpdateColorScape(person);
+                _unitOfWork.PersonRepository.Update(person);
+            }
+        }
+        else
+        {
+            person.CoverImage = string.Empty;
+            person.CoverImageLocked = false;
+            _imageService.UpdateColorScape(person);
+            _unitOfWork.PersonRepository.Update(person);
+        }
+
+        if (_unitOfWork.HasChanges())
+        {
+            await _unitOfWork.CommitAsync();
+            await _eventHub.SendMessageAsync(MessageFactory.CoverUpdate,
+                MessageFactory.CoverUpdateEvent(person.Id, MessageFactoryEntityTypes.Person), false);
+        }
+    }
+
+    /// <summary>
+    /// Sets the series cover by url
+    /// </summary>
+    /// <param name="series"></param>
+    /// <param name="url"></param>
+    /// <param name="fromBase64"></param>
+    /// <param name="chooseBetterImage">If images are similar, will choose the higher quality image</param>
+    public async Task SetSeriesCoverByUrl(Series series, string url, bool fromBase64 = true, bool chooseBetterImage = false)
+    {
+        if (!string.IsNullOrEmpty(url))
+        {
+            var filePath = await CreateThumbnail(url, $"{ImageService.GetSeriesFormat(series.Id)}", fromBase64);
+
+            if (!string.IsNullOrEmpty(filePath))
+            {
+                // Additional check to see if downloaded image is similar and we have a higher resolution
+                if (chooseBetterImage)
+                {
+                    try
+                    {
+                        var betterImage = Path.Join(_directoryService.CoverImageDirectory, series.CoverImage)
+                            .GetBetterImage(Path.Join(_directoryService.CoverImageDirectory, filePath))!;
+                        filePath = Path.GetFileName(betterImage);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "There was an issue trying to choose a better cover image for Series: {SeriesName} ({SeriesId})", series.Name, series.Id);
+                    }
+                }
+
+                series.CoverImage = filePath;
+                series.CoverImageLocked = true;
+                _imageService.UpdateColorScape(series);
+                _unitOfWork.SeriesRepository.Update(series);
+            }
+        }
+        else
+        {
+            series.CoverImage = string.Empty;
+            series.CoverImageLocked = false;
+            _imageService.UpdateColorScape(series);
+            _unitOfWork.SeriesRepository.Update(series);
+        }
+
+        if (_unitOfWork.HasChanges())
+        {
+            await _unitOfWork.CommitAsync();
+            await _eventHub.SendMessageAsync(MessageFactory.CoverUpdate,
+                MessageFactory.CoverUpdateEvent(series.Id, MessageFactoryEntityTypes.Series), false);
+        }
+    }
+
+    private async Task<string> CreateThumbnail(string url, string filename, bool fromBase64 = true)
+    {
+        var settings = await _unitOfWork.SettingsRepository.GetSettingsDtoAsync();
+        var encodeFormat = settings.EncodeMediaAs;
+        var coverImageSize = settings.CoverImageSize;
+
+        if (fromBase64)
+        {
+            return _imageService.CreateThumbnailFromBase64(url,
+                filename, encodeFormat, coverImageSize.GetDimensions().Width);
+        }
+
+        return await DownloadImageFromUrl(filename, encodeFormat, url);
     }
 }

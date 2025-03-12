@@ -10,6 +10,7 @@ using API.DTOs.Dashboard;
 using API.DTOs.Filtering;
 using API.DTOs.Filtering.v2;
 using API.DTOs.Metadata;
+using API.DTOs.Metadata.Matching;
 using API.DTOs.Recommendation;
 using API.DTOs.SeriesDetail;
 using API.Entities;
@@ -20,12 +21,14 @@ using API.Services;
 using API.Services.Plus;
 using API.SignalR;
 using EasyCaching.Core;
+using Hangfire;
 using Kavita.Common;
 using Kavita.Common.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace API.Controllers;
@@ -41,16 +44,19 @@ public class SeriesController : BaseApiController
     private readonly ILicenseService _licenseService;
     private readonly ILocalizationService _localizationService;
     private readonly IExternalMetadataService _externalMetadataService;
+    private readonly IHostEnvironment _environment;
     private readonly IEasyCachingProvider _externalSeriesCacheProvider;
     private readonly IMetadataService _metadataService;
     private readonly IEventHub _eventHub;
+    private readonly IEasyCachingProvider _matchSeriesCacheProvider;
     private const string CacheKey = "externalSeriesData_";
+    private const string MatchSeriesCacheKey = "matchSeries_";
 
 
     public SeriesController(ILogger<SeriesController> logger, ITaskScheduler taskScheduler, IUnitOfWork unitOfWork,
         ISeriesService seriesService, ILicenseService licenseService,
         IEasyCachingProviderFactory cachingProviderFactory, ILocalizationService localizationService,
-        IExternalMetadataService externalMetadataService, IMetadataService metadataService, IEventHub eventHub)
+        IExternalMetadataService externalMetadataService, IMetadataService metadataService, IEventHub eventHub, IHostEnvironment environment)
     {
         _logger = logger;
         _taskScheduler = taskScheduler;
@@ -61,8 +67,10 @@ public class SeriesController : BaseApiController
         _externalMetadataService = externalMetadataService;
         _metadataService = metadataService;
         _eventHub = eventHub;
+        _environment = environment;
 
         _externalSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusExternalSeries);
+        _matchSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusMatchSeries);
     }
 
     /// <summary>
@@ -507,7 +515,7 @@ public class SeriesController : BaseApiController
     /// <param name="ageRating"></param>
     /// <returns></returns>
     /// <remarks>This is cached for an hour</remarks>
-    [ResponseCache(CacheProfileName = "Month", VaryByQueryKeys = new[] { "ageRating" })]
+    [ResponseCache(CacheProfileName = "Month", VaryByQueryKeys = ["ageRating"])]
     [HttpGet("age-rating")]
     public async Task<ActionResult<string>> GetAgeRating(int ageRating)
     {
@@ -721,4 +729,52 @@ public class SeriesController : BaseApiController
             MessageFactory.ScanSeriesEvent(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId, mangaFile.Chapter.Volume.Series.Name));
         return Ok();
     }
+    /// <summary>
+    /// Sends a request to Kavita+ API for all potential matches, sorted by relevance
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    [HttpPost("match")]
+    public async Task<ActionResult<IList<ExternalSeriesMatchDto>>> MatchSeries(MatchSeriesDto dto)
+    {
+        var cacheKey = $"{MatchSeriesCacheKey}-{dto.SeriesId}-{dto.Query}";
+        var results = await _matchSeriesCacheProvider.GetAsync<IList<ExternalSeriesMatchDto>>(cacheKey);
+        if (results.HasValue && !_environment.IsDevelopment())
+        {
+            return Ok(results.Value);
+        }
+
+        var ret = await _externalMetadataService.MatchSeries(dto);
+        await _matchSeriesCacheProvider.SetAsync(cacheKey, ret, TimeSpan.FromMinutes(1));
+
+        return Ok(ret);
+    }
+
+    /// <summary>
+    /// This will perform the fix match
+    /// </summary>
+    /// <param name="aniListId"></param>
+    /// <param name="seriesId"></param>
+    /// <returns></returns>
+    [HttpPost("update-match")]
+    public ActionResult UpdateSeriesMatch([FromQuery] int seriesId, [FromQuery] int aniListId, [FromQuery] long? malId)
+    {
+        BackgroundJob.Enqueue(() => _externalMetadataService.FixSeriesMatch(seriesId, aniListId, malId));
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// When true, will not perform a match and will prevent Kavita from attempting to match/scrobble against this series
+    /// </summary>
+    /// <param name="seriesId"></param>
+    /// <param name="dontMatch"></param>
+    /// <returns></returns>
+    [HttpPost("dont-match")]
+    public async Task<ActionResult> UpdateDontMatch([FromQuery] int seriesId, [FromQuery] bool dontMatch)
+    {
+        await _externalMetadataService.UpdateSeriesDontMatch(seriesId, dontMatch);
+        return Ok();
+    }
+
 }
