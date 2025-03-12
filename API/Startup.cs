@@ -127,7 +127,8 @@ public class Startup
         services.Configure<ForwardedHeadersOptions>(options =>
         {
             options.ForwardedHeaders = ForwardedHeaders.All;
-            foreach(var proxy in _config.GetSection("KnownProxies").AsEnumerable().Where(c => c.Value != null)) {
+            foreach (var proxy in _config.GetSection("KnownProxies").AsEnumerable().Where(c => c.Value != null))
+            {
                 options.KnownProxies.Add(IPAddress.Parse(proxy.Value!));
             }
         });
@@ -150,7 +151,8 @@ public class Startup
             var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
             var filePath = Path.Combine(AppContext.BaseDirectory, xmlFile);
             c.IncludeXmlComments(filePath, true);
-            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
+            c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+            {
                 In = ParameterLocation.Header,
                 Description = "Please insert JWT with Bearer into field",
                 Name = "Authorization",
@@ -207,12 +209,12 @@ public class Startup
             .UseSimpleAssemblyNameTypeSerializer()
             .UseRecommendedSerializerSettings()
             .UseInMemoryStorage());
-            //.UseSQLiteStorage("config/Hangfire.db")); // UseSQLiteStorage - SQLite has some issues around resuming jobs when aborted (and locking can cause high utilization) (NOTE: There is code to clear jobs on startup a redditor gave me)
+        //.UseSQLiteStorage("config/Hangfire.db")); // UseSQLiteStorage - SQLite has some issues around resuming jobs when aborted (and locking can cause high utilization) (NOTE: There is code to clear jobs on startup a redditor gave me)
 
         // Add the processing server as IHostedService
         services.AddHangfireServer(options =>
         {
-            options.Queues = new[] {TaskScheduler.ScanQueue, TaskScheduler.DefaultQueue};
+            options.Queues = new[] { TaskScheduler.ScanQueue, TaskScheduler.DefaultQueue };
         });
         // Add IHostedService for startup tasks
         // Any services that should be bootstrapped go here
@@ -360,6 +362,7 @@ public class Startup
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials() // For SignalR token query param
+                .WithOrigins("http://localhost:4200", $"http://{GetLocalIpAddress()}:4200", $"http://{GetLocalIpAddress()}:5000")
                 .WithExposedHeaders("Content-Disposition", "Pagination"));
         }
 

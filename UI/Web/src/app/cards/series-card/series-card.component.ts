@@ -95,7 +95,7 @@ export class SeriesCardComponent implements OnInit, OnChanges {
   protected readonly bulkSelectionService = inject(BulkSelectionService);
   private readonly downloadService = inject(DownloadService);
   private readonly scrollService = inject(ScrollService);
-  private readonly readerService = inject(ReaderService);
+  protected readonly readerService = inject(ReaderService);
 
   @Input({required: true}) series!: Series;
   @Input() libraryId = 0;
@@ -133,6 +133,7 @@ export class SeriesCardComponent implements OnInit, OnChanges {
   @Output() selection = new EventEmitter<boolean>();
 
   count: number = 0;
+  chapterId: number = 0;
   actions: ActionItem<Series>[] = [];
   imageUrl: string = '';
   /**
@@ -188,6 +189,7 @@ export class SeriesCardComponent implements OnInit, OnChanges {
     if (this.series) {
       this.imageUrl = this.imageService.getSeriesCoverImage(this.series.id);
       this.cdRef.markForCheck();
+      this.readerService.getCurrentChapter(this.series.id).subscribe(chapter => {this.chapterId = chapter.id;});
     }
   }
 

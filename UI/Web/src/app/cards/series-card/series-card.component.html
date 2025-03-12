@@ -50,7 +50,9 @@
               <span class="card-title library mx-auto" style="width: auto;" (click)="read($event)">
                 <!-- Card Image -->
                 <div>
-                  <i class="fa-solid fa-book" aria-hidden="true"></i>
+                  <a class="dark-exempt btn-icon" routerLink="/library/{{libraryId}}/series/{{series.id}}/manga/{{chapterId}}?incognitoMode=false">
+                    <i class="fa-solid fa-book" aria-hidden="true"></i>
+                  </a>
                 </div>
               </span>
           </div>
