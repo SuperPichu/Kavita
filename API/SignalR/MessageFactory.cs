@@ -1,5 +1,7 @@
 ﻿using System;
+using API.DTOs.Reader;
 using API.DTOs.Update;
+using API.Entities.Person;
 using API.Extensions;
 using API.Services.Plus;
 
@@ -147,6 +149,20 @@ public static class MessageFactory
     /// Volume is removed from server
     /// </summary>
     public const string VolumeRemoved = "VolumeRemoved";
+    /// <summary>
+    /// A Person merged has been merged into another
+    /// </summary>
+    public const string PersonMerged = "PersonMerged";
+    /// <summary>
+    /// A Rate limit error was hit when matching a series with Kavita+
+    /// </summary>
+    public const string ExternalMatchRateLimitError = "ExternalMatchRateLimitError";
+    /// <summary>
+    /// Annotation is updated within the reader
+    /// </summary>
+    public const string AnnotationUpdate = "AnnotationUpdate";
+
+
 
     public static SignalRMessage DashboardUpdateEvent(int userId)
     {
@@ -659,6 +675,44 @@ public static class MessageFactory
             SubTitle = provider + " expired. Please re-generate on User Account page.",
             Progress = ProgressType.None,
             EventType = ProgressEventType.Single,
+        };
+    }
+
+    public static SignalRMessage PersonMergedMessage(Person dst, Person src)
+    {
+        return new SignalRMessage()
+        {
+            Name = PersonMerged,
+            Body = new
+            {
+                srcId = src.Id,
+                dstName = dst.Name,
+            },
+        };
+    }
+
+    public static SignalRMessage ExternalMatchRateLimitErrorEvent(int seriesId, string seriesName)
+    {
+        return new SignalRMessage()
+        {
+            Name = ExternalMatchRateLimitError,
+            Body = new
+            {
+                seriesId,
+                seriesName,
+            },
+        };
+    }
+
+    public static SignalRMessage AnnotationUpdateEvent(AnnotationDto dto)
+    {
+        return new SignalRMessage()
+        {
+            Name = AnnotationUpdate,
+            Body = new
+            {
+                Annotation = dto
+            },
         };
     }
 }

@@ -42,6 +42,16 @@ public class UsersController : BaseApiController
     public async Task<ActionResult> DeleteUser(string username)
     {
         var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(username);
+        if (user == null) return BadRequest();
+
+        // Remove all likes for the user, so like counts are correct
+        var annotations = await _unitOfWork.AnnotationRepository.GetAllAnnotations();
+        foreach (var annotation in annotations.Where(a => a.Likes.Contains(user.Id)))
+        {
+            annotation.Likes.Remove(user.Id);
+            _unitOfWork.AnnotationRepository.Update(annotation);
+        }
+
         _unitOfWork.UserRepository.Delete(user);
 
         //(TODO: After updating a role or removing a user, delete their token)
@@ -103,37 +113,21 @@ public class UsersController : BaseApiController
 
         var existingPreferences = user!.UserPreferences;
 
-        existingPreferences.ReadingDirection = preferencesDto.ReadingDirection;
-        existingPreferences.ScalingOption = preferencesDto.ScalingOption;
-        existingPreferences.PageSplitOption = preferencesDto.PageSplitOption;
-        existingPreferences.AutoCloseMenu = preferencesDto.AutoCloseMenu;
-        existingPreferences.ShowScreenHints = preferencesDto.ShowScreenHints;
-        existingPreferences.EmulateBook = preferencesDto.EmulateBook;
-        existingPreferences.ReaderMode = preferencesDto.ReaderMode;
-        existingPreferences.LayoutMode = preferencesDto.LayoutMode;
-        existingPreferences.BackgroundColor = string.IsNullOrEmpty(preferencesDto.BackgroundColor) ? "#000000" : preferencesDto.BackgroundColor;
-        existingPreferences.BookReaderMargin = preferencesDto.BookReaderMargin;
-        existingPreferences.BookReaderLineSpacing = preferencesDto.BookReaderLineSpacing;
-        existingPreferences.BookReaderFontFamily = preferencesDto.BookReaderFontFamily;
-        existingPreferences.BookReaderFontSize = preferencesDto.BookReaderFontSize;
-        existingPreferences.BookReaderTapToPaginate = preferencesDto.BookReaderTapToPaginate;
-        existingPreferences.BookReaderReadingDirection = preferencesDto.BookReaderReadingDirection;
-        existingPreferences.BookReaderWritingStyle = preferencesDto.BookReaderWritingStyle;
-        existingPreferences.BookThemeName = preferencesDto.BookReaderThemeName;
-        existingPreferences.BookReaderLayoutMode = preferencesDto.BookReaderLayoutMode;
-        existingPreferences.BookReaderImmersiveMode = preferencesDto.BookReaderImmersiveMode;
         existingPreferences.GlobalPageLayoutMode = preferencesDto.GlobalPageLayoutMode;
         existingPreferences.BlurUnreadSummaries = preferencesDto.BlurUnreadSummaries;
-        existingPreferences.LayoutMode = preferencesDto.LayoutMode;
         existingPreferences.PromptForDownloadSize = preferencesDto.PromptForDownloadSize;
         existingPreferences.NoTransitions = preferencesDto.NoTransitions;
-        existingPreferences.SwipeToPaginate = preferencesDto.SwipeToPaginate;
         existingPreferences.CollapseSeriesRelationships = preferencesDto.CollapseSeriesRelationships;
-        existingPreferences.ShareReviews = preferencesDto.ShareReviews;
+        existingPreferences.ColorScapeEnabled = preferencesDto.ColorScapeEnabled;
+        existingPreferences.BookReaderHighlightSlots = preferencesDto.BookReaderHighlightSlots;
+        existingPreferences.DataSaver = preferencesDto.DataSaver;
 
-        existingPreferences.PdfTheme = preferencesDto.PdfTheme;
-        existingPreferences.PdfScrollMode = preferencesDto.PdfScrollMode;
-        existingPreferences.PdfSpreadMode = preferencesDto.PdfSpreadMode;
+        var allLibs = (await _unitOfWork.LibraryRepository.GetLibrariesForUserIdAsync(user.Id))
+            .Select(l => l.Id).ToList();
+
+        preferencesDto.SocialPreferences.SocialLibraries = preferencesDto.SocialPreferences.SocialLibraries
+            .Where(l => allLibs.Contains(l)).ToList();
+        existingPreferences.SocialPreferences = preferencesDto.SocialPreferences;
 
         if (await _licenseService.HasActiveLicense())
         {

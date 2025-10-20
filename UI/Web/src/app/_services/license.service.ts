@@ -1,11 +1,10 @@
 import {inject, Injectable} from '@angular/core';
 import {HttpClient} from "@angular/common/http";
-import {catchError, map, of, ReplaySubject, tap, throwError} from "rxjs";
+import {catchError, map, ReplaySubject, tap, throwError} from "rxjs";
 import {environment} from "../../environments/environment";
-import { TextResonse } from '../_types/text-response';
+import {TextResonse} from '../_types/text-response';
 import {LicenseInfo} from "../_models/kavitaplus/license-info";
-import {translate} from "@jsverse/transloco";
-import {ConfirmService} from "../shared/confirm.service";
+import {toSignal} from "@angular/core/rxjs-interop";
 
 @Injectable({
   providedIn: 'root'
@@ -20,6 +19,7 @@ export class LicenseService {
    * Does the user have an active license
    */
   public readonly hasValidLicense$ = this.hasValidLicenseSource.asObservable();
+  public readonly hasValidLicenseSignal = toSignal(this.hasValidLicense$, {initialValue: false});
 
 
   /**
@@ -42,6 +42,10 @@ export class LicenseService {
     return this.httpClient.post<string>(this.baseUrl + 'license/reset', {license, email}, TextResonse);
   }
 
+  resendLicense() {
+    return this.httpClient.post<boolean>(this.baseUrl + 'license/resend-license', {}, TextResonse).pipe(map(res => (res + '') === "true"));
+  }
+
   /**
    * Returns information about License and will internally cache if license is valid or not
    */
@@ -58,7 +62,6 @@ export class LicenseService {
   }
 
   hasValidLicense(forceCheck: boolean = false) {
-    console.log('hasValidLicense being called: ', forceCheck);
     return this.httpClient.get<string>(this.baseUrl + 'license/valid-license?forceCheck=' + forceCheck, TextResonse)
       .pipe(
         map(res => res === "true"),

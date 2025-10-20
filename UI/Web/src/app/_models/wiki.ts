@@ -6,9 +6,9 @@ export enum WikiLink {
   SeriesRelationships = 'https://wiki.kavitareader.com/guides/features/relationships',
   Bookmarks = 'https://wiki.kavitareader.com/guides/features/bookmarks',
   DataCollection = 'https://wiki.kavitareader.com/troubleshooting/faq#q-does-kavita-collect-any-data-on-me',
-  MediaIssues = 'https://wiki.kavitareader.com/guides/admin-settings/media#media-issues',
+  MediaIssues = 'https://wiki.kavitareader.com/guides/admin-settings/mediaissues/',
   KavitaPlusDiscordId = 'https://wiki.kavitareader.com/guides/admin-settings/kavita+#discord-id',
-  KavitaPlus = 'https://wiki.kavitareader.com/kavita+/features/',
+  KavitaPlus = 'https://wiki.kavitareader.com/kavita+',
   KavitaPlusFAQ = 'https://wiki.kavitareader.com/kavita+/faq',
   ReadingListCBL = 'https://wiki.kavitareader.com/guides/features/readinglists#creating-a-reading-list-via-cbl',
   Donation = 'https://wiki.kavitareader.com/donating',
@@ -20,5 +20,7 @@ export enum WikiLink {
   UpdateNative = 'https://wiki.kavitareader.com/guides/updating/updating-native',
   UpdateDocker = 'https://wiki.kavitareader.com/guides/updating/updating-docker',
   OpdsClients = 'https://wiki.kavitareader.com/guides/features/opds/#opds-capable-clients',
-  Guides = 'https://wiki.kavitareader.com/guides'
+  Guides = 'https://wiki.kavitareader.com/guides',
+  ReadingProfiles = "https://wiki.kavitareader.com/guides/user-settings/reading-profiles/",
+  EpubFontManager = "https://wiki.kavitareader.com/guides/epub-fonts/",
 }

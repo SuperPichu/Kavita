@@ -2,7 +2,7 @@
 
 namespace API.DTOs.KavitaPlus.License;
 
-public class LicenseInfoDto
+public sealed record LicenseInfoDto
 {
     /// <summary>
     /// If cancelled, will represent cancellation date. If not, will represent repayment date
@@ -32,4 +32,8 @@ public class LicenseInfoDto
     /// A license is stored within Kavita
     /// </summary>
     public bool HasLicense { get; set; }
+    /// <summary>
+    /// InstallId which can be given to support
+    /// </summary>
+    public string InstallId { get; set; }
 }

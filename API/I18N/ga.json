@@ -203,5 +203,22 @@
     "person-name-unique": "Caithfidh ainm duine a bheith uathúil",
     "person-image-doesnt-exist": "Níl an duine in CoversDB",
     "email-taken": "Ríomhphost in úsáid cheana féin",
-    "kavitaplus-restricted": "Tá sé seo teoranta do Kavita+ amháin"
+    "kavitaplus-restricted": "Tá sé seo teoranta do Kavita+ amháin",
+    "smart-filter-system-name": "Ní féidir leat ainm srutha an chórais a sholáthair tú a úsáid",
+    "sidenav-stream-only-delete-smart-filter": "Ní féidir ach sruthanna cliste scagaire a scriosadh as an SideNav",
+    "dashboard-stream-only-delete-smart-filter": "Ní féidir ach sruthanna cliste scagaire a scriosadh ón deais",
+    "smart-filter-name-required": "Ainm Scagaire Cliste ag teastáil",
+    "aliases-have-overlap": "Tá forluí idir ceann amháin nó níos mó de na leasainmneacha agus daoine eile, ní féidir iad a nuashonrú",
+    "generated-reading-profile-name": "Gineadh ó {0}",
+    "password-authentication-disabled": "Tá fíordheimhniú pasfhocail díchumasaithe, logáil isteach trí OpenID Connect",
+    "oidc-managed": "Ní féidir úsáideoirí atá á mbainistiú ag OIDC a chur in eagar.",
+    "cannot-change-identity-provider-original-user": "Ní féidir Soláthraí Céannachta an chuntais riarthóra bhunaidh a athrú",
+    "oidc-invalid-authority": "Tá údarás OIDC neamhbhailí",
+    "annotation-failed-create": "Theip ar anótáil a chruthú, déan iarracht arís",
+    "annotation-delete": "Níorbh fhéidir an nóta a scriosadh",
+    "opds-continue-reading-title": "Lean ort ag léamh ó: {0}",
+    "genre-doesnt-exist": "Níl an seánra ann",
+    "font-url-not-allowed": "Ní cheadaítear Cló a uaslódáil trí url ach amháin ó Google Fonts",
+    "annotation-export-failed": "Ní féidir nótaí a easpórtáil, seiceáil na logaí",
+    "download-not-allowed": "Níl ceadanna íoslódála ag an úsáideoir"
 }

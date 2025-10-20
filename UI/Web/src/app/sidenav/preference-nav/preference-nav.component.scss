@@ -1,4 +1,5 @@
-@import '../../../theme/variables';
+@use '../../../theme/variables' as theme;
+
 // TODO: Move this to a common file so it applies both ways
 .side-nav {
   // For firefox
@@ -8,7 +9,7 @@
   }
 
   &::-webkit-scrollbar {
-    background-color: transparent; /*make scrollbar space invisible */
+    background-color: transparent;
     width: inherit;
     display: none;
     visibility: hidden;
@@ -16,7 +17,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: transparent; /*makes it invisible when not hovering*/
+    background: transparent;
   }
 
   &:hover {
@@ -34,7 +35,7 @@
   }
 }
 
-@media (max-width: $grid-breakpoints-lg) {
+@media (max-width: theme.$grid-breakpoints-lg) {
   .side-nav {
     padding: 10px 0;
     width: 55vw;
@@ -55,7 +56,7 @@
       box-shadow: none;
     }
 
-    .side-nav-item:first {
+    .side-nav-item:first-child {
       border-top-left-radius: var(--side-nav-border-radius);
       border-top-right-radius: var(--side-nav-border-radius);
     }
@@ -67,7 +68,7 @@
 }
 
 .side-nav-header {
-  color: #d5d5d5;
+  color: var(--pref-side-nav-header-text-color);
   font-weight: bold;
   margin-left: 5px;
 }

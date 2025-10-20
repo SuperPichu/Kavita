@@ -18,6 +18,7 @@ export interface MetadataFieldMapping {
 
 export interface MetadataSettings {
   enabled: boolean;
+  enableExtendedMetadataProcessing: boolean;
   enableSummary: boolean;
   enablePublicationStatus: boolean;
   enableRelationships: boolean;
@@ -25,10 +26,18 @@ export interface MetadataSettings {
   enableStartDate: boolean;
   enableCoverImage: boolean;
   enableLocalizedName: boolean;
+
+  enableChapterSummary: boolean;
+  enableChapterReleaseDate: boolean;
+  enableChapterTitle: boolean;
+  enableChapterPublisher: boolean;
+  enableChapterCoverImage: boolean;
+
+
   enableGenres: boolean;
   enableTags: boolean;
   firstLastPeopleNaming: boolean;
-  ageRatingMappings: Map<string, AgeRating>;
+  ageRatingMappings: Record<string, AgeRating>;
   fieldMappings: Array<MetadataFieldMapping>;
   blacklist: Array<string>;
   whitelist: Array<string>;

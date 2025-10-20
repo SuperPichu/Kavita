@@ -209,6 +209,7 @@ public class ReaderService : IReaderService
 
         if (user.Progresses == null)
         {
+            //throw new ArgumentException("AppUser must have Progress on it"); // TODO: Figure out the impact of switching to a more dev experience exception
             throw new KavitaException("progress-must-exist");
         }
 
@@ -356,7 +357,7 @@ public class ReaderService : IReaderService
         return page;
     }
 
-    private int GetNextSpecialChapter(VolumeDto volume, ChapterDto currentChapter)
+    private static int GetNextSpecialChapter(VolumeDto volume, ChapterDto currentChapter)
     {
         if (volume.IsSpecial())
         {

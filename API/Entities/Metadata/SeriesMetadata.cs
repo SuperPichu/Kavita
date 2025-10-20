@@ -4,12 +4,14 @@ using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using API.Entities.Enums;
 using API.Entities.Interfaces;
+using API.Entities.MetadataMatching;
+using API.Entities.Person;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Entities.Metadata;
 
 [Index(nameof(Id), nameof(SeriesId), IsUnique = true)]
-public class SeriesMetadata : IHasConcurrencyToken
+public class SeriesMetadata : IHasConcurrencyToken, IHasKPlusMetadata
 {
     public int Id { get; set; }
 
@@ -41,6 +43,10 @@ public class SeriesMetadata : IHasConcurrencyToken
     /// </summary>
     /// <remarks>This is not populated from Chapters of the Series</remarks>
     public string WebLinks { get; set; } = string.Empty;
+    /// <summary>
+    /// Tracks which metadata has been set by K+
+    /// </summary>
+    public IList<MetadataSettingField> KPlusOverrides { get; set; } = [];
 
     #region Locks
 
@@ -120,6 +126,8 @@ public class SeriesMetadata : IHasConcurrencyToken
     /// <returns></returns>
     public bool AllKavitaPlus(PersonRole role)
     {
-        return People.Where(p => p.Role == role).All(p => p.KavitaPlusConnection);
+        var people = People.Where(p => p.Role == role);
+        if (people.Any()) return people.All(p => p.KavitaPlusConnection);
+        return false;
     }
 }

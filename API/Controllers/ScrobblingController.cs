@@ -54,7 +54,7 @@ public class ScrobblingController : BaseApiController
     }
 
     /// <summary>
-    /// Get the current user's MAL token & username
+    /// Get the current user's MAL token and username
     /// </summary>
     /// <returns></returns>
     [HttpGet("mal-token")]
@@ -254,7 +254,7 @@ public class ScrobblingController : BaseApiController
     }
 
     /// <summary>
-    /// Adds a hold against the Series for user's scrobbling
+    /// Remove a hold against the Series for user's scrobbling
     /// </summary>
     /// <param name="seriesId"></param>
     /// <returns></returns>
@@ -267,6 +267,31 @@ public class ScrobblingController : BaseApiController
         user.ScrobbleHolds = user.ScrobbleHolds.Where(h => h.SeriesId != seriesId).ToList();
 
         _unitOfWork.UserRepository.Update(user);
+        await _unitOfWork.CommitAsync();
+        return Ok();
+    }
+
+    /// <summary>
+    /// Has the logged in user ran scrobble generation
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("has-ran-scrobble-gen")]
+    public async Task<ActionResult<bool>> HasRanScrobbleGen()
+    {
+        var user = await _unitOfWork.UserRepository.GetUserByIdAsync(User.GetUserId());
+        return Ok(user is {HasRunScrobbleEventGeneration: true});
+    }
+
+    /// <summary>
+    /// Delete the given scrobble events if they belong to that user
+    /// </summary>
+    /// <param name="eventIds"></param>
+    /// <returns></returns>
+    [HttpPost("bulk-remove-events")]
+    public async Task<ActionResult> BulkRemoveScrobbleEvents(IList<long> eventIds)
+    {
+        var events = await _unitOfWork.ScrobbleRepository.GetUserEvents(User.GetUserId(), eventIds);
+        _unitOfWork.ScrobbleRepository.Remove(events);
         await _unitOfWork.CommitAsync();
         return Ok();
     }

@@ -1,16 +1,6 @@
-import { DOCUMENT, NgIf, AsyncPipe } from '@angular/common';
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component, DestroyRef,
-  EventEmitter,
-  inject,
-  Inject,
-  Input,
-  OnInit,
-  Output
-} from '@angular/core';
-import {combineLatest, filter, map, Observable, of, shareReplay, switchMap, tap} from 'rxjs';
+import { DOCUMENT, AsyncPipe } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, DestroyRef, effect, EventEmitter, inject, Injector, Input, OnInit, Output, signal, Signal, WritableSignal } from '@angular/core';
+import {combineLatest, combineLatestWith, filter, map, Observable, of, shareReplay, switchMap, tap} from 'rxjs';
 import { PageSplitOption } from 'src/app/_models/preferences/page-split-option';
 import { ReaderMode } from 'src/app/_models/preferences/reader-mode';
 import { LayoutMode } from '../../_models/layout-mode';
@@ -18,20 +8,29 @@ import { FITTING_OPTION, PAGING_DIRECTION } from '../../_models/reader-enums';
 import { ReaderSetting } from '../../_models/reader-setting';
 import { ImageRenderer } from '../../_models/renderer';
 import { MangaReaderService } from '../../_service/manga-reader.service';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {takeUntilDestroyed, toObservable, toSignal} from "@angular/core/rxjs-interop";
 import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
+import {UtilityService} from "../../../shared/_services/utility.service";
+import {ReadingProfile} from "../../../_models/preferences/reading-profiles";
 
 @Component({
     selector: 'app-single-renderer',
     templateUrl: './single-renderer.component.html',
     styleUrls: ['./single-renderer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
     imports: [AsyncPipe, SafeStylePipe]
 })
 export class SingleRendererComponent implements OnInit, ImageRenderer {
+  private readonly cdRef = inject(ChangeDetectorRef);
+  mangaReaderService = inject(MangaReaderService);
+  private document = inject<Document>(DOCUMENT);
+
+
+  private readonly utilityService = inject(UtilityService);
+  private readonly injector = inject(Injector);
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
+  @Input({required: true}) readingProfile!: ReadingProfile;
   @Input({required: true}) image$!: Observable<HTMLImageElement | null>;
   @Input({required: true}) bookmark$!: Observable<number>;
   @Input({required: true}) showClickOverlay$!: Observable<boolean>;
@@ -53,16 +52,11 @@ export class SingleRendererComponent implements OnInit, ImageRenderer {
   pageNum: number = 0;
   maxPages: number = 1;
 
-  /**
-   * Width override for maunal width control
-  */
-  widthOverride$ : Observable<string> = new Observable<string>();
+  readerSettings!: Signal<ReaderSetting>;
+  widthOverride!: Signal<string>;
 
   get ReaderMode() {return ReaderMode;}
   get LayoutMode() {return LayoutMode;}
-
-  constructor(private readonly cdRef: ChangeDetectorRef, public mangaReaderService: MangaReaderService,
-    @Inject(DOCUMENT) private document: Document) { }
 
   ngOnInit(): void {
     this.readerModeClass$ = this.readerSettings$.pipe(
@@ -72,12 +66,16 @@ export class SingleRendererComponent implements OnInit, ImageRenderer {
       takeUntilDestroyed(this.destroyRef)
     );
 
-    //handle manual width
-    this.widthOverride$ = this.readerSettings$.pipe(
-      map(values => (parseInt(values.widthSlider) <= 0) ? '' : values.widthSlider + '%'),
-      takeUntilDestroyed(this.destroyRef)
-    );
+    this.readerSettings = toSignal(this.readerSettings$, {injector: this.injector, requireSync: true});
+    this.widthOverride = computed(() => {
+      const breakpoint = this.utilityService.activeUserBreakpoint();
+      const value = this.readerSettings().widthSlider;
 
+      if (breakpoint <= this.readingProfile.disableWidthOverride) {
+        return '';
+      }
+      return (parseInt(value) <= 0) ? '' : value + '%';
+    });
 
     this.emulateBookClass$ = this.readerSettings$.pipe(
       map(data => data.emulateBook),

@@ -1,24 +1,7 @@
 ﻿using System.Collections.Generic;
-using System.Linq;
 using API.Entities.Enums;
 
-namespace API.Entities;
-
-/// <summary>
-/// Represents which field that can be written to as an override when already locked
-/// </summary>
-public enum MetadataSettingField
-{
-    Summary = 1,
-    PublicationStatus = 2,
-    StartDate = 3,
-    Genres = 4,
-    Tags = 5,
-    LocalizedName = 6,
-    Covers = 7,
-    AgeRating = 8,
-    People = 9
-}
+namespace API.Entities.MetadataMatching;
 
 /// <summary>
 /// Handles the metadata settings for Kavita+
@@ -30,6 +13,13 @@ public class MetadataSettings
     /// If writing any sort of metadata from upstream (AniList, Hardcover) source is allowed
     /// </summary>
     public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Enable processing of metadata outside K+; e.g. disk and API
+    /// </summary>
+    public bool EnableExtendedMetadataProcessing { get; set; }
+
+    #region Series Metadata
 
     /// <summary>
     /// Allow the Summary to be written
@@ -59,6 +49,30 @@ public class MetadataSettings
     /// Allow setting the cover image
     /// </summary>
     public bool EnableCoverImage { get; set; }
+    #endregion
+
+    #region Chapter Metadata
+    /// <summary>
+    /// Allow Summary to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterSummary { get; set; }
+    /// <summary>
+    /// Allow Release Date to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterReleaseDate { get; set; }
+    /// <summary>
+    /// Allow Title to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterTitle { get; set; }
+    /// <summary>
+    /// Allow Publisher to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterPublisher { get; set; }
+    /// <summary>
+    /// Allow setting the cover image for the Chapter/Issue
+    /// </summary>
+    public bool EnableChapterCoverImage { get; set; }
+    #endregion
 
     // Need to handle the Genre/tags stuff
     public bool EnableGenres { get; set; } = true;

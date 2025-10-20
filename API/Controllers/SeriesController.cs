@@ -15,6 +15,7 @@ using API.DTOs.Recommendation;
 using API.DTOs.SeriesDetail;
 using API.Entities;
 using API.Entities.Enums;
+using API.Entities.MetadataMatching;
 using API.Extensions;
 using API.Helpers;
 using API.Services;
@@ -186,31 +187,21 @@ public class SeriesController : BaseApiController
     [HttpGet("chapter")]
     public async Task<ActionResult<ChapterDto>> GetChapter(int chapterId)
     {
-        var chapter = await _unitOfWork.ChapterRepository.GetChapterDtoAsync(chapterId);
+        var chapter = await _unitOfWork.ChapterRepository.GetChapterDtoAsync(chapterId, User.GetUserId());
         if (chapter == null) return NoContent();
         return Ok(await _unitOfWork.ChapterRepository.AddChapterModifiers(User.GetUserId(), chapter));
     }
 
+    /// <summary>
+    /// All chapter entities will load this data by default. Will not be maintained as of v0.8.1
+    /// </summary>
+    /// <param name="chapterId"></param>
+    /// <returns></returns>
     [Obsolete("All chapter entities will load this data by default. Will not be maintained as of v0.8.1")]
     [HttpGet("chapter-metadata")]
     public async Task<ActionResult<ChapterMetadataDto>> GetChapterMetadata(int chapterId)
     {
         return Ok(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapterId));
-    }
-
-
-    /// <summary>
-    /// Update the user rating for the given series
-    /// </summary>
-    /// <param name="updateSeriesRatingDto"></param>
-    /// <returns></returns>
-    [HttpPost("update-rating")]
-    public async Task<ActionResult> UpdateSeriesRating(UpdateSeriesRatingDto updateSeriesRatingDto)
-    {
-        var user = await _unitOfWork.UserRepository.GetUserByUsernameAsync(User.GetUsername(), AppUserIncludes.Ratings);
-        if (!await _seriesService.UpdateRating(user!, updateSeriesRatingDto))
-            return BadRequest(await _localizationService.Translate(User.GetUserId(), "generic-error"));
-        return Ok();
     }
 
     /// <summary>
@@ -245,7 +236,9 @@ public class SeriesController : BaseApiController
             // Trigger a refresh when we are moving from a locked image to a non-locked
             needsRefreshMetadata = true;
             series.CoverImage = null;
-            series.CoverImageLocked = updateSeries.CoverImageLocked;
+            series.CoverImageLocked = false;
+            series.Metadata.KPlusOverrides.Remove(MetadataSettingField.Covers);
+            _logger.LogDebug("[SeriesCoverImageBug] Setting Series Cover Image to null: {SeriesId}", series.Id);
             series.ResetColorScape();
 
         }
@@ -318,12 +311,14 @@ public class SeriesController : BaseApiController
     /// <summary>
     /// Returns series that were recently updated, like adding or removing a chapter
     /// </summary>
+    /// <param name="userParams">Page size and offset</param>
     /// <returns></returns>
     [ResponseCache(CacheProfileName = "Instant")]
     [HttpPost("recently-updated-series")]
-    public async Task<ActionResult<IEnumerable<RecentlyAddedItemDto>>> GetRecentlyAddedChapters()
+    public async Task<ActionResult<IEnumerable<RecentlyAddedItemDto>>> GetRecentlyAddedChapters([FromQuery] UserParams? userParams)
     {
-        return Ok(await _unitOfWork.SeriesRepository.GetRecentlyUpdatedSeries(User.GetUserId(), 20));
+        userParams ??= UserParams.Default;
+        return Ok(await _unitOfWork.SeriesRepository.GetRecentlyUpdatedSeries(User.GetUserId(), userParams));
     }
 
     /// <summary>
@@ -331,7 +326,7 @@ public class SeriesController : BaseApiController
     /// </summary>
     /// <param name="filterDto"></param>
     /// <param name="userParams"></param>
-    /// <param name="libraryId"></param>
+    /// <param name="libraryId">This is not in use</param>
     /// <returns></returns>
     [HttpPost("all-v2")]
     public async Task<ActionResult<IEnumerable<SeriesDto>>> GetAllSeriesV2(FilterV2Dto filterDto, [FromQuery] UserParams userParams,
@@ -342,8 +337,6 @@ public class SeriesController : BaseApiController
             await _unitOfWork.SeriesRepository.GetSeriesDtoForLibraryIdV2Async(userId, userParams, filterDto, context);
 
         // Apply progress/rating information (I can't work out how to do this in initial query)
-        if (series == null) return BadRequest(await _localizationService.Translate(User.GetUserId(), "no-series"));
-
         await _unitOfWork.SeriesRepository.AddSeriesModifiers(userId, series);
 
         Response.AddPaginationHeader(series.CurrentPage, series.PageSize, series.TotalCount, series.TotalPages);
@@ -753,13 +746,13 @@ public class SeriesController : BaseApiController
     /// <summary>
     /// This will perform the fix match
     /// </summary>
-    /// <param name="aniListId"></param>
+    /// <param name="match"></param>
     /// <param name="seriesId"></param>
     /// <returns></returns>
     [HttpPost("update-match")]
-    public ActionResult UpdateSeriesMatch([FromQuery] int seriesId, [FromQuery] int aniListId, [FromQuery] long? malId)
+    public ActionResult UpdateSeriesMatch([FromQuery] int seriesId, [FromQuery] int? aniListId, [FromQuery] long? malId, [FromQuery] int? cbrId)
     {
-        BackgroundJob.Enqueue(() => _externalMetadataService.FixSeriesMatch(seriesId, aniListId, malId));
+        BackgroundJob.Enqueue(() => _externalMetadataService.FixSeriesMatch(seriesId, aniListId, malId, cbrId));
 
         return Ok();
     }
@@ -776,5 +769,17 @@ public class SeriesController : BaseApiController
         await _externalMetadataService.UpdateSeriesDontMatch(seriesId, dontMatch);
         return Ok();
     }
+
+    /// <summary>
+    /// Returns all Series that a user has access to
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("series-with-annotations")]
+    public async Task<ActionResult<IList<SeriesDto>>> GetSeriesWithAnnotations()
+    {
+        var data = await _unitOfWork.AnnotationRepository.GetSeriesWithAnnotations(User.GetUserId());
+        return Ok(data);
+    }
+
 
 }

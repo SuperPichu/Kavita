@@ -12,8 +12,12 @@ public enum MatchStateOption
     DontMatch = 4
 }
 
-public class ManageMatchFilterDto
+public sealed record ManageMatchFilterDto
 {
     public MatchStateOption MatchStateOption { get; set; } = MatchStateOption.All;
+    /// <summary>
+    /// Library Type in int form. -1 indicates to ignore the field.
+    /// </summary>
+    public int LibraryType { get; set; } = -1;
     public string SearchTerm { get; set; } = string.Empty;
 }

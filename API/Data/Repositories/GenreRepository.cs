@@ -3,15 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs.Metadata;
+using API.DTOs.Metadata.Browse;
 using API.Entities;
 using API.Extensions;
 using API.Extensions.QueryExtensions;
+using API.Helpers;
 using API.Services.Tasks.Scanner.Parser;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
+#nullable enable
 
 public interface IGenreRepository
 {
@@ -23,9 +26,10 @@ public interface IGenreRepository
     Task RemoveAllGenreNoLongerAssociated(bool removeExternal = false);
     Task<IList<GenreTagDto>> GetAllGenreDtosForLibrariesAsync(int userId, IList<int>? libraryIds = null, QueryContext context = QueryContext.None);
     Task<int> GetCountAsync();
-    Task<GenreTagDto> GetRandomGenre();
-    Task<GenreTagDto> GetGenreById(int id);
+    Task<GenreTagDto?> GetRandomGenre();
+    Task<GenreTagDto?> GetGenreById(int id);
     Task<List<string>> GetAllGenresNotInListAsync(ICollection<string> genreNames);
+    Task<PagedList<BrowseGenreDto>> GetBrowseableGenre(int userId, UserParams userParams);
 }
 
 public class GenreRepository : IGenreRepository
@@ -75,7 +79,7 @@ public class GenreRepository : IGenreRepository
         return await _context.Genre.CountAsync();
     }
 
-    public async Task<GenreTagDto> GetRandomGenre()
+    public async Task<GenreTagDto?> GetRandomGenre()
     {
         var genreCount = await GetCountAsync();
         if (genreCount == 0) return null;
@@ -88,7 +92,7 @@ public class GenreRepository : IGenreRepository
             .FirstOrDefaultAsync();
     }
 
-    public async Task<GenreTagDto> GetGenreById(int id)
+    public async Task<GenreTagDto?> GetGenreById(int id)
     {
         return await _context.Genre
             .Where(g => g.Id == id)
@@ -110,7 +114,7 @@ public class GenreRepository : IGenreRepository
 
     /// <summary>
     /// Returns a set of Genre tags for a set of library Ids.
-    /// UserId will restrict returned Genres based on user's age restriction and library access.
+    /// AppUserId will restrict returned Genres based on user's age restriction and library access.
     /// </summary>
     /// <param name="userId"></param>
     /// <param name="libraryIds"></param>
@@ -163,5 +167,39 @@ public class GenreRepository : IGenreRepository
 
         // Return the original non-normalized genres for the missing ones
         return missingGenres.Select(normalizedName => normalizedToOriginalMap[normalizedName]).ToList();
+    }
+
+    public async Task<PagedList<BrowseGenreDto>> GetBrowseableGenre(int userId, UserParams userParams)
+    {
+        var ageRating = await _context.AppUser.GetUserAgeRestriction(userId);
+
+        var allLibrariesCount = await _context.Library.CountAsync();
+        var userLibs = await _context.Library.GetUserLibraries(userId).ToListAsync();
+
+        var seriesIds = await _context.Series.Where(s => userLibs.Contains(s.LibraryId)).Select(s => s.Id).ToListAsync();
+
+        var query = _context.Genre
+            .RestrictAgainstAgeRestriction(ageRating)
+            .WhereIf(allLibrariesCount != userLibs.Count,
+                genre => genre.Chapters.Any(cp => seriesIds.Contains(cp.Volume.SeriesId)) ||
+                         genre.SeriesMetadatas.Any(sm => seriesIds.Contains(sm.SeriesId)))
+            .Select(g => new BrowseGenreDto
+            {
+                Id = g.Id,
+                Title = g.Title,
+                SeriesCount = g.SeriesMetadatas
+                    .Where(sm => allLibrariesCount == userLibs.Count || seriesIds.Contains(sm.SeriesId))
+                    .RestrictAgainstAgeRestriction(ageRating)
+                    .Distinct()
+                    .Count(),
+                ChapterCount = g.Chapters
+                    .Where(cp => allLibrariesCount == userLibs.Count || seriesIds.Contains(cp.Volume.SeriesId))
+                    .RestrictAgainstAgeRestriction(ageRating)
+                    .Distinct()
+                    .Count(),
+            })
+            .OrderBy(g => g.Title);
+
+        return await PagedList<BrowseGenreDto>.CreateAsync(query, userParams.PageNumber, userParams.PageSize);
     }
 }

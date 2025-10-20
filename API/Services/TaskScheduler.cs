@@ -7,6 +7,7 @@ using API.Data;
 using API.Data.Repositories;
 using API.Entities.Enums;
 using API.Extensions;
+using API.Helpers;
 using API.Helpers.Converters;
 using API.Services.Plus;
 using API.Services.Tasks;
@@ -15,6 +16,8 @@ using API.SignalR;
 using Hangfire;
 using Kavita.Common.Helpers;
 using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.Retry;
 
 namespace API.Services;
 
@@ -33,7 +36,6 @@ public interface ITaskScheduler
     void RefreshSeriesMetadata(int libraryId, int seriesId, bool forceUpdate = false, bool forceColorscape = false);
     Task ScanSeries(int libraryId, int seriesId, bool forceUpdate = false);
     void AnalyzeFilesForSeries(int libraryId, int seriesId, bool forceUpdate = false);
-    void AnalyzeFilesForLibrary(int libraryId, bool forceUpdate = false);
     void CancelStatsTasks();
     Task RunStatCollection();
     void CovertAllCoversToEncoding();
@@ -84,6 +86,8 @@ public class TaskScheduler : ITaskScheduler
     public const string KavitaPlusStackSyncId = "kavita+-stack-sync";
     public const string KavitaPlusWantToReadSyncId = "kavita+-want-to-read-sync";
 
+    private const int BaseRetryDelay = 60; // 1-minute
+
     public static readonly ImmutableArray<string> ScanTasks =
         ["ScannerService", "ScanLibrary", "ScanLibraries", "ScanFolder", "ScanSeries"];
     private static readonly ImmutableArray<string> NonCronOptions = ["disabled", "daily", "weekly"];
@@ -94,6 +98,10 @@ public class TaskScheduler : ITaskScheduler
     {
         TimeZone = TimeZoneInfo.Local
     };
+    /// <summary>
+    /// Retry policy, with 3 tries, and a 1-minute base delay
+    /// </summary>
+    private readonly AsyncRetryPolicy _defaultRetryPolicy;
 
 
     public TaskScheduler(ICacheService cacheService, ILogger<TaskScheduler> logger, IScannerService scannerService,
@@ -123,6 +131,24 @@ public class TaskScheduler : ITaskScheduler
         _smartCollectionSyncService = smartCollectionSyncService;
         _wantToReadSyncService = wantToReadSyncService;
         _eventHub = eventHub;
+
+        _defaultRetryPolicy = Policy
+            .Handle<Exception>()
+            .WaitAndRetryAsync(
+                retryCount: 3,
+                sleepDurationProvider: attempt =>
+                {
+                    var delay = BaseRetryDelay * 2 * attempt;
+                    var jitter = Random.Shared.Next(0, delay / 4);
+
+                    return TimeSpan.FromSeconds(delay + jitter);
+                },
+                onRetry: (ex, timeSpan, attempt) =>
+                {
+                    _logger.LogWarning(ex, "Attempt {Attempt} failed, retrying in {Delay}ms",
+                        attempt, timeSpan.TotalMilliseconds);
+                }
+            );
     }
 
     public async Task ScheduleTasks()
@@ -215,9 +241,9 @@ public class TaskScheduler : ITaskScheduler
         RecurringJob.AddOrUpdate(LicenseCheckId, () => _licenseService.GetLicenseInfo(false),
             LicenseService.Cron, RecurringJobOptions);
 
-        // KavitaPlus Scrobbling (every hour)
+        // KavitaPlus Scrobbling (every hour) - randomise minutes to spread requests out for K+
         RecurringJob.AddOrUpdate(ProcessScrobblingEventsId, () => _scrobblingService.ProcessUpdatesSinceLastSync(),
-            "0 */1 * * *", RecurringJobOptions);
+            Cron.Hourly(Rnd.Next(0, 60)), RecurringJobOptions);
         RecurringJob.AddOrUpdate(ProcessProcessedScrobblingEventsId, () => _scrobblingService.ClearProcessedEvents(),
             Cron.Daily, RecurringJobOptions);
 
@@ -266,11 +292,6 @@ public class TaskScheduler : ITaskScheduler
         RecurringJob.AddOrUpdate(ReportStatsTaskId, () => _statsService.Send(), Cron.Daily(Rnd.Next(0, 22)), RecurringJobOptions);
     }
 
-    public void AnalyzeFilesForLibrary(int libraryId, bool forceUpdate = false)
-    {
-        _logger.LogInformation("Enqueuing library file analysis for: {LibraryId}", libraryId);
-        BackgroundJob.Enqueue(() => _wordCountAnalyzerService.ScanLibrary(libraryId, forceUpdate));
-    }
 
     /// <summary>
     /// Upon cancelling stat, we do report to the Stat service that we are no longer going to be reporting
@@ -334,7 +355,7 @@ public class TaskScheduler : ITaskScheduler
         if (HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, normalizedOriginal]) ||
             HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, string.Empty]))
         {
-            _logger.LogDebug("Skipped scheduling ScanFolder for {Folder} as a job already queued",
+            _logger.LogTrace("Skipped scheduling ScanFolder for {Folder} as a job already queued",
                 normalizedFolder);
             return;
         }
@@ -351,7 +372,7 @@ public class TaskScheduler : ITaskScheduler
         var normalizedFolder = Tasks.Scanner.Parser.Parser.NormalizePath(folderPath);
         if (HasAlreadyEnqueuedTask(ScannerService.Name, "ScanFolder", [normalizedFolder, string.Empty]))
         {
-            _logger.LogDebug("Skipped scheduling ScanFolder for {Folder} as a job already queued",
+            _logger.LogTrace("Skipped scheduling ScanFolder for {Folder} as a job already queued",
                 normalizedFolder);
             return;
         }
@@ -492,9 +513,13 @@ public class TaskScheduler : ITaskScheduler
     // ReSharper disable once MemberCanBePrivate.Global
     public async Task CheckForUpdate()
     {
-        var update = await _versionUpdaterService.CheckForUpdate();
-        if (update == null) return;
-        await _versionUpdaterService.PushUpdate(update);
+        await _defaultRetryPolicy.ExecuteAsync(async () =>
+        {
+            var update = await _versionUpdaterService.CheckForUpdate();
+            if (update == null) return;
+
+            await _versionUpdaterService.PushUpdate(update);
+        });
     }
 
     public async Task SyncThemes()

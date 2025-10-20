@@ -1,11 +1,12 @@
 ﻿using API.DTOs.Scrobbling;
 
 namespace API.DTOs.KavitaPlus.ExternalMetadata;
+#nullable enable
 
 /// <summary>
 /// Used for matching and fetching metadata on a series
 /// </summary>
-internal class ExternalMetadataIdsDto
+public sealed record ExternalMetadataIdsDto
 {
     public long? MalId { get; set; }
     public int? AniListId { get; set; }

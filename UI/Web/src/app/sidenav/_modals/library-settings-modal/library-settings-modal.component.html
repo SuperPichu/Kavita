@@ -1,4 +1,4 @@
-<ng-container *transloco="let t; read: 'library-settings-modal'">
+<ng-container *transloco="let t; prefix: 'library-settings-modal'">
   <div class="modal-header">
     <h4 class="modal-title" id="modal-basic-title">
       @if (!isAddLibrary) {
@@ -20,8 +20,8 @@
             <div class="mb-3">
               <label for="library-name" class="form-label">{{t('name-label')}}</label>
               @if (libraryForm.get('name'); as formControl) {
-                <input id="library-name" class="form-control" formControlName="name" type="text" [class.is-invalid]="formControl.invalid && formControl.touched">
-                @if (libraryForm.dirty || libraryForm.touched) {
+                <input id="library-name" class="form-control" formControlName="name" type="text" [class.is-invalid]="formControl.invalid && !formControl.untouched">
+                @if (libraryForm.dirty || !libraryForm.untouched) {
                   <div id="inviteForm-validations" class="invalid-feedback">
                     @if (formControl.errors?.required) {
                       <div>{{t('required-field')}}</div>
@@ -49,19 +49,23 @@
               <ng-template #typeTooltip>{{t('type-tooltip')}}</ng-template>
               <ng-template #kavitaplusEligibleTooltip>{{t('kavitaplus-eligible-tooltip')}}</ng-template>
               <span class="visually-hidden" id="library-type-help">
-                <ng-container [ngTemplateOutlet]="typeTooltip"></ng-container>
+                <ng-container [ngTemplateOutlet]="typeTooltip" />
               </span>
               <select class="form-select" id="library-type" formControlName="type" aria-describedby="library-type-help">
-                @for (opt of libraryTypes; track opt; let i = $index) {
-                  <option [value]="i">{{opt}}</option>
+                @for (opt of libraryTypes; track opt.value) {
+                  <option [value]="opt.value">{{opt.title}}</option>
                 }
-
               </select>
+              <div class="text-muted mt-2">
+                {{LibraryTypeValue | libraryTypeSubtitle}}
+              </div>
             </div>
-            <div *ngIf="!isAddLibrary">
-              {{t('last-scanned-label')}}
-              <span>{{library?.lastScanned | date: 'short' | defaultDate}}</span>
-            </div>
+            @if (!isAddLibrary) {
+              <div>
+                {{t('last-scanned-label')}}
+                <span>{{library?.lastScanned | date: 'short' | defaultDate}}</span>
+              </div>
+            }
           </ng-template>
         </li>
 
@@ -69,6 +73,11 @@
         <li [ngbNavItem]="TabID.Folder" [disabled]="isAddLibrary && setupStep < 1">
           <a ngbNavLink>{{t(TabID.Folder)}}</a>
           <ng-template ngbNavContent>
+
+            @if (filesAtRoot()) {
+              <p class="alert alert-warning">{{t('files-at-root-warning')}}</p>
+            }
+
             <p>{{t('folder-description')}}</p>
             <ul class="list-group list-group-flush" style="width: 100%">
               @for(folder of selectedFolders; track folder) {
@@ -77,7 +86,6 @@
                   <button class="btn float-end btn-sm" (click)="removeFolder(folder)"><i class="fa fa-times-circle" aria-hidden="true"></i></button>
                 </li>
               }
-
             </ul>
             <div class="row mt-2">
               <button class="btn btn-secondary float-end btn-sm" (click)="openDirectoryPicker()">
@@ -104,7 +112,7 @@
             <p>{{t('cover-description-extra')}}</p>
             <app-cover-image-chooser [(imageUrls)]="imageUrls" (imageSelected)="updateCoverImageIndex($event)"
                                      (selectedBase64Url)="applyCoverImage($event)" [showReset]="library?.coverImage !== null"
-                                     (resetClicked)="resetCoverImage()"></app-cover-image-chooser>
+                                     (resetClicked)="resetCoverImage()" />
           </ng-template>
         </li>
 
@@ -118,13 +126,33 @@
                   <div class="hstack gap-2">
                     @for (group of fileTypeGroups; track group) {
                       <div class="form-check form-switch">
-                        <input class="form-check-input" [formControlName]="group" type="checkbox" [id]="group">
+                        <input class="form-check-input" [formControlName]="group" type="checkbox" [id]="group" switch>
                         <label class="form-check-label" [for]="group">{{ group | fileTypeGroup }}</label>
                       </div>
                     }
                   </div>
                 </ng-template>
               </app-setting-item>
+            </div>
+
+            <div class="row g-0 mt-4 mb-4">
+              <app-setting-switch [title]="t('remove-prefix-for-sortname-label')" [subtitle]="t('remove-prefix-for-sortname-tooltip')">
+                <ng-template #switch>
+                  <div class="form-check form-switch float-end">
+                    <input type="checkbox" id="remove-prefix-for-sortname" role="switch" formControlName="removePrefixForSortName" class="form-check-input">
+                  </div>
+                </ng-template>
+              </app-setting-switch>
+            </div>
+
+            <div class="row g-0 mt-4 mb-4">
+              <app-setting-switch [title]="t('enable-metadata-label')" [subtitle]="t('enable-metadata-tooltip')">
+                <ng-template #switch>
+                  <div class="form-check form-switch float-end">
+                    <input type="checkbox" id="enable-metadata" role="switch" formControlName="enableMetadata" class="form-check-input">
+                  </div>
+                </ng-template>
+              </app-setting-switch>
             </div>
 
             <div class="row g-0 mt-4 mb-4">
@@ -204,7 +232,7 @@
               <app-setting-item [title]="t('exclude-patterns-label')" [showEdit]="false" [canEdit]="false"
                                 [subtitle]="excludePatternTooltip" [toggleOnViewClick]="false">
                 <ng-template #view>
-                  <app-edit-list [items]="excludePatterns" [label]="t('exclude-patterns-label')" (updateItems)="updateGlobs($event)"></app-edit-list>
+                  <app-edit-list [items]="excludePatterns" [label]="t('exclude-patterns-label')" (updateItems)="updateGlobs($event)" />
                 </ng-template>
               </app-setting-item>
             </div>

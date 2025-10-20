@@ -62,15 +62,6 @@
     "spoiler": {
         "click-to-show": "Spoiler, clicca per mostrare"
     },
-    "review-series-modal": {
-        "title": "Modifica recensione",
-        "review-label": "Recensione",
-        "close": "{{common.close}}",
-        "save": "{{common.save}}",
-        "delete": "{{common.delete}}",
-        "min-length": "La recensione deve avere almeno {{count}} caratteri",
-        "required": "{{validation.required-field}}"
-    },
     "review-card-modal": {
         "close": "{{common.close}}",
         "user-review": "Recensione di {{username}}",
@@ -115,63 +106,14 @@
         "collapse-series-relationships-tooltip": "Kavita dovrebbe mostrare serie che non hanno relazioni o è il genitore",
         "share-series-reviews-label": "Condividi le recensioni della serie",
         "share-series-reviews-tooltip": "Kavita dovrebbe includere le tue recensioni di serie per altri utenti",
-        "image-reader-settings-title": "Lettore di immagini",
-        "reading-direction-label": "Direzione Lettura",
-        "reading-direction-tooltip": "Direzione da cliccare per passare alla pagina successiva. Da destra a sinistra significa che fai clic sul lato sinistro dello schermo per passare alla pagina successiva.",
-        "scaling-option-label": "Opzioni di ridimensionamento",
-        "scaling-option-tooltip": "Come ridimensionare l'immagine sullo schermo.",
-        "page-splitting-label": "Divisione pagine",
-        "page-splitting-tooltip": "Come dividere un'immagine a tutta larghezza (cioè entrambe le immagini sinistra e destra sono combinate)",
-        "reading-mode-label": "Modalità lettura",
-        "layout-mode-label": "Modalità Layout",
-        "layout-mode-tooltip": "Renderizza una singola immagine sullo schermo o due immagini affiancate",
-        "background-color-label": "Colore di sfondo",
-        "auto-close-menu-label": "Menu di chiusura automatica",
-        "show-screen-hints-label": "Mostra suggerimenti sullo schermo",
-        "emulate-comic-book-label": "Emula fumetto",
-        "swipe-to-paginate-label": "Scorri per impaginare",
-        "book-reader-settings-title": "Lettore di Libri",
-        "tap-to-paginate-label": "Tocca per impaginare",
-        "tap-to-paginate-tooltip": "Se i lati dello schermo del lettore di libri consentono di toccarlo per passare alla pagina precedente/successiva",
-        "immersive-mode-label": "Modalità Immersiva",
-        "immersive-mode-tooltip": "Questo nasconderà il menu. Un clic sulla pagina del lettore e si attiverà il \"tocca per impaginare\"",
-        "reading-direction-book-label": "Direzione di lettura",
-        "reading-direction-book-tooltip": "Direzione da cliccare per passare alla pagina successiva. Da destra a sinistra significa che fai clic sul lato sinistro dello schermo per passare alla pagina successiva.",
-        "font-family-label": "Tipologia di Font",
-        "font-family-tooltip": "Tipologia di caratteri da caricare. Predefinito caricherà il carattere predefinito del libro",
-        "writing-style-label": "Stile di Scrittura",
-        "writing-style-tooltip": "Cambia la direzione del testo. Orizzontale è da sinistra a destra, verticale è dall'alto verso il basso.",
-        "layout-mode-book-label": "Modalità di disposizione delle pagine",
-        "layout-mode-book-tooltip": "Come devono essere strutturati i contenuti. Sfoglia è come lo presenta il libro. 1 o 2 colonne adatta all'altezza del dispositivo ed utilizza 1 o 2 colonne di testo per pagina",
-        "color-theme-book-label": "Tema Colore",
-        "color-theme-book-tooltip": "Quale tema applicare al contenuto e al menu del lettore di libri",
-        "font-size-book-label": "Dimensioni del carattere",
-        "line-height-book-label": "Spaziatura interlinea",
-        "line-height-book-tooltip": "Quanta spaziatura tra le righe del libro",
-        "margin-book-label": "Margine",
-        "margin-book-tooltip": "Quanto margine lasciare su ciascun lato dello schermo. Sui dispositivi mobili verrà ignorato il valore, indipendentemente da questo settaggio.",
-        "pdf-reader-settings-title": "Lettore PDF",
-        "pdf-scroll-mode-label": "Modalità Scorrimento",
-        "pdf-scroll-mode-tooltip": "Come scorrere le pagine. Verticalmente/Orizzontalmente e Premi per cambiare pagina (nessuno scorrimento)",
-        "pdf-spread-mode-label": "Modalità Due Pagine",
-        "pdf-spread-mode-tooltip": "Come dovrebbero essere disposte le pagine. Singole o doppie (pari/dispari)",
-        "pdf-theme-label": "Tema",
         "clients-opds-alert": "OPDS non è abilitato su questo server. Ciò non influirà sugli utenti Tachiyomi.",
         "clients-opds-description": "Tutti i client di terze parti utilizzeranno la chiave API o l'URL di connessione di seguito. Sono come password, tienile private.",
         "clients-api-key-tooltip": "La chiave API è come una password. Reimpostandolo, tutti i client esistenti verranno invalidati.",
         "clients-opds-url-tooltip": "Visualizza un elenco dei client OPDS supportati: ",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "reading-mode-tooltip": "Cambia il lettore per impaginare verticalmente, orizzontalmente o avere uno scorrimento infinito",
-        "show-screen-hints-tooltip": "Mostra una sovrapposizione per aiutare a comprendere l'area e la direzione della paginazione",
-        "emulate-comic-book-tooltip": "Applica un effetto ombra per emulare la lettura di un libro",
-        "swipe-to-paginate-tooltip": "Lo scorrimento sullo schermo dovrebbe causare l'attivazione della pagina successiva o precedente",
-        "pdf-theme-tooltip": "Tema colore del lettore",
         "clients-opds-url-label": "URL OPDS",
         "clients-api-key-label": "Chiave API",
-        "background-color-tooltip": "Colore di sfondo del lettore di immagini",
-        "auto-close-menu-tooltip": "Il menu dovrebbe chiudersi automaticamente",
-        "font-size-book-tooltip": "Percentuale di ridimensionamento da applicare al font nel libro",
         "kavitaplus-settings-title": "Kavita+",
         "anilist-scrobbling-tooltip": "Permetti a Kavita di fare Scrobble (sincronizzazione unidirezionale) sul progresso della lettura e sulle valutazioni verso AniList",
         "anilist-scrobbling-label": "Scrobbling AniList",
@@ -304,7 +246,8 @@
         "regen-warning": "La rigenerazione della chiave API invaliderà tutti i client esistenti.",
         "no-key": "ERRORE - CHIAVE NON IMPOSTATA",
         "confirm-reset": "Ciò invaliderà tutte le configurazioni OPDS impostate. Sei sicuro di voler continuare?",
-        "key-reset": "Ripristino della chiave API"
+        "key-reset": "Ripristino della chiave API",
+        "reset": "Ripristina"
     },
     "scrobbling-providers": {
         "title": "Fornitori di Scrobbling",
@@ -467,9 +410,9 @@
     },
     "relationship-pipe": {
         "adaptation": "Adattamento",
-        "alternative-setting": "Impostazioni Alternative",
-        "alternative-version": "Versione Alternativa",
-        "character": "Carattere",
+        "alternative-setting": "Ambientazione alternativa",
+        "alternative-version": "Versione alternativa",
+        "character": "Personaggio",
         "contains": "Contiene",
         "doujinshi": "Doujinshi",
         "other": "Altro",
@@ -689,7 +632,6 @@
     },
     "personal-table-of-contents": {
         "no-data": "Nessun preferito ancora",
-        "page": "Pagina {{value}}",
         "delete": "Elimina {{bookmarkName}}"
     },
     "confirm-email": {
@@ -779,10 +721,8 @@
         "reading-lists-title": "{{side-nav.reading-lists}}",
         "time-to-read-alt": "{{sort-field-pipe.time-to-read}}",
         "scrobbling-tooltip": "{{settings.scrobbling}}",
-        "user-reviews-plus": "Recensioni Esterne",
         "words-count": "{{num}} Parole",
         "more-alt": "Ancora",
-        "user-reviews-local": "Recensioni Locali",
         "pages-count": "{{num}} Pagine",
         "weblinks-title": "Link",
         "time-left-alt": "Tempo Rimanente",
@@ -850,8 +790,7 @@
         "donate-tooltip": "Puoi rimuoverlo iscrivendoti a Kavita+",
         "back": "Indietro",
         "more": "Altro",
-        "customize": "{{settings.customize}}",
-        "browse-authors": "Sfoglia gli Autori"
+        "customize": "{{settings.customize}}"
     },
     "library-settings-modal": {
         "close": "{{common.close}}",
@@ -1279,9 +1218,6 @@
         "backup-database-task-success": "Un lavoro per il backup del database è stato messo in coda",
         "download-logs-task": "Scarica Logs",
         "download-logs-task-desc": "Compila tutti i file di registro in un file zip e lo scarica.",
-        "analyze-files-task": "Analizza File",
-        "analyze-files-task-desc": "Esegue un'attività di lunga durata che analizzerà i file per generare estensione e dimensione. Dovrebbe essere eseguito solo una volta per la versione v0.7. Non necessario se hai installato la versione successiva alla v0.7.",
-        "analyze-files-task-success": "L'analisi del file è stata messa in coda",
         "check-for-updates-task": "Cerca Aggiornamenti",
         "check-for-updates-task-desc": "Verifica se sono disponibili versioni stabili prima della tua versione.",
         "clean-up-task": "Pulizia Generale",
@@ -1310,7 +1246,6 @@
         "change-password-alt": "Cambia Password {{user}}",
         "resend": "Rinvia",
         "setup": "Impostare",
-        "admin": "Amministratore",
         "none": "Nessuno",
         "never": "Mai",
         "online-now-tooltip": "Inlinea Adesso",
@@ -1425,7 +1360,8 @@
     },
     "reading-list-item": {
         "remove": "{{common.remove}}",
-        "read": "{{common.read}}"
+        "read": "{{common.read}}",
+        "released-label": "Rilasciato: {{date}}"
     },
     "stream-list-item": {
         "remove": "{{common.remove}}",
@@ -1574,7 +1510,7 @@
         "cbl-repo": "Puoi trovare molti elenchi di lettura nella community <a href='https://github.com/DieselTech/CBL-ReadingLists' target='_blank' rel='noopener noreferrer'>repo</a>."
     },
     "pdf-reader": {
-        "loading-message": "Caricamento... I PDF potrebbero richiedere più tempo del previsto",
+        "loading-message": "Caricamento...",
         "incognito-mode": "Modalità Incognito",
         "light-theme-alt": "Tema Chiaro",
         "dark-theme-alt": "Tema Scuro",
@@ -1606,7 +1542,6 @@
     },
     "manga-reader": {
         "back": "Indietro",
-        "save-globally": "Salva Globalmente",
         "incognito-alt": "La modalità di navigazione in incognito è attiva. Attiva/disattiva per disattivare.",
         "incognito-title": "Modalità Incognito:",
         "shortcuts-menu-alt": "Scorciatoie da tastiera modale",
@@ -1639,7 +1574,6 @@
         "layout-mode-switched": "La modalità layout è passata a Singola a causa dello spazio insufficiente per eseguire il rendering del layout doppio",
         "no-next-chapter": "Nessun prossimo capitolo",
         "no-prev-chapter": "Nessun capitolo precedente",
-        "user-preferences-updated": "Preferenze utente aggiornate",
         "emulate-comic-book-label": "{{user-preferences.emulate-comic-book-label}}",
         "series-progress": "Avanzamento della serie: {{percentage}}",
         "off": "Spegni",
@@ -1989,7 +1923,8 @@
         "sidenav": "Nav laterale",
         "external-sources": "Fonti esterne",
         "smart-filters": "Filtri Intelligenti",
-        "help": "{{common.help}}"
+        "help": "{{common.help}}",
+        "description": "Puoi personalizzare diversi aspetti di Kavita riordinandoli, modificandone la visibilità e associando filtri intelligenti/fonti esterne alla home page o alla navigazione laterale."
     },
     "customize-dashboard-streams": {
         "no-data": "Tutti i filtri Smart aggiunti a Dashboard o nessuno ancora creato.",
@@ -2513,11 +2448,6 @@
         "info-tab": "Info",
         "metadata-tab": "Metadati"
     },
-    "browse-authors": {
-        "title": "Sfoglia Autori e Scrittori",
-        "author-count": "{{num}} Persone",
-        "cover-image-description": "{{edit-series-modal.cover-image-description}}"
-    },
     "edit-person-modal": {
         "title": "{{personName}} Dettagli",
         "general-tab": "{{edit-series-modal.general-tab}}",
@@ -2599,5 +2529,15 @@
     "download-button": {
         "downloading-status": "Scaricamento…",
         "download-tooltip": "Scarica"
+    },
+    "oidc": {
+        "login": "Torna al login",
+        "error-loading-info": "Errore durante il caricamento di OIDC info, contattare l'amministratore",
+        "timeout": "Risoluzione dell'OIDC è scaduta o si è verificato un errore"
+    },
+    "manage-oidc-connect": {
+        "save-success": "Impostazioni OIDC aggiornate con successo",
+        "notice": "Avviso",
+        "restart-required": "La modifica dell'Autorità o del ClientID richiede un riavvio manuale di Kavita."
     }
 }

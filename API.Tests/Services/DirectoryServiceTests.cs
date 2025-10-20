@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using API.Services;
@@ -10,12 +12,19 @@ using Kavita.Common.Helpers;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace API.Tests.Services;
 
-public class DirectoryServiceTests
+public class DirectoryServiceTests: AbstractFsTest
 {
     private readonly ILogger<DirectoryService> _logger = Substitute.For<ILogger<DirectoryService>>();
+    private readonly ITestOutputHelper _testOutputHelper;
+
+    public DirectoryServiceTests(ITestOutputHelper testOutputHelper)
+    {
+        _testOutputHelper = testOutputHelper;
+    }
 
 
     #region TraverseTreeParallelForEach
@@ -178,6 +187,12 @@ public class DirectoryServiceTests
     [Fact]
     public void GetFiles_All_MixedPathSeparators()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _testOutputHelper.WriteLine("Skipping test on non Windows platform");
+            return;
+        }
+
         const string testDirectory = "/manga/";
         var fileSystem = new MockFileSystem();
         for (var i = 0; i < 10; i++)
@@ -373,9 +388,16 @@ public class DirectoryServiceTests
     #endregion
 
     #region IsDriveMounted
+    // The root directory (/) is always mounted on non windows
     [Fact]
     public void IsDriveMounted_DriveIsNotMounted()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _testOutputHelper.WriteLine("Skipping test on non Windows platform");
+            return;
+        }
+
         const string testDirectory = "c:/manga/";
         var fileSystem = new MockFileSystem();
         fileSystem.AddFile($"{testDirectory}data-0.txt", new MockFileData("abc"));
@@ -387,6 +409,12 @@ public class DirectoryServiceTests
     [Fact]
     public void IsDriveMounted_DriveIsMounted()
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _testOutputHelper.WriteLine("Skipping test on non Windows platform");
+            return;
+        }
+
         const string testDirectory = "c:/manga/";
         var fileSystem = new MockFileSystem();
         fileSystem.AddFile($"{testDirectory}data-0.txt", new MockFileData("abc"));
@@ -788,6 +816,12 @@ public class DirectoryServiceTests
     [InlineData(@"M:\", @"M:\Toukyou Akazukin\Vol. 01 Ch. 005.cbz", @"Toukyou Akazukin")]
     public void GetFoldersTillRoot_Test(string rootPath, string fullpath, string expectedArray)
     {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            _testOutputHelper.WriteLine("Skipping test on non Windows platform");
+            return;
+        }
+
         var fileSystem = new MockFileSystem();
         fileSystem.AddDirectory(rootPath);
         fileSystem.AddFile(fullpath, new MockFileData(""));
@@ -900,12 +934,14 @@ public class DirectoryServiceTests
     #region GetHumanReadableBytes
 
     [Theory]
-    [InlineData(1200, "1.17 KB")]
-    [InlineData(1, "1 B")]
-    [InlineData(10000000, "9.54 MB")]
-    [InlineData(10000000000, "9.31 GB")]
-    public void GetHumanReadableBytesTest(long bytes, string expected)
+    [InlineData(1200, 1.17, " KB")]
+    [InlineData(1, 1, " B")]
+    [InlineData(10000000, 9.54, " MB")]
+    [InlineData(10000000000, 9.31, " GB")]
+    public void GetHumanReadableBytesTest(long bytes, float number, string suffix)
     {
+        // GetHumanReadableBytes is user facing, should be in CultureInfo.CurrentCulture
+        var expected = number.ToString(CultureInfo.CurrentCulture) + suffix;
         Assert.Equal(expected, DirectoryService.GetHumanReadableBytes(bytes));
     }
     #endregion
@@ -1041,11 +1077,14 @@ public class DirectoryServiceTests
     #region GetParentDirectory
 
     [Theory]
-    [InlineData(@"C:/file.txt", "C:/")]
-    [InlineData(@"C:/folder/file.txt", "C:/folder")]
-    [InlineData(@"C:/folder/subfolder/file.txt", "C:/folder/subfolder")]
+    [InlineData(@"file.txt", "")]
+    [InlineData(@"folder/file.txt", "folder")]
+    [InlineData(@"folder/subfolder/file.txt", "folder/subfolder")]
     public void GetParentDirectoryName_ShouldFindParentOfFiles(string path, string expected)
     {
+        path = Root + path;
+        expected = Root + expected;
+
         var fileSystem = new MockFileSystem(new Dictionary<string, MockFileData>
         {
             { path, new MockFileData(string.Empty)}
@@ -1055,11 +1094,14 @@ public class DirectoryServiceTests
         Assert.Equal(expected, ds.GetParentDirectoryName(path));
     }
     [Theory]
-    [InlineData(@"C:/folder", "C:/")]
-    [InlineData(@"C:/folder/subfolder", "C:/folder")]
-    [InlineData(@"C:/folder/subfolder/another", "C:/folder/subfolder")]
+    [InlineData(@"folder", "")]
+    [InlineData(@"folder/subfolder", "folder")]
+    [InlineData(@"folder/subfolder/another", "folder/subfolder")]
     public void GetParentDirectoryName_ShouldFindParentOfDirectories(string path, string expected)
     {
+        path = Root + path;
+        expected = Root + expected;
+
         var fileSystem = new MockFileSystem();
         fileSystem.AddDirectory(path);
 

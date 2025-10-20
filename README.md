@@ -26,14 +26,14 @@ your reading collection with your friends and family!
 - First class responsive readers that work great on any device (phone, tablet, desktop)
 - Customizable theming support: [Theme Repo](https://github.com/Kareadita/Themes) and [Documentation](https://wiki.kavitareader.com/guides/themes)
 - External metadata integration and scrobbling for read status, ratings, and reviews (available via [Kavita+](https://wiki.kavitareader.com/kavita+)) 
-- Rich Metadata support with filtering and searching
+- Rich Metadata support with filtering, searching, and smart filters
 - Ways to group reading material: Collections, Reading Lists (CBL Import), Want to Read
-- Ability to manage users with rich Role-based management for age restrictions, abilities within the app, etc
+- Ability to manage users with rich Role-based management for age restrictions, abilities within the app, OIDC, etc
 - Rich web readers supporting webtoon, continuous reading mode (continue without leaving the reader), virtual pages (epub), etc
 - Ability to customize your dashboard and side nav with smart filters, custom order and visibility toggles
-- Full Localization Support
-- Ability to download metadata (available via [Kavita+](https://wiki.kavitareader.com/kavita+))
-
+- Full Localization Support ([Weblate](https://hosted.weblate.org/engage/kavita/))
+- Ability to download metadata, reviews, ratings, and more (available via [Kavita+](https://wiki.kavitareader.com/kavita+))
+- Epub-based Annotation/Highlight support 
 
 ## Support
 [![Discord](https://img.shields.io/badge/discord-chat-7289DA.svg?maxAge=60)](https://discord.gg/eczRp9eeem)
@@ -41,7 +41,7 @@ your reading collection with your friends and family!
 
 ## Demo
 If you want to try out Kavita, a demo is available:
-[https://demo.kavitareader.com/](https://demo.kavitareader.com/)
+[https://demo.kavitareader.com/](https://demo.kavitareader.com/login?apiKey=9003cf99-9213-4206-a787-af2fe4cc5f1f)
 ```
 Username: demouser
 Password: Demouser64
@@ -68,7 +68,7 @@ option which provides funding, and you get a benefit.
 ## Kavita+
 [Kavita+](https://wiki.kavitareader.com/kavita+) is a paid subscription that offers premium features that otherwise wouldn't be feasible to include in Kavita. It is ran and operated by majora2007, the creator and developer of Kavita.
 
-If you are interested, you can use the promo code `FIRSTTIME` for your initial signup for a 50% discount on the first month (2$). This can be thought of as donating to Kavita's development and getting some sweet features out of it.
+If you are interested, you can use the promo code [`FIRSTTIME`](https://buy.stripe.com/00gcOQanFajG0hi5ko?prefilled_promo_code=FIRSTTIME) for your initial signup for a 50% discount on the first month (2$). This can be thought of as donating to Kavita's development and getting some sweet features out of it.
 
 **If you already contribute via OpenCollective, please reach out to majora2007 for a provisioned license.**
 
@@ -107,13 +107,10 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 ## Mega Sponsors
 <img src="https://opencollective.com/Kavita/tiers/mega-sponsor.svg?width=890"></a>
 
-## JetBrains
-Thank you to [<img src="/Logo/jetbrains.svg" alt="" width="32"> JetBrains](http://www.jetbrains.com/) for providing us with free licenses to their great tools.
-
-* [<img src="/Logo/rider.svg" alt="" width="32"> Rider](http://www.jetbrains.com/rider/)
+## Powered By
+[![JetBrains logo.](https://resources.jetbrains.com/storage/products/company/brand/logos/jetbrains.svg)](https://jb.gg/OpenSource)
 
 ### License
-
 * [GNU GPL v3](http://www.gnu.org/licenses/gpl.html)
 * Copyright 2020-2024
 

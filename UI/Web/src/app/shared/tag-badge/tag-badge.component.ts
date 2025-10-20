@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import {CommonModule} from "@angular/common";
+import {ChangeDetectionStrategy, Component, Input} from '@angular/core';
+import {NgClass} from "@angular/common";
 
 /**
  * What type of cursor to apply to the tag badge
@@ -23,12 +23,13 @@ export enum TagBadgeCursor {
 }
 
 @Component({
-  selector: 'app-tag-badge',
-  standalone: true,
-  imports: [CommonModule],
-  templateUrl: './tag-badge.component.html',
-  styleUrls: ['./tag-badge.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-tag-badge',
+  imports: [
+    NgClass
+  ],
+    templateUrl: './tag-badge.component.html',
+    styleUrls: ['./tag-badge.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TagBadgeComponent {
 

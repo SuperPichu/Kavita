@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Metadata;
+using API.Entities.Person;
 
 namespace API.Helpers.Builders;
 
@@ -105,6 +106,25 @@ public class SeriesMetadataBuilder : IEntityBuilder<SeriesMetadata>
         _seriesMetadata.Tags ??= [];
         _seriesMetadata.Tags.Add(tag);
         _seriesMetadata.TagsLocked = lockStatus;
+        return this;
+    }
+
+    public SeriesMetadataBuilder WithTags(List<Tag> tags, bool lockStatus = false)
+    {
+        _seriesMetadata.Tags = tags;
+        _seriesMetadata.TagsLocked = lockStatus;
+        return this;
+    }
+
+    public SeriesMetadataBuilder WithMaxCount(int count)
+    {
+        _seriesMetadata.MaxCount = count;
+        return this;
+    }
+
+    public SeriesMetadataBuilder WithTotalCount(int count)
+    {
+        _seriesMetadata.TotalCount = count;
         return this;
     }
 }

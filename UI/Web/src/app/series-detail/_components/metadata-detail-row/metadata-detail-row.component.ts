@@ -18,10 +18,10 @@ import {FilterField} from "../../../_models/metadata/v2/filter-field";
 import {MangaFormat} from "../../../_models/manga-format";
 import {SeriesFormatComponent} from "../../../shared/series-format/series-format.component";
 import {PublisherFlipperComponent} from "../../../_single-module/publisher-flipper/publisher-flipper.component";
+import {BytesPipe} from "../../../_pipes/bytes.pipe";
 
 @Component({
-  selector: 'app-metadata-detail-row',
-  standalone: true,
+    selector: 'app-metadata-detail-row',
   imports: [
     AgeRatingImageComponent,
     CompactNumberPipe,
@@ -31,11 +31,12 @@ import {PublisherFlipperComponent} from "../../../_single-module/publisher-flipp
     TranslocoDirective,
     ImageComponent,
     SeriesFormatComponent,
-    PublisherFlipperComponent
+    PublisherFlipperComponent,
+    BytesPipe
   ],
-  templateUrl: './metadata-detail-row.component.html',
-  styleUrl: './metadata-detail-row.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    templateUrl: './metadata-detail-row.component.html',
+    styleUrl: './metadata-detail-row.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MetadataDetailRowComponent {
   protected readonly imageService = inject(ImageService);
@@ -52,6 +53,8 @@ export class MetadataDetailRowComponent {
   @Input({required: true}) ageRating: AgeRating = AgeRating.Unknown;
   @Input({required: true}) libraryType!: LibraryType;
   @Input({required: true}) mangaFormat!: MangaFormat;
+  @Input() releaseYear: number | undefined;
+  @Input() totalBytes: number | undefined;
 
   openGeneric(queryParamName: FilterField, filter: string | number) {
     if (queryParamName === FilterField.None) return;

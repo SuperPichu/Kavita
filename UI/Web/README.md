@@ -27,13 +27,25 @@ Run `npx playwright test --reporter=line` or `npx playwright test` to run e2e te
 
 ## Connecting to your dev server via your phone or any other compatible client on local network
 
-Update `IP` constant in `src/environments/environment.ts` to your dev machine's ip instead of `localhost`.
+Run `npm run start-proxy`
 
-Run `npm run start`
+## Testing OIDC
+
+There's two options,
+
+1) Run the proxy and correct the port after redirect (on login).
+2) Run `build-backend` or `build-backend-prod`, and use `localhost:5000` to test. This requires you to rebuild after each change
+
+Do **NOT** commit appsettings.development.json while testing OIDC. It'll contain your secret key
 
 ## Notes:
 - injected services should be at the top of the file
 - all components must be standalone
 
 # Update latest angular
-`ng update @angular/core @angular/cli @typescript-eslint/parser @angular/localize @angular/compiler-cli @angular-devkit/build-angular @angular/cdk`
+`ng update @angular/core @angular/cli @typescript-eslint/parser @angular/localize @angular/compiler-cli @angular/cdk @angular/animations @angular/common @angular/forms @angular/platform-browser @angular/platform-browser-dynamic @angular/router`
+
+`npm install @angular-eslint/builder@latest @angular-eslint/eslint-plugin@latest @angular-eslint/eslint-plugin-template@latest @angular-eslint/schematics@latest @angular-eslint/template-parser@latest`
+
+# Update Localization library
+`npm install @jsverse/transloco@latest @jsverse/transloco-locale@latest @jsverse/transloco-persist-lang@latest @jsverse/transloco-persist-translations@latest @jsverse/transloco-preload-langs@latest`

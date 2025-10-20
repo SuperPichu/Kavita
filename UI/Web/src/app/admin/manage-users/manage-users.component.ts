@@ -3,7 +3,7 @@ import {NgbModal, NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
 import {take} from 'rxjs/operators';
 import {MemberService} from 'src/app/_services/member.service';
 import {Member} from 'src/app/_models/auth/member';
-import {AccountService} from 'src/app/_services/account.service';
+import {AccountService, Role} from 'src/app/_services/account.service';
 import {ToastrService} from 'ngx-toastr';
 import {ResetPasswordModalComponent} from '../_modals/reset-password-modal/reset-password-modal.component';
 import {ConfirmService} from 'src/app/shared/confirm.service';
@@ -12,41 +12,52 @@ import {InviteUserComponent} from '../invite-user/invite-user.component';
 import {EditUserComponent} from '../edit-user/edit-user.component';
 import {Router} from '@angular/router';
 import {TagBadgeComponent} from '../../shared/tag-badge/tag-badge.component';
-import {AsyncPipe, DatePipe, NgClass, NgIf, TitleCasePipe} from '@angular/common';
-import {translate, TranslocoModule, TranslocoService} from "@jsverse/transloco";
+import {AsyncPipe, NgClass, TitleCasePipe} from '@angular/common';
+import {TranslocoModule, TranslocoService} from "@jsverse/transloco";
 import {DefaultDatePipe} from "../../_pipes/default-date.pipe";
 import {DefaultValuePipe} from "../../_pipes/default-value.pipe";
-import {ReadMoreComponent} from "../../shared/read-more/read-more.component";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
-import {makeBindingParser} from "@angular/compiler";
 import {LoadingComponent} from "../../shared/loading/loading.component";
 import {TimeAgoPipe} from "../../_pipes/time-ago.pipe";
 import {SentenceCasePipe} from "../../_pipes/sentence-case.pipe";
 import {DefaultModalOptions} from "../../_models/default-modal-options";
+import {UtcToLocaleDatePipe} from "../../_pipes/utc-to-locale-date.pipe";
+import {RoleLocalizedPipe} from "../../_pipes/role-localized.pipe";
+import {SettingsService} from "../settings.service";
+import {ServerSettings} from "../_models/server-settings";
+import {IdentityProvider} from "../../_models/user";
+import {ImageComponent} from "../../shared/image/image.component";
 
 @Component({
-    selector: 'app-manage-users',
-    templateUrl: './manage-users.component.html',
-    styleUrls: ['./manage-users.component.scss'],
-    standalone: true,
-    changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgbTooltip, TagBadgeComponent, AsyncPipe, TitleCasePipe, DatePipe, TranslocoModule, DefaultDatePipe, NgClass, DefaultValuePipe, ReadMoreComponent, UtcToLocalTimePipe, LoadingComponent, NgIf, TimeAgoPipe, SentenceCasePipe]
+  selector: 'app-manage-users',
+  templateUrl: './manage-users.component.html',
+  styleUrls: ['./manage-users.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgbTooltip, TagBadgeComponent, AsyncPipe, TitleCasePipe, TranslocoModule, DefaultDatePipe, NgClass,
+    DefaultValuePipe, UtcToLocalTimePipe, LoadingComponent, TimeAgoPipe, SentenceCasePipe, UtcToLocaleDatePipe,
+    RoleLocalizedPipe, ImageComponent]
 })
 export class ManageUsersComponent implements OnInit {
 
-  members: Member[] = [];
-  loggedInUsername = '';
-  loadingMembers = false;
+  protected readonly Role = Role;
 
   private readonly translocoService = inject(TranslocoService);
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly memberService = inject(MemberService);
   private readonly accountService = inject(AccountService);
+  private readonly settingsService = inject(SettingsService);
   private readonly modalService = inject(NgbModal);
   private readonly toastr = inject(ToastrService);
   private readonly confirmService = inject(ConfirmService);
   public readonly messageHub = inject(MessageHubService);
   private readonly router = inject(Router);
+
+  members: Member[] = [];
+  settings: ServerSettings | undefined = undefined;
+  loggedInUsername = '';
+  loadingMembers = false;
+  libraryCount: number = 0;
+
 
   constructor() {
     this.accountService.currentUser$.pipe(take(1)).subscribe((user) => {
@@ -59,6 +70,10 @@ export class ManageUsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadMembers();
+
+    this.settingsService.getServerSettings().subscribe(settings => {
+      this.settings = settings;
+    });
   }
 
 
@@ -77,7 +92,11 @@ export class ManageUsersComponent implements OnInit {
         if (nameA < nameB) return -1;
         if (nameA > nameB) return 1;
         return 0;
-      })
+      });
+
+      // Get the admin and get their library count
+      this.libraryCount = this.members.filter(m => this.hasAdminRole(m))[0].libraries.length;
+
       this.loadingMembers = false;
       this.cdRef.markForCheck();
     });
@@ -88,8 +107,11 @@ export class ManageUsersComponent implements OnInit {
   }
 
   openEditUser(member: Member) {
+    if (!this.settings) return;
+
     const modalRef = this.modalService.open(EditUserComponent, DefaultModalOptions);
-    modalRef.componentInstance.member = member;
+    modalRef.componentInstance.member.set(member);
+    modalRef.componentInstance.settings.set(this.settings);
     modalRef.closed.subscribe(() => {
       this.loadMembers();
     });
@@ -102,7 +124,7 @@ export class ManageUsersComponent implements OnInit {
         setTimeout(() => {
           this.loadMembers();
           this.toastr.success(this.translocoService.translate('toasts.user-deleted', {user: member.username}));
-        }, 30); // SetTimeout because I've noticed this can run super fast and not give enough time for data to flush
+        }, 30); // SetTimeout because I've noticed this can run superfast and not give enough time for data to flush
       });
     }
   }
@@ -138,21 +160,13 @@ export class ManageUsersComponent implements OnInit {
     modalRef.componentInstance.member = member;
   }
 
-  formatLibraries(member: Member) {
-    if (member.libraries.length === 0) {
-      return translate('manage-users.none');
-    }
-
-    return member.libraries.map(item => item.name).join(', ');
-  }
-
   hasAdminRole(member: Member) {
-    return member.roles.indexOf('Admin') >= 0;
+    return member.roles.indexOf(Role.Admin) >= 0;
   }
 
   getRoles(member: Member) {
     return member.roles.filter(item => item != 'Pleb');
   }
 
-  protected readonly makeBindingParser = makeBindingParser;
+  protected readonly IdentityProvider = IdentityProvider;
 }

@@ -1,15 +1,19 @@
 ﻿using System.IO.Abstractions;
 using API.Constants;
+using API.Controllers;
 using API.Data;
 using API.Helpers;
+using API.Middleware;
 using API.Services;
 using API.Services.Plus;
+using API.Services.Store;
 using API.Services.Tasks;
 using API.Services.Tasks.Metadata;
 using API.Services.Tasks.Scanner;
 using API.SignalR;
 using API.SignalR.Presence;
 using Kavita.Common;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -52,6 +56,13 @@ public static class ApplicationServiceExtensions
         services.AddScoped<IMediaErrorService, MediaErrorService>();
         services.AddScoped<IMediaConversionService, MediaConversionService>();
         services.AddScoped<IStreamService, StreamService>();
+        services.AddScoped<IRatingService, RatingService>();
+        services.AddScoped<IPersonService, PersonService>();
+        services.AddScoped<IReadingProfileService, ReadingProfileService>();
+        services.AddScoped<IKoreaderService, KoreaderService>();
+        services.AddScoped<IFontService, FontService>();
+        services.AddScoped<IAnnotationService, AnnotationService>();
+        services.AddScoped<IOpdsService, OpdsService>();
 
         services.AddScoped<IScannerService, ScannerService>();
         services.AddScoped<IProcessSeries, ProcessSeries>();
@@ -69,13 +80,19 @@ public static class ApplicationServiceExtensions
         services.AddScoped<ICoverDbService, CoverDbService>();
 
         services.AddScoped<ILocalizationService, LocalizationService>();
+        services.AddScoped<ISettingsService, SettingsService>();
 
 
+        services.AddScoped<IKavitaPlusApiService, KavitaPlusApiService>();
         services.AddScoped<IScrobblingService, ScrobblingService>();
         services.AddScoped<ILicenseService, LicenseService>();
         services.AddScoped<IExternalMetadataService, ExternalMetadataService>();
         services.AddScoped<ISmartCollectionSyncService, SmartCollectionSyncService>();
         services.AddScoped<IWantToReadSyncService, WantToReadSyncService>();
+
+        services.AddScoped<IOidcService, OidcService>();
+        services.AddScoped<OpdsActionFilterAttribute>();
+        services.AddScoped<OpdsActiveUserMiddlewareAttribute>();
 
         services.AddSqLite();
         services.AddSignalR(opt => opt.EnableDetailedErrors = true);
@@ -83,6 +100,7 @@ public static class ApplicationServiceExtensions
         services.AddEasyCaching(options =>
         {
             options.UseInMemory(EasyCacheProfiles.Favicon);
+            options.UseInMemory(EasyCacheProfiles.Publisher);
             options.UseInMemory(EasyCacheProfiles.Library);
             options.UseInMemory(EasyCacheProfiles.RevokedJwt);
             options.UseInMemory(EasyCacheProfiles.LocaleOptions);
@@ -99,6 +117,7 @@ public static class ApplicationServiceExtensions
             options.SizeLimit = Configuration.CacheSize * 1024 * 1024; // 75 MB
             options.CompactionPercentage = 0.1; // LRU compaction (10%)
         });
+        services.AddSingleton<ITicketStore, CustomTicketStore>();
 
         services.AddSwaggerGen(g =>
         {

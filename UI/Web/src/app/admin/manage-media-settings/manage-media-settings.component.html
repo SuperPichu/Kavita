@@ -1,4 +1,4 @@
-<ng-container *transloco="let t; read: 'manage-media-settings'">
+<ng-container *transloco="let t; prefix: 'manage-media-settings'">
     <form [formGroup]="settingsForm">
       <div class="mb-4">
         <p>
@@ -14,7 +14,7 @@
           @if(settingsForm.get('encodeMediaAs'); as formControl) {
             <app-setting-item [title]="t('encode-as-label')" [subtitle]="t('encode-as-tooltip')">
               <ng-template #view>
-                {{formControl!.value | encodeFormat}}
+                {{formControl.value | encodeFormat}}
               </ng-template>
               <ng-template #edit>
                 <select class="form-select" formControlName="encodeMediaAs">

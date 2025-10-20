@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Constants;
+using API.Data;
 using API.Data.Repositories;
 using API.DTOs.KavitaPlus.Metadata;
 using API.DTOs.Recommendation;
@@ -11,42 +11,97 @@ using API.DTOs.Scrobbling;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Metadata;
+using API.Entities.MetadataMatching;
+using API.Entities.Person;
 using API.Helpers.Builders;
 using API.Services.Plus;
 using API.Services.Tasks.Metadata;
+using API.Services.Tasks.Scanner.Parser;
 using API.SignalR;
+using AutoMapper;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
-using YamlDotNet.Serialization;
 
 namespace API.Tests.Services;
 
 /// <summary>
 /// Given these rely on Kavita+, this will not have any [Fact]/[Theory] on them and must be manually checked
 /// </summary>
-public class ExternalMetadataServiceTests : AbstractDbTest
+public class ExternalMetadataServiceTests: AbstractDbTest
 {
-    private readonly ITestOutputHelper _testOutputHelper;
-    private readonly ExternalMetadataService _externalMetadataService;
-    private readonly Dictionary<string, Genre> _genreLookup = new Dictionary<string, Genre>();
-    private readonly Dictionary<string, Tag> _tagLookup = new Dictionary<string, Tag>();
-    private readonly Dictionary<string, Person> _personLookup = new Dictionary<string, Person>();
-
-
-    public ExternalMetadataServiceTests(ITestOutputHelper testOutputHelper)
+    public ExternalMetadataServiceTests(ITestOutputHelper outputHelper): base(outputHelper)
     {
-        _testOutputHelper = testOutputHelper;
-
         // Set up Hangfire to use in-memory storage for testing
         GlobalConfiguration.Configuration.UseInMemoryStorage();
+    }
 
-        _externalMetadataService = new ExternalMetadataService(_unitOfWork, Substitute.For<ILogger<ExternalMetadataService>>(),
-            _mapper, Substitute.For<ILicenseService>(), Substitute.For<IScrobblingService>(), Substitute.For<IEventHub>(),
-            Substitute.For<ICoverDbService>());
+    private async Task<(IExternalMetadataService, Dictionary<string, Genre>, Dictionary<string, Tag>, Dictionary<string, Person>)> Setup(IUnitOfWork unitOfWork, DataContext context, IMapper mapper)
+    {
+
+       var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
+       metadataSettings.Enabled = false;
+       metadataSettings.EnableSummary = false;
+       metadataSettings.EnableCoverImage = false;
+       metadataSettings.EnableLocalizedName = false;
+       metadataSettings.EnableGenres = false;
+       metadataSettings.EnablePeople = false;
+       metadataSettings.EnableRelationships = false;
+       metadataSettings.EnableTags = false;
+       metadataSettings.EnablePublicationStatus = false;
+       metadataSettings.EnableStartDate = false;
+       metadataSettings.FieldMappings = [];
+       metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>();
+       context.MetadataSettings.Update(metadataSettings);
+
+       await context.SaveChangesAsync();
+
+       context.AppUser.Add(new AppUserBuilder("Joe", "Joe")
+           .WithRole(PolicyConstants.AdminRole)
+           .WithLibrary(await context.Library.FirstAsync(l => l.Id == 1))
+           .Build());
+
+       var genreLookup = new Dictionary<string, Genre>();
+       var tagLookup = new Dictionary<string, Tag>();
+       var personLookup = new Dictionary<string, Person>();
+
+       // Create a bunch of Genres for this test and store their string in genreLookup
+       genreLookup.Clear();
+       var g1 = new GenreBuilder("Action").Build();
+       var g2 = new GenreBuilder("Ecchi").Build();
+       context.Genre.Add(g1);
+       context.Genre.Add(g2);
+       genreLookup.Add("Action", g1);
+       genreLookup.Add("Ecchi", g2);
+
+       tagLookup.Clear();
+       var t1 = new TagBuilder("H").Build();
+       var t2 = new TagBuilder("Boxing").Build();
+       context.Tag.Add(t1);
+       context.Tag.Add(t2);
+       tagLookup.Add("H", t1);
+       tagLookup.Add("Boxing", t2);
+
+       personLookup.Clear();
+       var p1 = new PersonBuilder("Johnny Twowheeler").Build();
+       var p2 = new PersonBuilder("Boxing").Build();
+       context.Person.Add(p1);
+       context.Person.Add(p2);
+       personLookup.Add("Johnny Twowheeler", p1);
+       personLookup.Add("Batman Robin", p2);
+
+       await context.SaveChangesAsync();
+
+       var externalMetadataService = new ExternalMetadataService(unitOfWork,
+           Substitute.For<ILogger<ExternalMetadataService>>(),
+           mapper, Substitute.For<ILicenseService>(), Substitute.For<IScrobblingService>(),
+           Substitute.For<IEventHub>(), Substitute.For<ICoverDbService>(),
+           Substitute.For<IKavitaPlusApiService>());
+
+       return (externalMetadataService, genreLookup, tagLookup, personLookup);
     }
 
     #region Gloabl
@@ -54,7 +109,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Off_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -62,24 +118,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = false;
         metadataSettings.EnableSummary = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "Test"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(string.Empty, postSeries.Metadata.Summary);
     }
@@ -91,7 +147,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Summary_NoExisting_Off_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -99,24 +156,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableSummary = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "Test"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(string.Empty, postSeries.Metadata.Summary);
     }
@@ -124,7 +181,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Summary_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -132,24 +190,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableSummary = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "Test"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.False(string.IsNullOrEmpty(postSeries.Metadata.Summary));
         Assert.Equal(series.Metadata.Summary, postSeries.Metadata.Summary);
@@ -158,7 +216,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Summary_Existing_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -167,24 +226,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithSummary("This summary is not locked")
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableSummary = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "This should not write"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.False(string.IsNullOrEmpty(postSeries.Metadata.Summary));
         Assert.Equal("This summary is not locked", postSeries.Metadata.Summary);
@@ -193,7 +252,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Summary_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -202,24 +262,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithSummary("This summary is not locked", true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableSummary = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "This should not write"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.False(string.IsNullOrEmpty(postSeries.Metadata.Summary));
         Assert.Equal("This summary is not locked", postSeries.Metadata.Summary);
@@ -228,7 +288,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Summary_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Summary";
         var series = new SeriesBuilder(seriesName)
@@ -237,25 +298,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithSummary("This summary is not locked", true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableSummary = true;
         metadataSettings.Overrides = [MetadataSettingField.Summary];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Summary = "This should write"
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.False(string.IsNullOrEmpty(postSeries.Metadata.Summary));
         Assert.Equal("This should write", postSeries.Metadata.Summary);
@@ -269,7 +330,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task ReleaseYear_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Release Year";
         var series = new SeriesBuilder(seriesName)
@@ -277,24 +339,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableStartDate = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             StartDate = DateTime.UtcNow
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(0, postSeries.Metadata.ReleaseYear);
     }
@@ -302,7 +364,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task ReleaseYear_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Release Year";
         var series = new SeriesBuilder(seriesName)
@@ -310,24 +373,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableStartDate = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             StartDate = DateTime.UtcNow
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(DateTime.UtcNow.Year, postSeries.Metadata.ReleaseYear);
     }
@@ -335,7 +398,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task ReleaseYear_Existing_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Release Year";
         var series = new SeriesBuilder(seriesName)
@@ -344,24 +408,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithReleaseYear(1990)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableStartDate = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             StartDate = DateTime.UtcNow
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(1990, postSeries.Metadata.ReleaseYear);
     }
@@ -369,7 +433,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task ReleaseYear_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Release Year";
         var series = new SeriesBuilder(seriesName)
@@ -378,24 +443,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithReleaseYear(1990, true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableStartDate = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             StartDate = DateTime.UtcNow
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(1990, postSeries.Metadata.ReleaseYear);
     }
@@ -403,7 +468,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task ReleaseYear_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Release Year";
         var series = new SeriesBuilder(seriesName)
@@ -412,25 +478,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithReleaseYear(1990, true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableStartDate = true;
         metadataSettings.Overrides = [MetadataSettingField.StartDate];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             StartDate = DateTime.UtcNow
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(DateTime.UtcNow.Year, postSeries.Metadata.ReleaseYear);
     }
@@ -442,7 +508,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_NoExisting_Off_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -451,24 +518,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください", "Kimchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(string.Empty, postSeries.LocalizedName);
     }
@@ -476,7 +543,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -485,24 +553,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください", "Kimchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal("Kimchi", postSeries.LocalizedName);
     }
@@ -510,7 +578,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_Existing_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -519,24 +588,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください", "Kimchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal("Localized Name here", postSeries.LocalizedName);
     }
@@ -544,7 +613,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -553,24 +623,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください", "Kimchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal("Localized Name here", postSeries.LocalizedName);
     }
@@ -578,7 +648,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -587,25 +658,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = true;
         metadataSettings.Overrides = [MetadataSettingField.LocalizedName];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください", "Kimchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal("Kimchi", postSeries.LocalizedName);
     }
@@ -613,7 +684,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task LocalizedName_OnlyNonEnglishSynonyms_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Localized Name";
         var series = new SeriesBuilder(seriesName)
@@ -622,24 +694,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableLocalizedName = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Synonyms = [seriesName, "設定しないでください"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.True(string.IsNullOrEmpty(postSeries.LocalizedName));
     }
@@ -651,7 +723,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -665,24 +738,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("2").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.OnGoing, postSeries.Metadata.PublicationStatus);
     }
@@ -690,7 +763,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -704,24 +778,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("2").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.Completed, postSeries.Metadata.PublicationStatus);
     }
@@ -729,7 +803,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_Existing_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -744,24 +819,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("2").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.Completed, postSeries.Metadata.PublicationStatus);
     }
@@ -769,7 +844,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -784,24 +860,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("2").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.Hiatus, postSeries.Metadata.PublicationStatus);
     }
@@ -809,7 +885,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -824,25 +901,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("2").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = true;
         metadataSettings.Overrides = [MetadataSettingField.PublicationStatus];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.Completed, postSeries.Metadata.PublicationStatus);
     }
@@ -850,7 +927,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task PublicationStatus_Existing_CorrectState_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Publication Status";
         var series = new SeriesBuilder(seriesName)
@@ -862,28 +940,239 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithChapter(new ChapterBuilder("1").Build())
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePublicationStatus = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Volumes = 2
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(PublicationStatus.Ended, postSeries.Metadata.PublicationStatus);
     }
 
+
+    [Fact]
+    public void IsSeriesCompleted_ExactMatch()
+    {
+        const string seriesName = "Test - Exact Match";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(5)
+                .WithTotalCount(5)
+                .Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 5, Volumes = 0 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, Parser.DefaultChapterNumber);
+
+        Assert.True(result);
+    }
+
+    [Fact]
+    public void IsSeriesCompleted_Volumes_DecimalVolumes()
+    {
+        const string seriesName = "Test - Volume Complete";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(2)
+                .WithTotalCount(3)
+                .Build())
+            .WithVolume(new VolumeBuilder("1").WithNumber(1).Build())
+            .WithVolume(new VolumeBuilder("2").WithNumber(2).Build())
+            .WithVolume(new VolumeBuilder("2.5").WithNumber(2.5f).Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        // External metadata includes decimal volume 2.5
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 0, Volumes = 3 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, 2);
+
+        Assert.True(result);
+        Assert.Equal(3, series.Metadata.MaxCount);
+        Assert.Equal(3, series.Metadata.TotalCount);
+    }
+
+    /// <summary>
+    /// This is validating that we get a completed even though we have a special chapter and AL doesn't count it
+    /// </summary>
+    [Fact]
+    public void IsSeriesCompleted_Volumes_HasSpecialAndDecimal_ExternalNoSpecial()
+    {
+        const string seriesName = "Test - Volume Complete";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(2)
+                .WithTotalCount(3)
+                .Build())
+            .WithVolume(new VolumeBuilder("1").WithNumber(1).Build())
+            .WithVolume(new VolumeBuilder("1.5").WithNumber(1.5f).Build())
+            .WithVolume(new VolumeBuilder("2").WithNumber(2).Build())
+            .WithVolume(new VolumeBuilder(Parser.SpecialVolume).Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        // External metadata includes volume 1.5, but not the special
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 0, Volumes = 3 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, 2);
+
+        Assert.True(result);
+        Assert.Equal(3, series.Metadata.MaxCount);
+        Assert.Equal(3, series.Metadata.TotalCount);
+    }
+
+    /// <remarks>
+    /// This unit test also illustrates the bug where you may get a false positive if you had Volumes 1,2, and 2.1. While
+    /// missing volume 3. With the external metadata expecting non-decimal volumes.
+    /// i.e. it would fail if we only had one decimal volume
+    /// </remarks>
+    [Fact]
+    public void IsSeriesCompleted_Volumes_TooManyDecimalVolumes()
+    {
+        const string seriesName = "Test - Volume Complete";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(2)
+                .WithTotalCount(3)
+                .Build())
+            .WithVolume(new VolumeBuilder("1").WithNumber(1).Build())
+            .WithVolume(new VolumeBuilder("2").WithNumber(2).Build())
+            .WithVolume(new VolumeBuilder("2.1").WithNumber(2.1f).Build())
+            .WithVolume(new VolumeBuilder("2.2").WithNumber(2.2f).Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        // External metadata includes no special or decimals. There are 3 volumes. And we're missing volume 3
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 0, Volumes = 3 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, 2);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsSeriesCompleted_NoVolumes_GEQChapterCheck()
+    {
+        // We own 11 chapters, the external metadata expects 10
+        const string seriesName = "Test - Chapter MaxCount, no volumes";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(11)
+                .WithTotalCount(10)
+                .Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 10, Volumes = 0 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, Parser.DefaultChapterNumber);
+
+        Assert.True(result);
+        Assert.Equal(11, series.Metadata.TotalCount);
+        Assert.Equal(11, series.Metadata.MaxCount);
+    }
+
+    [Fact]
+    public void IsSeriesCompleted_NoVolumes_IncludeAllChaptersCheck()
+    {
+        const string seriesName = "Test - Chapter Count";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(7)
+                .WithTotalCount(10)
+                .Build())
+            .Build();
+
+        var chapters = new List<Chapter>
+        {
+            new ChapterBuilder("0").Build(),
+            new ChapterBuilder("2").Build(),
+            new ChapterBuilder("3").Build(),
+            new ChapterBuilder("4").Build(),
+            new ChapterBuilder("5").Build(),
+            new ChapterBuilder("6").Build(),
+            new ChapterBuilder("7").Build(),
+            new ChapterBuilder("7.1").Build(),
+            new ChapterBuilder("7.2").Build(),
+            new ChapterBuilder("7.3").Build()
+        };
+        // External metadata includes prologues (0) and extra's (7.X)
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 10, Volumes = 0 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, Parser.DefaultChapterNumber);
+
+        Assert.True(result);
+        Assert.Equal(10, series.Metadata.TotalCount);
+        Assert.Equal(10, series.Metadata.MaxCount);
+    }
+
+    [Fact]
+    public void IsSeriesCompleted_NotEnoughVolumes()
+    {
+        const string seriesName = "Test - Incomplete Volume";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(2)
+                .WithTotalCount(5)
+                .Build())
+            .WithVolume(new VolumeBuilder("1").WithNumber(1).Build())
+            .WithVolume(new VolumeBuilder("2").WithNumber(2).Build())
+            .Build();
+
+        var chapters = new List<Chapter>();
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 0, Volumes = 5 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, 2);
+
+        Assert.False(result);
+    }
+
+    [Fact]
+    public void IsSeriesCompleted_NoVolumes_NotEnoughChapters()
+    {
+        const string seriesName = "Test - Incomplete Chapter";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .WithMaxCount(5)
+                .WithTotalCount(8)
+                .Build())
+            .Build();
+
+        var chapters = new List<Chapter>
+        {
+            new ChapterBuilder("1").Build(),
+            new ChapterBuilder("2").Build(),
+            new ChapterBuilder("3").Build()
+        };
+        var externalMetadata = new ExternalSeriesDetailDto { Chapters = 10, Volumes = 0 };
+
+        var result = ExternalMetadataService.IsSeriesCompleted(series, chapters, externalMetadata, Parser.DefaultChapterNumber);
+
+        Assert.False(result);
+    }
 
 
     #endregion
@@ -893,7 +1182,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task AgeRating_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Age Rating";
         var series = new SeriesBuilder(seriesName)
@@ -901,28 +1191,28 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>()
         {
             {"Ecchi", AgeRating.Teen}, // Genre
             {"H", AgeRating.R18Plus}, // Tag
         };
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(AgeRating.Teen, postSeries.Metadata.AgeRating);
     }
@@ -930,7 +1220,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task AgeRating_ExistingHigher_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Age Rating";
         var series = new SeriesBuilder(seriesName)
@@ -939,28 +1230,28 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithAgeRating(AgeRating.Mature)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>()
         {
             {"Ecchi", AgeRating.Teen}, // Genre
             {"H", AgeRating.R18Plus}, // Tag
         };
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(AgeRating.Mature, postSeries.Metadata.AgeRating);
     }
@@ -968,7 +1259,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task AgeRating_ExistingLower_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Age Rating";
         var series = new SeriesBuilder(seriesName)
@@ -977,28 +1269,28 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithAgeRating(AgeRating.Everyone)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>()
         {
             {"Ecchi", AgeRating.Teen}, // Genre
             {"H", AgeRating.R18Plus}, // Tag
         };
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(AgeRating.Teen, postSeries.Metadata.AgeRating);
     }
@@ -1006,7 +1298,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task AgeRating_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Age Rating";
         var series = new SeriesBuilder(seriesName)
@@ -1015,28 +1308,28 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithAgeRating(AgeRating.Everyone, true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>()
         {
             {"Ecchi", AgeRating.Teen}, // Genre
             {"H", AgeRating.R18Plus}, // Tag
         };
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(AgeRating.Everyone, postSeries.Metadata.AgeRating);
     }
@@ -1044,7 +1337,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task AgeRating_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Age Rating";
         var series = new SeriesBuilder(seriesName)
@@ -1053,10 +1347,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 .WithAgeRating(AgeRating.Everyone, true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.Overrides = [MetadataSettingField.AgeRating];
         metadataSettings.AgeRatingMappings = new Dictionary<string, AgeRating>()
@@ -1064,20 +1358,35 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             {"Ecchi", AgeRating.Teen}, // Genre
             {"H", AgeRating.R18Plus}, // Tag
         };
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(AgeRating.Teen, postSeries.Metadata.AgeRating);
+    }
+
+    [Fact]
+    public void AgeRating_NormalizedMapping()
+    {
+        var tags = new List<string> { "tAg$'1", "tag2" };
+        var mappings = new Dictionary<string, AgeRating>()
+        {
+            ["tag1"] = AgeRating.Teen,
+        };
+
+        Assert.Equal(AgeRating.Teen, ExternalMetadataService.DetermineAgeRating(tags, mappings));
+
+        mappings.Add("tag2", AgeRating.AdultsOnly);
+        Assert.Equal(AgeRating.AdultsOnly, ExternalMetadataService.DetermineAgeRating(tags, mappings));
     }
 
     #endregion
@@ -1087,7 +1396,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Genres_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres";
         var series = new SeriesBuilder(seriesName)
@@ -1095,24 +1405,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal([], postSeries.Metadata.Genres);
     }
@@ -1120,7 +1430,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Genres_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres";
         var series = new SeriesBuilder(seriesName)
@@ -1128,24 +1439,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Ecchi"], postSeries.Metadata.Genres.Select(g => g.Title));
     }
@@ -1153,33 +1464,34 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Genres_Existing_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, genreLookup, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithGenre(_genreLookup["Action"])
+                .WithGenre(genreLookup["Action"])
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Ecchi"], postSeries.Metadata.Genres.Select(g => g.Title));
     }
@@ -1187,33 +1499,34 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Genres_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, genreLookup, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithGenre(_genreLookup["Action"], true)
+                .WithGenre(genreLookup["Action"], true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Action"], postSeries.Metadata.Genres.Select(g => g.Title));
     }
@@ -1221,34 +1534,35 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Genres_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, genreLookup, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithGenre(_genreLookup["Action"], true)
+                .WithGenre(genreLookup["Action"], true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.Overrides = [MetadataSettingField.Genres];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Ecchi"], postSeries.Metadata.Genres.Select(g => g.Title));
     }
@@ -1260,7 +1574,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Tags_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tags";
         var series = new SeriesBuilder(seriesName)
@@ -1268,24 +1583,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal([], postSeries.Metadata.Tags);
     }
@@ -1293,7 +1608,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Tags_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tags";
         var series = new SeriesBuilder(seriesName)
@@ -1301,24 +1617,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Boxing"], postSeries.Metadata.Tags.Select(t => t.Title));
     }
@@ -1326,33 +1642,34 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Tags_Existing_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, tagLookup, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tags";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithTag(_tagLookup["H"], true)
+                .WithTag(tagLookup["H"], true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["H"], postSeries.Metadata.Tags.Select(t => t.Title));
     }
@@ -1360,37 +1677,132 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Tags_Existing_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, tagLookup, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tags";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithTag(_tagLookup["H"], true)
+                .WithTag(tagLookup["H"], true)
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.Overrides = [MetadataSettingField.Tags];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Boxing"], postSeries.Metadata.Tags.Select(t => t.Title));
     }
+
+    #endregion
+
+    #region FieldMappings
+
+    [Fact]
+    public void GenerateGenreAndTagLists_Normalized_Mappings()
+    {
+        var settings = new MetadataSettingsDto
+        {
+            EnableExtendedMetadataProcessing = true,
+            Whitelist = [],
+            Blacklist = [],
+            FieldMappings = [
+                new MetadataFieldMappingDto
+                {
+                    SourceType = MetadataFieldType.Tag,
+                    SourceValue = "Girls love",
+                    DestinationType = MetadataFieldType.Genre,
+                    DestinationValue = "Yuri",
+                    ExcludeFromSource = false,
+                },
+                new MetadataFieldMappingDto
+                {
+                    SourceType = MetadataFieldType.Tag,
+                    SourceValue = "Girls love",
+                    DestinationType = MetadataFieldType.Genre,
+                    DestinationValue = "Romance",
+                    ExcludeFromSource = false,
+                },
+                new MetadataFieldMappingDto
+                {
+                    SourceType = MetadataFieldType.Genre,
+                    SourceValue = "WW2",
+                    DestinationType = MetadataFieldType.Genre,
+                    DestinationValue = "War",
+                    ExcludeFromSource = true,
+                },
+            ],
+        };
+
+        var tags = new List<string> { "Girl's Love", "Unrelated tag" };
+        var genres = new List<string> { "Ww2", "Unrelated genre" };
+
+        ExternalMetadataService.GenerateExternalGenreAndTagsList(genres, tags, settings,
+            out var finalTags, out var finalGenres);
+
+        Assert.Contains("Unrelated tag", finalTags);
+
+        Assert.Contains("Yuri", finalGenres);
+        Assert.Contains("Romance", finalGenres);
+        Assert.Contains("Unrelated genre", finalGenres);
+        Assert.DoesNotContain("Ww2", finalGenres);
+    }
+
+    [Fact]
+    public void GenerateGenreAndTagLists_RemoveIfAnyRemoves()
+    {
+        var settings = new MetadataSettingsDto
+        {
+            EnableExtendedMetadataProcessing = true,
+            Whitelist = [],
+            Blacklist = [],
+            FieldMappings = [
+                new MetadataFieldMappingDto
+                {
+                    SourceType = MetadataFieldType.Tag,
+                    SourceValue = "Girls love",
+                    DestinationType = MetadataFieldType.Genre,
+                    DestinationValue = "Yuri",
+                    ExcludeFromSource = false,
+                },
+                new MetadataFieldMappingDto
+                {
+                    SourceType = MetadataFieldType.Tag,
+                    SourceValue = "Girls love",
+                    DestinationType = MetadataFieldType.Genre,
+                    DestinationValue = "Romance",
+                    ExcludeFromSource = true,
+                },
+            ],
+        };
+
+        var tags = new List<string> { "Girl's Love"};
+        var genres = new List<string>();
+
+        ExternalMetadataService.GenerateExternalGenreAndTagsList(genres, tags, settings,
+            out _, out var finalGenres);
+
+        Assert.Contains("Yuri", finalGenres);
+        Assert.Contains("Romance", finalGenres);
+        Assert.DoesNotContain("Girls Love", finalGenres);
+    }
+
 
     #endregion
 
@@ -1399,7 +1811,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
@@ -1407,24 +1820,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal([], postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer));
     }
@@ -1432,7 +1845,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
@@ -1440,25 +1854,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["John Doe"], postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer).Select(p => p.Person.Name));
     }
@@ -1466,35 +1880,36 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Writer)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Writer)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
@@ -1505,37 +1920,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Writer)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Writer)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Writer];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe", "Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
@@ -1548,37 +1964,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_Locked_Override_ReverseNamingMatch_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Writer)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Writer)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = false;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Writer];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("Twowheeler", "Johnny", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
@@ -1589,37 +2006,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_Locked_Override_PersonRoleNotSet_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Writer)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Writer)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
@@ -1631,7 +2049,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Writer_OverrideReMatchDeletesOld_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Writer/Artists";
         var series = new SeriesBuilder(seriesName)
@@ -1639,40 +2058,40 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Writer];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe", "Story")]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
                 .Select(p => p.Person.Name)
                 .OrderBy(s => s));
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Staff = [CreateStaff("John", "Doe 2", "Story")]
         }, 1);
 
-        postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe 2"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer)
@@ -1682,12 +2101,140 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
     #endregion
 
+    #region People Alias
+
+    [Fact]
+    public async Task PeopleAliasing_AddAsAlias()
+    {
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
+
+        const string seriesName = "Test - People - Add as Alias";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .Build())
+            .Build();
+        context.Series.Attach(series);
+        context.Person.Add(new PersonBuilder("John Doe").Build());
+        await context.SaveChangesAsync();
+
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
+        metadataSettings.Enabled = true;
+        metadataSettings.EnablePeople = true;
+        metadataSettings.FirstLastPeopleNaming = true;
+        metadataSettings.Overrides = [MetadataSettingField.People];
+        metadataSettings.PersonRoles = [PersonRole.Writer];
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
+
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        {
+            Name = seriesName,
+            Staff = [CreateStaff("Doe", "John", "Story")]
+        }, 1);
+
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        Assert.NotNull(postSeries);
+
+        var allWriters = postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer).ToList();
+        Assert.Single(allWriters);
+
+        var johnDoe = allWriters[0].Person;
+
+        Assert.Contains("Doe John", johnDoe.Aliases.Select(pa => pa.Alias));
+    }
+
+    [Fact]
+    public async Task PeopleAliasing_AddOnAlias()
+    {
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
+
+        const string seriesName = "Test - People - Add as Alias";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .Build())
+            .Build();
+        context.Series.Attach(series);
+
+        context.Person.Add(new PersonBuilder("John Doe").WithAlias("Doe John").Build());
+
+        await context.SaveChangesAsync();
+
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
+        metadataSettings.Enabled = true;
+        metadataSettings.EnablePeople = true;
+        metadataSettings.FirstLastPeopleNaming = true;
+        metadataSettings.Overrides = [MetadataSettingField.People];
+        metadataSettings.PersonRoles = [PersonRole.Writer];
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
+
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        {
+            Name = seriesName,
+            Staff = [CreateStaff("Doe", "John", "Story")]
+        }, 1);
+
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        Assert.NotNull(postSeries);
+
+        var allWriters = postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer).ToList();
+        Assert.Single(allWriters);
+
+        var johnDoe = allWriters[0].Person;
+
+        Assert.Contains("Doe John", johnDoe.Aliases.Select(pa => pa.Alias));
+    }
+
+    [Fact]
+    public async Task PeopleAliasing_DontAddAsAlias_SameButNotSwitched()
+    {
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
+
+        const string seriesName = "Test - People - Add as Alias";
+        var series = new SeriesBuilder(seriesName)
+            .WithLibraryId(1)
+            .WithMetadata(new SeriesMetadataBuilder()
+                .Build())
+            .Build();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
+
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
+        metadataSettings.Enabled = true;
+        metadataSettings.EnablePeople = true;
+        metadataSettings.FirstLastPeopleNaming = true;
+        metadataSettings.Overrides = [MetadataSettingField.People];
+        metadataSettings.PersonRoles = [PersonRole.Writer];
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
+
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        {
+            Name = seriesName,
+            Staff = [CreateStaff("John", "Doe Doe", "Story"), CreateStaff("Doe", "John Doe", "Story")]
+        }, 1);
+
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        Assert.NotNull(postSeries);
+
+        var allWriters = postSeries.Metadata.People.Where(p => p.Role == PersonRole.Writer).ToList();
+        Assert.Equal(2, allWriters.Count);
+    }
+
+    #endregion
+
     #region People - Characters
 
     [Fact]
     public async Task People_Character_NoExisting_Off_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
@@ -1695,24 +2242,24 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = false;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal([], postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character));
     }
@@ -1720,7 +2267,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_NoExisting_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
@@ -1728,25 +2276,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["John Doe"], postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character).Select(p => p.Person.Name));
     }
@@ -1754,35 +2302,36 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_Locked_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Character)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Character)
                 .Build())
             .Build();
         series.Metadata.CharacterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
@@ -1793,37 +2342,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_Locked_Override_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Character)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Character)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Character];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe", "Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
@@ -1836,37 +2386,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_Locked_Override_ReverseNamingNoMatch_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Character)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Character)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = false;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Character];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("Twowheeler", "Johnny", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler", "Twowheeler Johnny"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
@@ -1877,37 +2428,38 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_Locked_Override_PersonRoleNotSet_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, personLookup) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithPerson(_personLookup["Johnny Twowheeler"], PersonRole.Character)
+                .WithPerson(personLookup["Johnny Twowheeler"], PersonRole.Character)
                 .Build())
             .Build();
         series.Metadata.WriterLocked = true;
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"Johnny Twowheeler"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
@@ -1919,7 +2471,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task People_Character_OverrideReMatchDeletesOld_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - People - Character";
         var series = new SeriesBuilder(seriesName)
@@ -1927,40 +2480,40 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnablePeople = true;
         metadataSettings.FirstLastPeopleNaming = true;
         metadataSettings.Overrides = [MetadataSettingField.People];
         metadataSettings.PersonRoles = [PersonRole.Character];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe", CharacterRole.Main)]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
                 .Select(p => p.Person.Name)
                 .OrderBy(s => s));
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Characters = [CreateCharacter("John", "Doe 2", CharacterRole.Main)]
         }, 1);
 
-        postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[]{"John Doe 2"}.OrderBy(s => s),
             postSeries.Metadata.People.Where(p => p.Role == PersonRole.Character)
@@ -1983,7 +2536,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_NonSequel()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Relationships Side Story";
         var series = new SeriesBuilder(seriesName)
@@ -1992,7 +2546,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         var series2 = new SeriesBuilder("Test - Relationships Side Story - Target")
             .WithLibraryId(1)
@@ -2004,16 +2558,16 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 AniListId = 10
             })
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Relations = [new SeriesRelationship()
@@ -2032,7 +2586,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var sourceSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var sourceSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sourceSeries);
         Assert.Single(sourceSeries.Relations);
         Assert.Equal(series2.Name, sourceSeries.Relations.First().TargetSeries.Name);
@@ -2041,7 +2595,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_NonSequel_LocalizedName()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Relationships Side Story";
         var series = new SeriesBuilder(seriesName)
@@ -2050,7 +2605,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         var series2 = new SeriesBuilder("Test - Relationships Side Story - Target")
             .WithLibraryId(1)
@@ -2059,16 +2614,16 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Relations = [new SeriesRelationship()
@@ -2087,7 +2642,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var sourceSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var sourceSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sourceSeries);
         Assert.Single(sourceSeries.Relations);
         Assert.Equal(series2.Name, sourceSeries.Relations.First().TargetSeries.Name);
@@ -2097,7 +2652,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_NonSequel_FormatDifference()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Relationships Side Story";
         var series = new SeriesBuilder(seriesName)
@@ -2106,7 +2662,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         var series2 = new SeriesBuilder("Test - Relationships Side Story - Target")
             .WithLibraryId(1)
@@ -2115,16 +2671,16 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Relations = [new SeriesRelationship()
@@ -2143,7 +2699,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var sourceSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var sourceSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sourceSeries);
         Assert.Empty(sourceSeries.Relations);
     }
@@ -2152,13 +2708,14 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_NonSequel_ExistingLink_DifferentType_BothExist()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         var existingRelationshipSeries = new SeriesBuilder("Existing")
             .WithLibraryId(1)
             .Build();
-        _context.Series.Attach(existingRelationshipSeries);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(existingRelationshipSeries);
+        await context.SaveChangesAsync();
 
         const string seriesName = "Test - Relationships Side Story";
         var series = new SeriesBuilder(seriesName)
@@ -2168,7 +2725,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         var series2 = new SeriesBuilder("Test - Relationships Side Story - Target")
             .WithLibraryId(1)
@@ -2180,17 +2737,17 @@ public class ExternalMetadataServiceTests : AbstractDbTest
                 AniListId = 10
             })
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Relations = [new SeriesRelationship()
@@ -2208,7 +2765,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 2);
 
         // Repull Series and validate what is overwritten
-       var sourceSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
+       var sourceSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sourceSeries);
         Assert.Equal(seriesName, sourceSeries.Name);
 
@@ -2222,7 +2779,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_Sequel_CreatesPrequel()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Relationships Source";
         var series = new SeriesBuilder(seriesName)
@@ -2231,7 +2789,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         var series2 = new SeriesBuilder("Test - Relationships Target")
             .WithLibraryId(1)
@@ -2239,16 +2797,16 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Relations = [new SeriesRelationship()
@@ -2266,12 +2824,12 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var sourceSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var sourceSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sourceSeries);
         Assert.Single(sourceSeries.Relations);
         Assert.Equal(series2.Name, sourceSeries.Relations.First().TargetSeries.Name);
 
-        var sequel = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var sequel = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(sequel);
         Assert.Equal(seriesName, sequel.Relations.First().TargetSeries.Name);
     }
@@ -2279,7 +2837,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Relationships_Prequel_CreatesSequel()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         // ID 1: Blue Lock - Episode Nagi
         var series = new SeriesBuilder("Blue Lock - Episode Nagi")
@@ -2288,7 +2847,7 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
+        context.Series.Attach(series);
 
         // ID 2: Blue Lock
         var series2 = new SeriesBuilder("Blue Lock")
@@ -2297,17 +2856,17 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series2);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series2);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableRelationships = true;
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
         // Apply to Blue Lock - Episode Nagi (ID 1), setting Blue Lock (ID 2) as its prequel
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = "Blue Lock - Episode Nagi", // The series we're updating metadata for
             Relations = [new SeriesRelationship()
@@ -2328,14 +2887,14 @@ public class ExternalMetadataServiceTests : AbstractDbTest
         }, 1); // Apply to series ID 1 (Nagi)
 
         // Verify Blue Lock - Episode Nagi has Blue Lock as prequel
-        var nagiSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var nagiSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(nagiSeries);
         Assert.Single(nagiSeries.Relations);
         Assert.Equal("Blue Lock", nagiSeries.Relations.First().TargetSeries.Name);
         Assert.Equal(RelationKind.Prequel, nagiSeries.Relations.First().RelationKind);
 
         // Verify Blue Lock has Blue Lock - Episode Nagi as sequel
-        var blueLockSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
+        var blueLockSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(2, SeriesIncludes.Metadata | SeriesIncludes.Related);
         Assert.NotNull(blueLockSeries);
         Assert.Single(blueLockSeries.Relations);
         Assert.Equal("Blue Lock - Episode Nagi", blueLockSeries.Relations.First().TargetSeries.Name);
@@ -2350,7 +2909,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Blacklist_Genres()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Blacklist Genres";
         var series = new SeriesBuilder(seriesName)
@@ -2358,26 +2918,26 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.Blacklist = ["Sports", "Action"];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Boxing", "Sports", "Action"],
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[] {"Boxing"}.OrderBy(s => s), postSeries.Metadata.Genres.Select(t => t.Title).OrderBy(s => s));
     }
@@ -2386,7 +2946,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Blacklist_Tags()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Blacklist Tags";
         var series = new SeriesBuilder(seriesName)
@@ -2394,26 +2955,26 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.Blacklist = ["Sports", "Action"];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}, new MetadataTagDto() {Name = "Sports"}, new MetadataTagDto() {Name = "Action"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[] {"Boxing"}.OrderBy(s => s), postSeries.Metadata.Tags.Select(t => t.Title).OrderBy(s => s));
     }
@@ -2431,7 +2992,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Whitelist_Tags()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Whitelist Tags";
         var series = new SeriesBuilder(seriesName)
@@ -2439,25 +3001,25 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.Whitelist = ["Sports", "Action"];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}, new MetadataTagDto() {Name = "Sports"}, new MetadataTagDto() {Name = "Action"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[] {"Sports", "Action"}.OrderBy(s => s), postSeries.Metadata.Tags.Select(t => t.Title).OrderBy(s => s));
     }
@@ -2465,7 +3027,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Whitelist_WithFieldMap_Tags()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Whitelist Tags";
         var series = new SeriesBuilder(seriesName)
@@ -2473,10 +3036,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.FieldMappings = [new MetadataFieldMapping()
@@ -2489,18 +3052,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
         metadataSettings.Whitelist = ["Sports", "Action"];
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Boxing"}, new MetadataTagDto() {Name = "Action"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(new[] {"Sports", "Action"}.OrderBy(s => s), postSeries.Metadata.Tags.Select(t => t.Title).OrderBy(s => s));
     }
@@ -2512,7 +3075,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task FieldMap_GenreToGenre_KeepSource_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres Field Mapping";
         var series = new SeriesBuilder(seriesName)
@@ -2520,10 +3084,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.Overrides = [MetadataSettingField.Genres];
@@ -2537,18 +3101,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(
             new[] { "Ecchi", "Fanservice" }.OrderBy(s => s),
@@ -2559,7 +3123,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task FieldMap_GenreToGenre_RemoveSource_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres Field Mapping";
         var series = new SeriesBuilder(seriesName)
@@ -2567,10 +3132,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.Overrides = [MetadataSettingField.Genres];
@@ -2584,18 +3149,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Fanservice"], postSeries.Metadata.Genres.Select(g => g.Title));
     }
@@ -2603,7 +3168,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task FieldMap_TagToTag_KeepSource_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tag Field Mapping";
         var series = new SeriesBuilder(seriesName)
@@ -2611,10 +3177,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.FieldMappings = [new MetadataFieldMapping()
@@ -2627,18 +3193,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Ecchi"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(
             new[] { "Ecchi", "Fanservice" }.OrderBy(s => s),
@@ -2649,7 +3215,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task Tags_Existing_FieldMap_RemoveSource_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Tag Field Mapping";
         var series = new SeriesBuilder(seriesName)
@@ -2657,10 +3224,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableTags = true;
         metadataSettings.Overrides = [MetadataSettingField.Genres];
@@ -2674,18 +3241,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Tags = [new MetadataTagDto() {Name = "Ecchi"}]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(["Fanservice"], postSeries.Metadata.Tags.Select(g => g.Title));
     }
@@ -2693,7 +3260,8 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task FieldMap_GenreToTag_KeepSource_Modification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, _, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres Field Mapping";
         var series = new SeriesBuilder(seriesName)
@@ -2701,10 +3269,10 @@ public class ExternalMetadataServiceTests : AbstractDbTest
             .WithMetadata(new SeriesMetadataBuilder()
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.EnableTags = true;
@@ -2719,18 +3287,18 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
             Genres = ["Ecchi"]
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(
             new[] {"Ecchi"}.OrderBy(s => s),
@@ -2747,19 +3315,20 @@ public class ExternalMetadataServiceTests : AbstractDbTest
     [Fact]
     public async Task FieldMap_GenreToGenre_RemoveSource_NoExternalGenre_NoModification()
     {
-        await ResetDb();
+        var (unitOfWork, context, mapper) = await CreateDatabase();
+        var (externalMetadataService, genreLookup, _, _) = await Setup(unitOfWork, context, mapper);
 
         const string seriesName = "Test - Genres Field Mapping";
         var series = new SeriesBuilder(seriesName)
             .WithLibraryId(1)
             .WithMetadata(new SeriesMetadataBuilder()
-                .WithGenre(_genreLookup["Action"])
+                .WithGenre(genreLookup["Action"])
                 .Build())
             .Build();
-        _context.Series.Attach(series);
-        await _context.SaveChangesAsync();
+        context.Series.Attach(series);
+        await context.SaveChangesAsync();
 
-        var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
+        var metadataSettings = await unitOfWork.SettingsRepository.GetMetadataSettings();
         metadataSettings.Enabled = true;
         metadataSettings.EnableGenres = true;
         metadataSettings.EnableTags = true;
@@ -2774,17 +3343,17 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
         }];
 
-        _context.MetadataSettings.Update(metadataSettings);
-        await _context.SaveChangesAsync();
+        context.MetadataSettings.Update(metadataSettings);
+        await context.SaveChangesAsync();
 
 
-        await _externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
+        await externalMetadataService.WriteExternalMetadataToSeries(new ExternalSeriesDetailDto()
         {
             Name = seriesName,
         }, 1);
 
         // Repull Series and validate what is overwritten
-        var postSeries = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
+        var postSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1, SeriesIncludes.Metadata);
         Assert.NotNull(postSeries);
         Assert.Equal(
             new[] {"Action"}.OrderBy(s => s),
@@ -2794,63 +3363,6 @@ public class ExternalMetadataServiceTests : AbstractDbTest
 
     #endregion
 
-
-
-    protected override async Task ResetDb()
-    {
-       _context.Series.RemoveRange(_context.Series);
-       _context.AppUser.RemoveRange(_context.AppUser);
-       _context.Genre.RemoveRange(_context.Genre);
-       _context.Tag.RemoveRange(_context.Tag);
-       _context.Person.RemoveRange(_context.Person);
-
-       var metadataSettings = await _unitOfWork.SettingsRepository.GetMetadataSettings();
-       metadataSettings.Enabled = false;
-       metadataSettings.EnableSummary = false;
-       metadataSettings.EnableCoverImage = false;
-       metadataSettings.EnableLocalizedName = false;
-       metadataSettings.EnableGenres = false;
-       metadataSettings.EnablePeople = false;
-       metadataSettings.EnableRelationships = false;
-       metadataSettings.EnableTags = false;
-       metadataSettings.EnablePublicationStatus = false;
-       metadataSettings.EnableStartDate = false;
-       _context.MetadataSettings.Update(metadataSettings);
-
-       await _context.SaveChangesAsync();
-
-       _context.AppUser.Add(new AppUserBuilder("Joe", "Joe")
-           .WithRole(PolicyConstants.AdminRole)
-           .WithLibrary(await _context.Library.FirstAsync(l => l.Id == 1))
-           .Build());
-
-       // Create a bunch of Genres for this test and store their string in _genreLookup
-       _genreLookup.Clear();
-       var g1 = new GenreBuilder("Action").Build();
-       var g2 = new GenreBuilder("Ecchi").Build();
-       _context.Genre.Add(g1);
-       _context.Genre.Add(g2);
-       _genreLookup.Add("Action", g1);
-       _genreLookup.Add("Ecchi", g2);
-
-       _tagLookup.Clear();
-       var t1 = new TagBuilder("H").Build();
-       var t2 = new TagBuilder("Boxing").Build();
-       _context.Tag.Add(t1);
-       _context.Tag.Add(t2);
-       _tagLookup.Add("H", t1);
-       _tagLookup.Add("Boxing", t2);
-
-       _personLookup.Clear();
-       var p1 = new PersonBuilder("Johnny Twowheeler").Build();
-       var p2 = new PersonBuilder("Boxing").Build();
-       _context.Person.Add(p1);
-       _context.Person.Add(p2);
-       _personLookup.Add("Johnny Twowheeler", p1);
-       _personLookup.Add("Batman Robin", p2);
-
-       await _context.SaveChangesAsync();
-    }
 
     private static SeriesStaffDto CreateStaff(string first, string last, string role)
     {

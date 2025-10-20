@@ -23,25 +23,27 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
+#nullable enable
 
 [Flags]
 public enum AppUserIncludes
 {
     None = 1,
-    Progress = 2,
-    Bookmarks = 4,
-    ReadingLists = 8,
-    Ratings = 16,
-    UserPreferences = 32,
-    WantToRead = 64,
-    ReadingListsWithItems = 128,
-    Devices = 256,
-    ScrobbleHolds = 512,
-    SmartFilters = 1024,
-    DashboardStreams = 2048,
-    SideNavStreams = 4096,
-    ExternalSources = 8192,
-    Collections = 16384 // 2^14
+    Progress = 1 << 1,
+    Bookmarks = 1 << 2,
+    ReadingLists = 1 << 3,
+    Ratings = 1 << 4,
+    UserPreferences = 1 << 5,
+    WantToRead = 1 << 6,
+    ReadingListsWithItems = 1 << 7,
+    Devices = 1 << 8,
+    ScrobbleHolds = 1 << 9,
+    SmartFilters = 1 << 10,
+    DashboardStreams = 1 << 11,
+    SideNavStreams = 1 << 12,
+    ExternalSources = 1 << 13,
+    Collections = 1 << 14,
+    ChapterRatings = 1 << 15,
 }
 
 public interface IUserRepository
@@ -56,20 +58,24 @@ public interface IUserRepository
     void Delete(AppUser? user);
     void Delete(AppUserBookmark bookmark);
     void Delete(IEnumerable<AppUserDashboardStream> streams);
+    void Delete(AppUserDashboardStream stream);
     void Delete(IEnumerable<AppUserSideNavStream> streams);
+    void Delete(AppUserSideNavStream stream);
     Task<IEnumerable<MemberDto>> GetEmailConfirmedMemberDtosAsync(bool emailConfirmed = true);
     Task<IEnumerable<AppUser>> GetAdminUsersAsync();
     Task<bool> IsUserAdminAsync(AppUser? user);
     Task<IList<string>> GetRoles(int userId);
     Task<AppUserRating?> GetUserRatingAsync(int seriesId, int userId);
+    Task<AppUserChapterRating?> GetUserChapterRatingAsync(int userId, int chapterId);
     Task<IList<UserReviewDto>> GetUserRatingDtosForSeriesAsync(int seriesId, int userId);
+    Task<IList<UserReviewDto>> GetUserRatingDtosForChapterAsync(int chapterId, int userId);
     Task<AppUserPreferences?> GetPreferencesAsync(string username);
     Task<IEnumerable<BookmarkDto>> GetBookmarkDtosForSeries(int userId, int seriesId);
     Task<IEnumerable<BookmarkDto>> GetBookmarkDtosForVolume(int userId, int volumeId);
     Task<IEnumerable<BookmarkDto>> GetBookmarkDtosForChapter(int userId, int chapterId);
     Task<IEnumerable<BookmarkDto>> GetAllBookmarkDtos(int userId, FilterV2Dto filter);
     Task<IEnumerable<AppUserBookmark>> GetAllBookmarksAsync();
-    Task<AppUserBookmark?> GetBookmarkForPage(int page, int chapterId, int userId);
+    Task<AppUserBookmark?> GetBookmarkForPage(int page, int chapterId, int imageOffset, int userId);
     Task<AppUserBookmark?> GetBookmarkAsync(int bookmarkId);
     Task<int> GetUserIdByApiKeyAsync(string apiKey);
     Task<AppUser?> GetUserByUsernameAsync(string username, AppUserIncludes includeFlags = AppUserIncludes.None);
@@ -78,6 +84,7 @@ public interface IUserRepository
     Task<IList<AppUserBookmark>> GetAllBookmarksByIds(IList<int> bookmarkIds);
     Task<AppUser?> GetUserByEmailAsync(string email, AppUserIncludes includes = AppUserIncludes.None);
     Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByThemeAsync(int themeId);
+    Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByFontAsync(string fontName);
     Task<bool> HasAccessToLibrary(int libraryId, int userId);
     Task<bool> HasAccessToSeries(int userId, int seriesId);
     Task<IEnumerable<AppUser>> GetAllUsersAsync(AppUserIncludes includeFlags = AppUserIncludes.None, bool track = true);
@@ -94,12 +101,26 @@ public interface IUserRepository
     Task<IList<AppUserDashboardStream>> GetDashboardStreamWithFilter(int filterId);
     Task<IList<SideNavStreamDto>> GetSideNavStreams(int userId, bool visibleOnly = false);
     Task<AppUserSideNavStream?> GetSideNavStream(int streamId);
+    Task<AppUserSideNavStream?> GetSideNavStreamWithUser(int streamId);
     Task<IList<AppUserSideNavStream>> GetSideNavStreamWithFilter(int filterId);
     Task<IList<AppUserSideNavStream>> GetSideNavStreamsByLibraryId(int libraryId);
     Task<IList<AppUserSideNavStream>> GetSideNavStreamWithExternalSource(int externalSourceId);
     Task<IList<AppUserSideNavStream>> GetDashboardStreamsByIds(IList<int> streamIds);
     Task<IEnumerable<UserTokenInfo>> GetUserTokenInfo();
     Task<AppUser?> GetUserByDeviceEmail(string deviceEmail);
+    Task<List<AnnotationDto>> GetAnnotations(int userId, int chapterId);
+    Task<List<AnnotationDto>> GetAnnotationsByPage(int userId, int chapterId, int pageNum);
+    /// <summary>
+    /// Try getting a user by the id provided by OIDC
+    /// </summary>
+    /// <param name="oidcId"></param>
+    /// <param name="includes"></param>
+    /// <returns></returns>
+    Task<AppUser?> GetByOidcId(string? oidcId, AppUserIncludes includes = AppUserIncludes.None);
+
+    Task<AnnotationDto?> GetAnnotationDtoById(int userId, int annotationId);
+    Task<List<AnnotationDto>> GetAnnotationDtosBySeries(int userId, int seriesId);
+    Task UpdateUserAsActive(int userId);
 }
 
 public class UserRepository : IUserRepository
@@ -166,9 +187,19 @@ public class UserRepository : IUserRepository
         _context.AppUserDashboardStream.RemoveRange(streams);
     }
 
+    public void Delete(AppUserDashboardStream stream)
+    {
+        _context.AppUserDashboardStream.Remove(stream);
+    }
+
     public void Delete(IEnumerable<AppUserSideNavStream> streams)
     {
         _context.AppUserSideNavStream.RemoveRange(streams);
+    }
+
+    public void Delete(AppUserSideNavStream stream)
+    {
+        _context.AppUserSideNavStream.Remove(stream);
     }
 
     /// <summary>
@@ -204,18 +235,18 @@ public class UserRepository : IUserRepository
         return await _context.AppUserBookmark.ToListAsync();
     }
 
-    public async Task<AppUserBookmark?> GetBookmarkForPage(int page, int chapterId, int userId)
+    public async Task<AppUserBookmark?> GetBookmarkForPage(int page, int chapterId, int imageOffset, int userId)
     {
         return await _context.AppUserBookmark
-            .Where(b => b.Page == page && b.ChapterId == chapterId && b.AppUserId == userId)
-            .SingleOrDefaultAsync();
+            .Where(b => b.Page == page && b.ChapterId == chapterId && b.AppUserId == userId && b.ImageOffset == imageOffset)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<AppUserBookmark?> GetBookmarkAsync(int bookmarkId)
     {
         return await _context.AppUserBookmark
             .Where(b => b.Id == bookmarkId)
-            .SingleOrDefaultAsync();
+            .FirstOrDefaultAsync();
     }
 
 
@@ -264,6 +295,14 @@ public class UserRepository : IUserRepository
             .ToListAsync();
     }
 
+    public async Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByFontAsync(string fontName)
+    {
+        return await _context.AppUserPreferences
+            .Where(p => p.BookReaderFontFamily == fontName)
+            .AsSplitQuery()
+            .ToListAsync();
+    }
+
     public async Task<bool> HasAccessToLibrary(int libraryId, int userId)
     {
         return await _context.Library
@@ -289,8 +328,8 @@ public class UserRepository : IUserRepository
 
     public async Task<IEnumerable<AppUser>> GetAllUsersAsync(AppUserIncludes includeFlags = AppUserIncludes.None, bool track = true)
     {
-        var query = _context.AppUser
-            .Includes(includeFlags);
+        var query = _context.AppUser.Includes(includeFlags);
+
         if (track)
         {
             return await query.ToListAsync();
@@ -395,6 +434,7 @@ public class UserRepository : IUserRepository
             .FirstOrDefaultAsync(d => d.Id == streamId);
     }
 
+
     public async Task<IList<AppUserDashboardStream>> GetDashboardStreamWithFilter(int filterId)
     {
         return await _context.AppUserDashboardStream
@@ -431,10 +471,10 @@ public class UserRepository : IUserRepository
             .Select(d => d.LibraryId)
             .ToList();
 
-        var libraryDtos = _context.Library
+        var libraryDtos = await _context.Library
             .Where(l => libraryIds.Contains(l.Id))
             .ProjectTo<LibraryDto>(_mapper.ConfigurationProvider)
-            .ToList();
+            .ToListAsync();
 
         foreach (var dto in sideNavStreams.Where(dto => dto.StreamType == SideNavStreamType.Library))
         {
@@ -458,10 +498,18 @@ public class UserRepository : IUserRepository
         return sideNavStreams;
     }
 
-    public async Task<AppUserSideNavStream> GetSideNavStream(int streamId)
+    public async Task<AppUserSideNavStream?> GetSideNavStream(int streamId)
     {
         return await _context.AppUserSideNavStream
             .Include(d => d.SmartFilter)
+            .FirstOrDefaultAsync(d => d.Id == streamId);
+    }
+
+    public async Task<AppUserSideNavStream?> GetSideNavStreamWithUser(int streamId)
+    {
+        return await _context.AppUserSideNavStream
+            .Include(d => d.SmartFilter)
+            .Include(d => d.AppUser)
             .FirstOrDefaultAsync(d => d.Id == streamId);
     }
 
@@ -524,11 +572,82 @@ public class UserRepository : IUserRepository
     /// </summary>
     /// <param name="deviceEmail"></param>
     /// <returns></returns>
-    public async Task<AppUser> GetUserByDeviceEmail(string deviceEmail)
+    public async Task<AppUser?> GetUserByDeviceEmail(string deviceEmail)
     {
         return await _context.AppUser
             .Where(u => u.Devices.Any(d => d.EmailAddress == deviceEmail))
             .FirstOrDefaultAsync();
+    }
+
+    /// <summary>
+    /// Returns a list of annotations ordered by page number.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="chapterId"></param>
+    /// <returns></returns>
+    public async Task<List<AnnotationDto>> GetAnnotations(int userId, int chapterId)
+    {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
+        return await _context.AppUserAnnotation
+            .Where(a => a.ChapterId == chapterId)
+            .RestrictBySocialPreferences(userId, userPreferences)
+            .OrderBy(a => a.PageNumber)
+            .ProjectTo<AnnotationDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<List<AnnotationDto>> GetAnnotationsByPage(int userId, int chapterId, int pageNum)
+    {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
+        return await _context.AppUserAnnotation
+            .Where(a => a.ChapterId == chapterId && a.PageNumber == pageNum)
+            .RestrictBySocialPreferences(userId, userPreferences)
+            .OrderBy(a => a.PageNumber)
+            .ProjectTo<AnnotationDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<AppUser?> GetByOidcId(string? oidcId, AppUserIncludes includes = AppUserIncludes.None)
+    {
+        if (string.IsNullOrEmpty(oidcId)) return null;
+
+        return await _context.AppUser
+            .Where(u => u.OidcId == oidcId)
+            .Includes(includes)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<AnnotationDto?> GetAnnotationDtoById(int userId, int annotationId)
+    {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
+        return await _context.AppUserAnnotation
+            .Where(a => a.Id == annotationId)
+            .RestrictBySocialPreferences(userId, userPreferences)
+            .ProjectTo<AnnotationDto>(_mapper.ConfigurationProvider)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<AnnotationDto>> GetAnnotationDtosBySeries(int userId, int seriesId)
+    {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
+        return await _context.AppUserAnnotation
+            .Where(a => a.SeriesId == seriesId)
+            .RestrictBySocialPreferences(userId, userPreferences)
+            .ProjectTo<AnnotationDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task UpdateUserAsActive(int userId)
+    {
+        await _context.Set<AppUser>()
+            .Where(u => u.Id == userId)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(u => u.LastActiveUtc, DateTime.UtcNow)
+                .SetProperty(u => u.LastActive, DateTime.Now));
     }
 
 
@@ -546,7 +665,17 @@ public class UserRepository : IUserRepository
     public async Task<IList<string>> GetRoles(int userId)
     {
         var user = await _context.Users.FirstOrDefaultAsync(u => u.Id == userId);
-        if (user == null || _userManager == null) return ArraySegment<string>.Empty; // userManager is null on Unit Tests only
+        if (user == null) return ArraySegment<string>.Empty;
+
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (_userManager == null)
+        {
+            // userManager is null on Unit Tests only
+            return await _context.UserRoles
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.Role.Name)
+                .ToListAsync();
+        }
 
         return await _userManager.GetRolesAsync(user);
     }
@@ -555,15 +684,39 @@ public class UserRepository : IUserRepository
     {
         return await _context.AppUserRating
             .Where(r => r.SeriesId == seriesId && r.AppUserId == userId)
-            .SingleOrDefaultAsync();
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<AppUserChapterRating?> GetUserChapterRatingAsync(int userId, int chapterId)
+    {
+        return await _context.AppUserChapterRating
+            .Where(r => r.AppUserId == userId && r.ChapterId == chapterId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<IList<UserReviewDto>> GetUserRatingDtosForSeriesAsync(int seriesId, int userId)
     {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
         return await _context.AppUserRating
             .Include(r => r.AppUser)
             .Where(r => r.SeriesId == seriesId)
-            .Where(r => r.AppUser.UserPreferences.ShareReviews || r.AppUserId == userId)
+            .RestrictBySocialPreferences(userId, userPreferences)
+            .OrderBy(r => r.AppUserId == userId)
+            .ThenBy(r => r.Rating)
+            .AsSplitQuery()
+            .ProjectTo<UserReviewDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+    }
+
+    public async Task<IList<UserReviewDto>> GetUserRatingDtosForChapterAsync(int chapterId, int userId)
+    {
+        var userPreferences = await _context.AppUserPreferences.ToListAsync();
+
+        return await _context.AppUserChapterRating
+            .Include(r => r.AppUser)
+            .Where(r => r.ChapterId == chapterId)
+            .RestrictBySocialPreferences(userId, userPreferences)
             .OrderBy(r => r.AppUserId == userId)
             .ThenBy(r => r.Rating)
             .AsSplitQuery()
@@ -702,7 +855,7 @@ public class UserRepository : IUserRepository
 
 
     /// <summary>
-    /// Fetches the UserId by API Key. This does not include any extra information
+    /// Fetches the AppUserId by API Key. This does not include any extra information
     /// </summary>
     /// <param name="apiKey"></param>
     /// <returns></returns>
@@ -734,6 +887,7 @@ public class UserRepository : IUserRepository
                 LastActiveUtc = u.LastActiveUtc,
                 Roles = u.UserRoles.Select(r => r.Role.Name).ToList(),
                 IsPending = !u.EmailConfirmed,
+                IdentityProvider = u.IdentityProvider,
                 AgeRestriction = new AgeRestrictionDto()
                 {
                     AgeRating = u.AgeRestriction,
@@ -741,11 +895,12 @@ public class UserRepository : IUserRepository
                 },
                 Libraries =  u.Libraries.Select(l => new LibraryDto
                 {
+                    Id = l.Id,
                     Name = l.Name,
                     Type = l.Type,
                     LastScanned = l.LastScanned,
                     Folders = l.Folders.Select(x => x.Path).ToList()
-                }).ToList()
+                }).ToList(),
             })
             .AsSplitQuery()
             .AsNoTracking()

@@ -90,7 +90,7 @@
     "user-no-access-library-from-series": "L'utente non ha accesso alla libreria a cui appartiene questa serie",
     "volume-num": "Volume {0}",
     "book-num": "Libro {0}",
-    "issue-num": "Problema {0}{1}",
+    "issue-num": "Numero {0}{1}",
     "chapter-num": "Capitolo {0}",
     "epub-malformed": "Il file è corrotto! Non posso leggere.",
     "collection-updated": "Collezione aggiornata con successo",
@@ -203,5 +203,6 @@
     "generic-cover-volume-save": "Impossibile salvare l'immagine di copertina nel Volume",
     "generic-cover-person-save": "Impossibile salvare l'immagine di copertina nella Persona",
     "error-import-stack": "Si è verificato un errore durante l'importazione dello stack MAL",
-    "kavitaplus-restricted": "Riservato a Kavita+"
+    "kavitaplus-restricted": "Riservato a Kavita+",
+    "password-authentication-disabled": "Autenticazione tramite password è disabilitata, utilizzare OpenID Connect"
 }

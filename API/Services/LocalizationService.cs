@@ -4,20 +4,14 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using API.Data;
+using API.DTOs;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Hosting;
 
 namespace API.Services;
 #nullable enable
 
-public class KavitaLocale
-{
-    public string FileName { get; set; } // Key
-    public string RenderName { get; set; }
-    public float TranslationCompletion { get; set; }
-    public bool IsRtL { get; set; }
-    public string Hash { get; set; } // ETAG hash so I can run my own localization busting implementation
-}
+
 
 
 public interface ILocalizationService
@@ -29,6 +23,8 @@ public interface ILocalizationService
 
 public class LocalizationService : ILocalizationService
 {
+    private const string LocaleCacheKey = "locales";
+
     private readonly IDirectoryService _directoryService;
     private readonly IMemoryCache _cache;
     private readonly IUnitOfWork _unitOfWork;
@@ -39,6 +35,7 @@ public class LocalizationService : ILocalizationService
     private readonly string _localizationDirectoryUi;
 
     private readonly MemoryCacheEntryOptions _cacheOptions;
+    private readonly MemoryCacheEntryOptions _localsCacheOptions;
 
 
     public LocalizationService(IDirectoryService directoryService,
@@ -68,6 +65,10 @@ public class LocalizationService : ILocalizationService
         _cacheOptions = new MemoryCacheEntryOptions()
             .SetSize(1)
             .SetAbsoluteExpiration(TimeSpan.FromMinutes(15));
+
+        _localsCacheOptions = new MemoryCacheEntryOptions()
+            .SetSize(1)
+            .SetAbsoluteExpiration(TimeSpan.FromHours(24));
     }
 
     /// <summary>
@@ -145,6 +146,11 @@ public class LocalizationService : ILocalizationService
     /// <returns></returns>
     public IEnumerable<KavitaLocale> GetLocales()
     {
+        if (_cache.TryGetValue(LocaleCacheKey, out List<KavitaLocale>? cachedLocales) && cachedLocales != null)
+        {
+            return cachedLocales;
+        }
+
         var uiLanguages = _directoryService
         .GetFilesWithExtension(_directoryService.FileSystem.Path.GetFullPath(_localizationDirectoryUi), @"\.json");
         var backendLanguages = _directoryService
@@ -227,7 +233,7 @@ public class LocalizationService : ILocalizationService
                     RenderName = GetDisplayName(fileName),
                     TranslationCompletion = 0, // Will be calculated later
                     IsRtL = IsRightToLeft(fileName),
-                    Hash = hash
+                    Hash = hash,
                 };
             }
             else
@@ -252,7 +258,18 @@ public class LocalizationService : ILocalizationService
             }
         }
 
-        return locales.Values;
+        var validFileNames = uiLanguages
+            .Select(file => _directoryService.FileSystem.Path.GetFileNameWithoutExtension(file))
+            .Intersect(backendLanguages
+                .Select(file => _directoryService.FileSystem.Path.GetFileNameWithoutExtension(file)))
+            .ToList();
+
+        var kavitaLocales = locales.Values
+            .Where(l => validFileNames.Contains(l.FileName))
+            .ToList();
+        _cache.Set(LocaleCacheKey, kavitaLocales, _localsCacheOptions);
+
+        return kavitaLocales;
     }
 
     // Helper methods that would need to be implemented
@@ -277,7 +294,7 @@ public class LocalizationService : ILocalizationService
         // This could use a lookup table or follow a naming convention
         try
         {
-            var cultureInfo = new System.Globalization.CultureInfo(fileName);
+            var cultureInfo = new System.Globalization.CultureInfo(fileName.Replace('_', '-'));
             return cultureInfo.NativeName;
         }
         catch

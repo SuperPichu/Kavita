@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from 'src/environments/environment';
 import {ServerInfoSlim} from '../admin/_models/server-info';
 import { UpdateVersionEvent } from '../_models/events/update-version-event';
@@ -12,10 +12,10 @@ import {map} from "rxjs/operators";
   providedIn: 'root'
 })
 export class ServerService {
+  private http = inject(HttpClient);
+
 
   baseUrl = environment.apiUrl;
-
-  constructor(private http: HttpClient) { }
 
   getVersion(apiKey: string) {
     return this.http.get<string>(this.baseUrl + 'plugin/version?apiKey=' + apiKey, TextResonse);
@@ -41,10 +41,6 @@ export class ServerService {
     return this.http.post(this.baseUrl + 'server/backup-db', {});
   }
 
-  analyzeFiles() {
-    return this.http.post(this.baseUrl + 'server/analyze-files', {});
-  }
-
   syncThemes() {
     return this.http.post(this.baseUrl + 'server/sync-themes', {});
   }
@@ -53,13 +49,9 @@ export class ServerService {
     return this.http.get<UpdateVersionEvent | null>(this.baseUrl + 'server/check-update');
   }
 
-  checkHowOutOfDate() {
-    return this.http.get<string>(this.baseUrl + 'server/check-out-of-date', TextResonse)
+  checkHowOutOfDate(stableOnly: boolean = true) {
+    return this.http.get<string>(this.baseUrl + `server/check-out-of-date?stableOnly=${stableOnly}`, TextResonse)
       .pipe(map(r => parseInt(r, 10)));
-  }
-
-  checkForUpdates() {
-    return this.http.get<UpdateVersionEvent>(this.baseUrl + 'server/check-for-updates', {});
   }
 
   getChangelog(count: number = 0) {

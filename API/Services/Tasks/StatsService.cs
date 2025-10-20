@@ -178,7 +178,6 @@ public class StatsService : IStatsService
             var sw = Stopwatch.StartNew();
             var response = await (Configuration.StatsApiUrl + "/api/health/")
                 .WithBasicHeaders(ApiKey)
-                .WithTimeout(TimeSpan.FromSeconds(30))
                 .GetAsync();
 
             if (response.StatusCode == StatusCodes.Status200OK)
@@ -197,7 +196,7 @@ public class StatsService : IStatsService
 
     private async Task<int> MaxSeriesInAnyLibrary()
     {
-        // If first time flow, just return 0
+        // If first time flow, return 0
         if (!await _context.Series.AnyAsync()) return 0;
         return await _context.Series
             .Select(s => _context.Library.Where(l => l.Id == s.LibraryId).SelectMany(l => l.Series!).Count())
@@ -249,7 +248,8 @@ public class StatsService : IStatsService
             DotnetVersion = Environment.Version.ToString(),
             OpdsEnabled = serverSettings.EnableOpds,
             EncodeMediaAs = serverSettings.EncodeMediaAs,
-            MatchedMetadataEnabled = mediaSettings.Enabled
+            MatchedMetadataEnabled = mediaSettings.Enabled,
+            OidcEnabled = !string.IsNullOrEmpty(serverSettings.OidcConfig.Authority),
         };
 
         dto.OsLocale = CultureInfo.CurrentCulture.EnglishName;
@@ -309,6 +309,7 @@ public class StatsService : IStatsService
             libDto.UsingFolderWatching = library.FolderWatching;
             libDto.CreateCollectionsFromMetadata = library.ManageCollections;
             libDto.CreateReadingListsFromMetadata = library.ManageReadingLists;
+            libDto.EnabledMetadata = library.EnableMetadata;
             libDto.LibraryType = library.Type;
 
             dto.Libraries.Add(libDto);
@@ -354,7 +355,9 @@ public class StatsService : IStatsService
             userDto.DevicePlatforms = user.Devices.Select(d => d.Platform).ToList();
             userDto.SeriesBookmarksCreatedCount = user.Bookmarks.Count;
             userDto.SmartFilterCreatedCount = user.SmartFilters.Count;
+            userDto.IsSharingReviews = user.UserPreferences.SocialPreferences.ShareReviews;
             userDto.WantToReadSeriesCount = user.WantToRead.Count;
+            userDto.IdentityProvider = user.IdentityProvider;
 
             if (allLibraries.Count > 0 && userLibraryAccess.TryGetValue(user.Id, out var accessibleLibraries))
             {

@@ -13,40 +13,37 @@ import {UserReview} from "./user-review";
 import {NgbModal} from "@ng-bootstrap/ng-bootstrap";
 import {ReviewCardModalComponent} from "../review-card-modal/review-card-modal.component";
 import {AccountService} from "../../_services/account.service";
-import {
-  ReviewSeriesModalCloseEvent,
-  ReviewSeriesModalComponent
-} from "../review-series-modal/review-series-modal.component";
+import {ReviewModalCloseEvent, ReviewModalComponent} from "../review-modal/review-modal.component";
 import {ReadMoreComponent} from "../../shared/read-more/read-more.component";
 import {DefaultValuePipe} from "../../_pipes/default-value.pipe";
-import {ImageComponent} from "../../shared/image/image.component";
 import {ProviderImagePipe} from "../../_pipes/provider-image.pipe";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {ScrobbleProvider} from "../../_services/scrobbling.service";
+import {RatingAuthority} from "../../_models/rating";
 
 @Component({
   selector: 'app-review-card',
-  standalone: true,
-  imports: [ReadMoreComponent, DefaultValuePipe, ImageComponent, NgOptimizedImage, ProviderImagePipe, TranslocoDirective],
+  imports: [ReadMoreComponent, DefaultValuePipe, NgOptimizedImage, ProviderImagePipe, TranslocoDirective],
   templateUrl: './review-card.component.html',
   styleUrls: ['./review-card.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewCardComponent implements OnInit {
+  private readonly modalService = inject(NgbModal);
+  private readonly cdRef = inject(ChangeDetectorRef);
+
   private readonly accountService = inject(AccountService);
   protected readonly ScrobbleProvider = ScrobbleProvider;
 
   @Input({required: true}) review!: UserReview;
-  @Output() refresh = new EventEmitter<ReviewSeriesModalCloseEvent>();
+  @Output() refresh = new EventEmitter<ReviewModalCloseEvent>();
 
   isMyReview: boolean = false;
-
-  constructor(private readonly modalService: NgbModal, private readonly cdRef: ChangeDetectorRef) {}
 
   ngOnInit() {
     this.accountService.currentUser$.subscribe(u => {
       if (u) {
-        this.isMyReview = this.review.username === u.username;
+        this.isMyReview = this.review.username === u.username && !this.review.isExternal;
         this.cdRef.markForCheck();
       }
     });
@@ -55,16 +52,19 @@ export class ReviewCardComponent implements OnInit {
   showModal() {
     let component;
     if (this.isMyReview) {
-      component = ReviewSeriesModalComponent;
+      component = ReviewModalComponent;
     } else {
       component = ReviewCardModalComponent;
     }
     const ref = this.modalService.open(component, {size: 'lg', fullscreen: 'md'});
+
     ref.componentInstance.review = this.review;
-    ref.closed.subscribe((res: ReviewSeriesModalCloseEvent | undefined) => {
+    ref.closed.subscribe((res: ReviewModalCloseEvent | undefined) => {
       if (res) {
         this.refresh.emit(res);
       }
     })
   }
+
+  protected readonly RatingAuthority = RatingAuthority;
 }

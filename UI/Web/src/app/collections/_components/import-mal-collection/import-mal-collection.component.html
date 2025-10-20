@@ -1,9 +1,5 @@
-<ng-container *transloco="let t; read: 'import-mal-collection-modal'">
+<ng-container *transloco="let t; prefix: 'import-mal-collection-modal'">
   <p>{{t('description')}}</p>
-
-  @if (stacks.length === 0) {
-    <p>{{t('nothing-found')}}</p>
-  }
 
   <ul>
     @for(stack of stacks; track stack.url) {
@@ -20,7 +16,9 @@
       </li>
     } @empty {
       @if (isLoading) {
-        <app-loading [loading]="isLoading"></app-loading>
+        <app-loading [loading]="isLoading" />
+      } @else {
+        <p>{{t('nothing-found')}}</p>
       }
     }
   </ul>

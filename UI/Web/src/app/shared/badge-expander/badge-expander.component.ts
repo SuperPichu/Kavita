@@ -1,11 +1,9 @@
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
+  Component, computed,
   ContentChild, EventEmitter,
-  inject,
-  Input, OnChanges,
-  OnInit, Output, SimpleChanges,
+  input,
+  OnInit, Output, signal,
   TemplateRef
 } from '@angular/core';
 import {NgTemplateOutlet} from "@angular/common";
@@ -13,52 +11,55 @@ import {TranslocoDirective} from "@jsverse/transloco";
 import {DefaultValuePipe} from "../../_pipes/default-value.pipe";
 
 @Component({
-  selector: 'app-badge-expander',
-  standalone: true,
-  imports: [TranslocoDirective, NgTemplateOutlet, DefaultValuePipe],
-  templateUrl: './badge-expander.component.html',
-  styleUrls: ['./badge-expander.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-badge-expander',
+    imports: [TranslocoDirective, NgTemplateOutlet, DefaultValuePipe],
+    templateUrl: './badge-expander.component.html',
+    styleUrls: ['./badge-expander.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class BadgeExpanderComponent implements OnInit, OnChanges {
+export class BadgeExpanderComponent implements OnInit {
 
-  private readonly cdRef = inject(ChangeDetectorRef);
+  items = input.required<any[]>();
+  itemsTillExpander = input(4);
+  allowToggle = input(true);
+  includeComma = input(true);
+  /**
+   * If the list should be expanded by default. Defaults to false.
+   */
+  defaultExpanded = input(false);
 
-  @Input() items: Array<any> = [];
-  @Input() itemsTillExpander: number = 4;
-  @Input() allowToggle: boolean = true;
-  @Input() includeComma: boolean = true;
   /**
    * Invoked when the "and more" is clicked
    */
   @Output() toggle = new EventEmitter<void>();
   @ContentChild('badgeExpanderItem') itemTemplate!: TemplateRef<any>;
 
+  isCollapsed = signal<boolean | undefined>(undefined);
+  visibleItems = computed(() => {
+    const allItems = this.items();
+    const isCollapsed = this.isCollapsed();
+    const cutOff = this.itemsTillExpander();
 
-  visibleItems: Array<any> = [];
-  isCollapsed: boolean = false;
+    if (!isCollapsed) return allItems;
 
-  get itemsLeft() {
-    return Math.max(this.items.length - this.itemsTillExpander, 0);
-  }
+    return allItems.slice(0, cutOff);
+  });
+  itemsLeft = computed(() => {
+    const allItems = this.items();
+    const visibleItems = this.visibleItems();
+
+    return allItems.length - visibleItems.length;
+  });
 
   ngOnInit(): void {
-    this.visibleItems = this.items.slice(0, this.itemsTillExpander);
-    this.cdRef.markForCheck();
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    this.visibleItems = this.items.slice(0, this.itemsTillExpander);
-    this.cdRef.markForCheck();
+    this.isCollapsed.set(!this.defaultExpanded());
   }
 
   toggleVisible() {
     this.toggle.emit();
-    if (!this.allowToggle) return;
+    if (!this.allowToggle()) return;
 
-    this.isCollapsed = !this.isCollapsed;
-    this.visibleItems = this.items;
-    this.cdRef.markForCheck();
+    this.isCollapsed.update(x => !x);
   }
 
 }

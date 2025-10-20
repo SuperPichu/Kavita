@@ -13,7 +13,10 @@ using API.DTOs.CollectionTags;
 using API.DTOs.Dashboard;
 using API.DTOs.Filtering;
 using API.DTOs.Filtering.v2;
+using API.DTOs.KavitaPlus.Metadata;
 using API.DTOs.Metadata;
+using API.DTOs.Person;
+using API.DTOs.Reader;
 using API.DTOs.ReadingLists;
 using API.DTOs.Recommendation;
 using API.DTOs.Scrobbling;
@@ -39,6 +42,7 @@ using Microsoft.EntityFrameworkCore;
 
 
 namespace API.Data.Repositories;
+#nullable enable
 
 [Flags]
 public enum SeriesIncludes
@@ -56,6 +60,8 @@ public enum SeriesIncludes
     ExternalRatings = 128,
     ExternalRecommendations = 256,
     ExternalMetadata = 512,
+
+    ExternalData = ExternalMetadata | ExternalReviews | ExternalRatings | ExternalRecommendations,
 }
 
 /// <summary>
@@ -77,6 +83,7 @@ public interface ISeriesRepository
     void Attach(Series series);
     void Attach(SeriesRelation relation);
     void Update(Series series);
+    void Update(SeriesMetadata seriesMetadata);
     void Remove(Series series);
     void Remove(IEnumerable<Series> series);
     void Detach(Series series);
@@ -128,7 +135,7 @@ public interface ISeriesRepository
     Task<Series?> GetFullSeriesForSeriesIdAsync(int seriesId);
     Task<Chunk> GetChunkInfo(int libraryId = 0);
     Task<IList<SeriesMetadata>> GetSeriesMetadataForIdsAsync(IEnumerable<int> seriesIds);
-    Task<IEnumerable<GroupedSeriesDto>> GetRecentlyUpdatedSeries(int userId, int pageSize = 30);
+    Task<IEnumerable<GroupedSeriesDto>> GetRecentlyUpdatedSeries(int userId, UserParams? userParams);
     Task<RelatedSeriesDto> GetRelatedSeries(int userId, int seriesId);
     Task<IEnumerable<SeriesDto>> GetSeriesForRelationKind(int userId, int seriesId, RelationKind kind);
     Task<PagedList<SeriesDto>> GetQuickReads(int userId, int libraryId, UserParams userParams);
@@ -212,6 +219,11 @@ public class SeriesRepository : ISeriesRepository
     public void Update(Series series)
     {
         _context.Entry(series).State = EntityState.Modified;
+    }
+
+    public void Update(SeriesMetadata seriesMetadata)
+    {
+        _context.Entry(seriesMetadata).State = EntityState.Modified;
     }
 
     public void Remove(Series series)
@@ -391,6 +403,14 @@ public class SeriesRepository : ISeriesRepository
             .ProjectTo<LibraryDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
+        result.Annotations = await _context.AppUserAnnotation
+            .Where(a => a.AppUserId == userId &&
+                        (EF.Functions.Like(a.Comment,  $"%{searchQueryNormalized}%") || EF.Functions.Like(a.Context, $"%{searchQueryNormalized}%")))
+            .Take(maxRecords)
+            .OrderBy(l => l.CreatedUtc)
+            .ProjectTo<AnnotationDto>(_mapper.ConfigurationProvider)
+            .ToListAsync();
+
         var justYear = _yearRegex.Match(searchQuery).Value;
         var hasYearInQuery = !string.IsNullOrEmpty(justYear);
         var yearComparison = hasYearInQuery ? int.Parse(justYear) : 0;
@@ -406,7 +426,8 @@ public class SeriesRepository : ISeriesRepository
             .Include(s => s.Library)
             .AsNoTracking()
             .AsSplitQuery()
-            .OrderBy(s => s.SortName!.ToLower())
+            .OrderBy(s => s.SortName!.Length)
+            .ThenBy(s => s.SortName!.ToLower())
             .Take(maxRecords)
             .ProjectTo<SearchResultDto>(_mapper.ConfigurationProvider)
             .AsEnumerable();
@@ -424,7 +445,8 @@ public class SeriesRepository : ISeriesRepository
                                EF.Functions.Like(joined.Series.OriginalName, $"%{searchQuery}%")) ||
                               (joined.Series.LocalizedName != null &&
                                EF.Functions.Like(joined.Series.LocalizedName, $"%{searchQuery}%"))))
-            .OrderBy(joined => joined.Series.Name)
+            .OrderBy(joined => joined.Series.NormalizedName.Length)
+            .ThenBy(joined => joined.Series.NormalizedName)
             .Take(maxRecords)
             .Select(joined => new BookmarkSearchResultDto()
             {
@@ -451,11 +473,19 @@ public class SeriesRepository : ISeriesRepository
             .ProjectTo<AppUserCollectionDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
-        result.Persons = await _context.SeriesMetadata
+        // I can't work out how to map people in DB layer
+        var personIds = await _context.SeriesMetadata
             .SearchPeople(searchQuery, seriesIds)
-            .Take(maxRecords)
-            .OrderBy(t => t.NormalizedName)
+            .Select(p => p.Id)
             .Distinct()
+            .OrderBy(id => id)
+            .Take(maxRecords)
+            .ToListAsync();
+
+        result.Persons = await _context.Person
+            .Where(p => personIds.Contains(p.Id))
+            .OrderBy(p => p.NormalizedName.Length)
+            .ThenBy(p => p.NormalizedName)
             .ProjectTo<PersonDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
@@ -471,8 +501,8 @@ public class SeriesRepository : ISeriesRepository
             .ProjectTo<TagDto>(_mapper.ConfigurationProvider)
             .ToListAsync();
 
-        result.Files = new List<MangaFileDto>();
-        result.Chapters = new List<ChapterDto>();
+        result.Files = [];
+        result.Chapters = (List<ChapterDto>) [];
 
 
         if (includeChapterAndFiles)
@@ -505,7 +535,8 @@ public class SeriesRepository : ISeriesRepository
                 )
                 .Where(c => c.Files.All(f => fileIds.Contains(f.Id)))
                 .AsSplitQuery()
-                .OrderBy(c => c.TitleName)
+                .OrderBy(c => c.TitleName.Length)
+                .ThenBy(c => c.TitleName)
                 .Take(maxRecords)
                 .ProjectTo<ChapterDto>(_mapper.ConfigurationProvider)
                 .ToListAsync();
@@ -562,7 +593,13 @@ public class SeriesRepository : ISeriesRepository
 
         if (!fullSeries) return await query.ToListAsync();
 
-        return await query.Include(s => s.Volumes)
+        return await query
+            .Include(s => s.Volumes)
+                .ThenInclude(v => v.Chapters)
+                .ThenInclude(c => c.ExternalRatings)
+            .Include(s => s.Volumes)
+                .ThenInclude(v => v.Chapters)
+                .ThenInclude(c => c.ExternalReviews)
             .Include(s => s.Relations)
             .Include(s => s.Metadata)
 
@@ -715,19 +752,27 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<PlusSeriesRequestDto?> GetPlusSeriesDto(int seriesId)
     {
-        return await _context.Series
+
+        // I need to check Weblinks when AniListId/MalId is already set in ExternalSeries
+        // Updating stale data should prioritize ExernalSeriesMetada before Weblinks, to priorize prior matches
+        var result = await _context.Series
             .Where(s => s.Id == seriesId)
+            .Include(s => s.ExternalSeriesMetadata)
             .Select(series => new PlusSeriesRequestDto()
             {
                 MediaFormat = series.Library.Type.ConvertToPlusMediaFormat(series.Format),
                 SeriesName = series.Name,
                 AltSeriesName = series.LocalizedName,
-                AniListId = ScrobblingService.ExtractId<int?>(series.Metadata.WebLinks,
-                    ScrobblingService.AniListWeblinkWebsite),
-                MalId = ScrobblingService.ExtractId<long?>(series.Metadata.WebLinks,
-                    ScrobblingService.MalWeblinkWebsite),
-                GoogleBooksId = ScrobblingService.ExtractId<string?>(series.Metadata.WebLinks,
-                    ScrobblingService.GoogleBooksWeblinkWebsite),
+                AniListId = series.ExternalSeriesMetadata.AniListId != 0
+                    ? series.ExternalSeriesMetadata.AniListId
+                    : ScrobblingService.ExtractId<int?>(series.Metadata.WebLinks, ScrobblingService.AniListWeblinkWebsite),
+                MalId = series.ExternalSeriesMetadata.MalId != 0
+                    ? series.ExternalSeriesMetadata.MalId
+                    : ScrobblingService.ExtractId<long?>(series.Metadata.WebLinks, ScrobblingService.MalWeblinkWebsite),
+                CbrId = series.ExternalSeriesMetadata.CbrId,
+                GoogleBooksId = !string.IsNullOrEmpty(series.ExternalSeriesMetadata.GoogleBooksId)
+                    ? series.ExternalSeriesMetadata.GoogleBooksId
+                    : ScrobblingService.ExtractId<string?>(series.Metadata.WebLinks, ScrobblingService.GoogleBooksWeblinkWebsite),
                 MangaDexId = ScrobblingService.ExtractId<string?>(series.Metadata.WebLinks,
                     ScrobblingService.MangaDexWeblinkWebsite),
                 VolumeCount = series.Volumes.Count,
@@ -735,6 +780,8 @@ public class SeriesRepository : ISeriesRepository
                 Year = series.Metadata.ReleaseYear
             })
             .FirstOrDefaultAsync();
+
+        return result;
     }
 
     public async Task<int> GetCountAsync()
@@ -919,7 +966,7 @@ public class SeriesRepository : ISeriesRepository
         var cutoffProgressPoint = DateTime.Now - TimeSpan.FromDays(serverSettings.OnDeckProgressDays);
         var cutoffLastAddedPoint = DateTime.Now - TimeSpan.FromDays(serverSettings.OnDeckUpdateDays);
 
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Dashboard)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Dashboard)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
 
@@ -1069,8 +1116,6 @@ public class SeriesRepository : ISeriesRepository
         {
             return query.Where(s => false);
         }
-
-
 
         // First setup any FilterField.Libraries in the statements, as these don't have any traditional query statements applied here
         query = ApplyLibraryFilter(filter, query);
@@ -1272,7 +1317,8 @@ public class SeriesRepository : ISeriesRepository
             FilterField.ReadingDate => query.HasReadingDate(true, statement.Comparison, (DateTime) value, userId),
             FilterField.ReadLast => query.HasReadLast(true, statement.Comparison, (int) value, userId),
             FilterField.AverageRating => query.HasAverageRating(true, statement.Comparison, (float) value),
-            _ => throw new ArgumentOutOfRangeException()
+            FilterField.FileSize => query.HasFileSize(true, statement.Comparison, (long) value),
+            _ => throw new ArgumentOutOfRangeException(nameof(statement.Field), $"Unexpected value for field: {statement.Field}"),
         };
     }
 
@@ -1452,12 +1498,12 @@ public class SeriesRepository : ISeriesRepository
     /// <remarks>This provides 2 levels of pagination. Fetching the individual chapters only looks at 3000. Then when performing grouping
     /// in memory, we stop after 30 series. </remarks>
     /// <param name="userId">Used to ensure user has access to libraries</param>
-    /// <param name="pageSize">How many entities to return</param>
+    /// <param name="userParams">Page size and offset</param>
     /// <returns></returns>
-    public async Task<IEnumerable<GroupedSeriesDto>> GetRecentlyUpdatedSeries(int userId, int pageSize = 30)
+    public async Task<IEnumerable<GroupedSeriesDto>> GetRecentlyUpdatedSeries(int userId, UserParams? userParams)
     {
-        var seriesMap = new Dictionary<string, GroupedSeriesDto>();
-        var index = 0;
+        userParams ??= UserParams.Default;
+
         var userRating = await _context.AppUser.GetUserAgeRestriction(userId);
 
         var items = (await GetRecentlyAddedChaptersQuery(userId));
@@ -1466,20 +1512,30 @@ public class SeriesRepository : ISeriesRepository
             items = items.RestrictAgainstAgeRestriction(userRating);
         }
 
+        var index = 0;
+        var seriesMap = new Dictionary<int, GroupedSeriesDto>();
+        var toSkip = (userParams.PageNumber - 1) * userParams.PageSize;
+        var skipped = new HashSet<int>();
+
         foreach (var item in items)
         {
-            if (seriesMap.Keys.Count == pageSize) break;
+            if (seriesMap.Keys.Count == userParams.PageSize) break;
 
             if (item.SeriesName == null) continue;
 
+            if (skipped.Count < toSkip)
+            {
+                skipped.Add(item.SeriesId);
+                continue;
+            }
 
-            if (seriesMap.TryGetValue(item.SeriesName + "_" + item.LibraryId, out var value))
+            if (seriesMap.TryGetValue(item.SeriesId, out var value))
             {
                 value.Count += 1;
             }
             else
             {
-                seriesMap[item.SeriesName + "_" + item.LibraryId] = new GroupedSeriesDto()
+                seriesMap[item.SeriesId] = new GroupedSeriesDto()
                 {
                     LibraryId = item.LibraryId,
                     LibraryType = item.LibraryType,
@@ -1499,7 +1555,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<IEnumerable<SeriesDto>> GetSeriesForRelationKind(int userId, int seriesId, RelationKind kind)
     {
-        var libraryIds = GetLibraryIdsForUser(userId);
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId);
         var userRating = await _context.AppUser.GetUserAgeRestriction(userId);
 
         var usersSeriesIds = _context.Series
@@ -1526,7 +1582,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<PagedList<SeriesDto>> GetMoreIn(int userId, int libraryId, int genreId, UserParams userParams)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Dashboard)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Dashboard)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
 
@@ -1554,7 +1610,7 @@ public class SeriesRepository : ISeriesRepository
     /// <returns></returns>
     public async Task<PagedList<SeriesDto>> GetRediscover(int userId, int libraryId, UserParams userParams)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
         var distinctSeriesIdsWithProgress = _context.AppUserProgresses
@@ -1574,7 +1630,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<SeriesDto?> GetSeriesForMangaFile(int mangaFileId, int userId)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, 0, QueryContext.Search);
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, 0, QueryContext.Search);
         var userRating = await _context.AppUser.GetUserAgeRestriction(userId);
 
         return await _context.MangaFile
@@ -1591,7 +1647,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<SeriesDto?> GetSeriesForChapter(int chapterId, int userId)
     {
-        var libraryIds = GetLibraryIdsForUser(userId);
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId);
         var userRating = await _context.AppUser.GetUserAgeRestriction(userId);
         return await _context.Chapter
             .Where(m => m.Id == chapterId)
@@ -1736,7 +1792,7 @@ public class SeriesRepository : ISeriesRepository
     public async Task<Series?> GetSeriesByAnyName(string seriesName, string localizedName, IList<MangaFormat> formats,
         int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None)
     {
-        var libraryIds = GetLibraryIdsForUser(userId);
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId);
         var normalizedSeries = seriesName.ToNormalized();
         var normalizedLocalized = localizedName.ToNormalized();
 
@@ -1770,7 +1826,7 @@ public class SeriesRepository : ISeriesRepository
     public async Task<Series?> GetSeriesByAnyName(IList<string> names, IList<MangaFormat> formats,
         int userId, int? aniListId = null, SeriesIncludes includes = SeriesIncludes.None)
     {
-        var libraryIds = GetLibraryIdsForUser(userId);
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId);
         names = names.Where(s => !string.IsNullOrEmpty(s)).Distinct().ToList();
         var normalizedNames = names.Select(s => s.ToNormalized()).ToList();
 
@@ -1867,7 +1923,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<PagedList<SeriesDto>> GetHighlyRated(int userId, int libraryId, UserParams userParams)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
         var distinctSeriesIdsWithHighRating = _context.AppUserRating
@@ -1889,7 +1945,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<PagedList<SeriesDto>> GetQuickReads(int userId, int libraryId, UserParams userParams)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
         var distinctSeriesIdsWithProgress = _context.AppUserProgresses
@@ -1916,7 +1972,7 @@ public class SeriesRepository : ISeriesRepository
 
     public async Task<PagedList<SeriesDto>> GetQuickCatchupReads(int userId, int libraryId, UserParams userParams)
     {
-        var libraryIds = GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
+        var libraryIds = _context.AppUser.GetLibraryIdsForUser(userId, libraryId, QueryContext.Recommended)
             .Where(id => libraryId == 0 || id == libraryId);
         var usersSeriesIds = GetSeriesIdsForLibraryIds(libraryIds);
         var distinctSeriesIdsWithProgress = _context.AppUserProgresses
@@ -2287,36 +2343,8 @@ public class SeriesRepository : ISeriesRepository
             .Select(s => s.Metadata.AgeRating)
             .OrderBy(s => s)
             .LastOrDefaultAsync();
+
         if (ret == null) return AgeRating.Unknown;
         return ret;
     }
-
-    /// <summary>
-    /// Returns all library ids for a user
-    /// </summary>
-    /// <param name="userId"></param>
-    /// <param name="libraryId">0 for no library filter</param>
-    /// <param name="queryContext">Defaults to None - The context behind this query, so appropriate restrictions can be placed</param>
-    /// <returns></returns>
-    private IQueryable<int> GetLibraryIdsForUser(int userId, int libraryId = 0, QueryContext queryContext = QueryContext.None)
-    {
-        var user = _context.AppUser
-            .AsSplitQuery()
-            .AsNoTracking()
-            .Where(u => u.Id == userId)
-            .AsSingleQuery();
-
-        if (libraryId == 0)
-        {
-            return user.SelectMany(l => l.Libraries)
-                .IsRestricted(queryContext)
-                .Select(lib => lib.Id);
-        }
-
-        return user.SelectMany(l => l.Libraries)
-            .Where(lib => lib.Id == libraryId)
-            .IsRestricted(queryContext)
-            .Select(lib => lib.Id);
-    }
-
 }

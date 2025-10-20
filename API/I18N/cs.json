@@ -203,5 +203,22 @@
     "person-name-unique": "Jméno osoby musí být unikátní",
     "person-image-doesnt-exist": "Osoba neexistuje v databázi CoversDB",
     "email-taken": "Email je již používán",
-    "kavitaplus-restricted": "Toto je omezeno pouze na Kavita+"
+    "kavitaplus-restricted": "Toto je omezeno pouze na Kavita+",
+    "dashboard-stream-only-delete-smart-filter": "Z ovládacího panelu lze odstranit pouze streamy chytrých filtrů",
+    "smart-filter-name-required": "Vyžaduje se název chytrého filtru",
+    "smart-filter-system-name": "Nelze použít název streamu poskytovaného systémem",
+    "sidenav-stream-only-delete-smart-filter": "Z postranní navigace lze odstranit pouze streamy chytrých filtrů",
+    "aliases-have-overlap": "Jeden nebo více aliasů se překrývají s jinými osobami, nelze je aktualizovat",
+    "generated-reading-profile-name": "Generováno z {0}",
+    "password-authentication-disabled": "Ověřování heslem bylo deaktivováno, přihlášení přes OpenID Connect",
+    "oidc-managed": "Uživatelé spravovaní OIDC nemohou být upravováni.",
+    "cannot-change-identity-provider-original-user": "Zprostředkovatel identity původního účtu správce nelze změnit",
+    "oidc-invalid-authority": "OIDC autorita je neplatná",
+    "annotation-failed-create": "Vytvoření anotace se nezdařilo, zkuste to znovu",
+    "annotation-delete": "Nelze odstranit poznámku",
+    "opds-continue-reading-title": "Pokračovat ve čtení od: {0}",
+    "genre-doesnt-exist": "Žánr neexistuje",
+    "font-url-not-allowed": "Nahrávání písma pomocí URL je povoleno pouze z Google Fonts",
+    "annotation-export-failed": "Nelze exportovat poznámky, zkontrolujte protokoly",
+    "download-not-allowed": "Uživatel nemá oprávnění ke stažení"
 }

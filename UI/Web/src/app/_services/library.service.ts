@@ -1,11 +1,11 @@
-import { HttpClient } from '@angular/common/http';
-import {DestroyRef, Injectable} from '@angular/core';
-import { of } from 'rxjs';
+import {HttpClient} from '@angular/common/http';
+import { DestroyRef, Injectable, inject } from '@angular/core';
+import {of} from 'rxjs';
 import {filter, map, tap} from 'rxjs/operators';
-import { environment } from 'src/environments/environment';
-import { JumpKey } from '../_models/jumpbar/jump-key';
-import { Library, LibraryType } from '../_models/library/library';
-import { DirectoryDto } from '../_models/system/directory-dto';
+import {environment} from 'src/environments/environment';
+import {JumpKey} from '../_models/jumpbar/jump-key';
+import {Library, LibraryType} from '../_models/library/library';
+import {DirectoryDto} from '../_models/system/directory-dto';
 import {EVENTS, MessageHubService} from "./message-hub.service";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
@@ -14,13 +14,17 @@ import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
   providedIn: 'root'
 })
 export class LibraryService {
+  private httpClient = inject(HttpClient);
+  private readonly messageHub = inject(MessageHubService);
+  private readonly destroyRef = inject(DestroyRef);
+
 
   baseUrl = environment.apiUrl;
 
   private libraryNames: {[key:number]: string} | undefined = undefined;
   private libraryTypes: {[key: number]: LibraryType} | undefined = undefined;
 
-  constructor(private httpClient: HttpClient, private readonly messageHub: MessageHubService, private readonly destroyRef: DestroyRef) {
+  constructor() {
     this.messageHub.messages$.pipe(takeUntilDestroyed(this.destroyRef), filter(e => e.event === EVENTS.LibraryModified),
       tap((e) => {
         console.log('LibraryModified event came in, clearing library name cache');
@@ -73,6 +77,10 @@ export class LibraryService {
     return this.httpClient.get<DirectoryDto[]>(this.baseUrl + 'library/list' + query);
   }
 
+  hasFilesAtRoot(roots: Array<string>) {
+    return this.httpClient.post<{[key: string]: boolean}>(this.baseUrl + 'library/has-files-at-root', {roots});
+  }
+
   getJumpBar(libraryId: number) {
     return this.httpClient.get<JumpKey[]>(this.baseUrl + 'library/jump-bar?libraryId=' + libraryId);
   }
@@ -97,20 +105,12 @@ export class LibraryService {
     return this.httpClient.post(this.baseUrl + 'library/scan-multiple', {ids: libraryIds, force: force});
   }
 
-  analyze(libraryId: number) {
-    return this.httpClient.post(this.baseUrl + 'library/analyze?libraryId=' + libraryId, {});
-  }
-
   refreshMetadata(libraryId: number, forceUpdate = false, forceColorscape = false) {
     return this.httpClient.post(this.baseUrl + `library/refresh-metadata?libraryId=${libraryId}&force=${forceUpdate}&forceColorscape=${forceColorscape}`, {});
   }
 
   refreshMetadataMultipleLibraries(libraryIds: Array<number>, force = false, forceColorscape = false) {
     return this.httpClient.post(this.baseUrl + 'library/refresh-metadata-multiple?forceColorscape=' + forceColorscape, {ids: libraryIds, force: force});
-  }
-
-  analyzeFilesMultipleLibraries(libraryIds: Array<number>) {
-    return this.httpClient.post(this.baseUrl + 'library/analyze-multiple', {ids: libraryIds, force: false});
   }
 
   copySettingsFromLibrary(sourceLibraryId: number, targetLibraryIds: Array<number>, includeType: boolean) {

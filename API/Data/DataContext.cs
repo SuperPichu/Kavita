@@ -4,19 +4,20 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using API.DTOs.KavitaPlus.Metadata;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Enums.UserPreferences;
 using API.Entities.History;
 using API.Entities.Interfaces;
 using API.Entities.Metadata;
+using API.Entities.MetadataMatching;
+using API.Entities.Person;
 using API.Entities.Scrobble;
+using API.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
-using Microsoft.EntityFrameworkCore.Diagnostics;
 
 namespace API.Data;
 
@@ -41,12 +42,13 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
     public DbSet<ServerSetting> ServerSetting { get; set; } = null!;
     public DbSet<AppUserPreferences> AppUserPreferences { get; set; } = null!;
     public DbSet<SeriesMetadata> SeriesMetadata { get; set; } = null!;
-    [Obsolete]
+    [Obsolete("Use AppUserCollection")]
     public DbSet<CollectionTag> CollectionTag { get; set; } = null!;
     public DbSet<AppUserBookmark> AppUserBookmark { get; set; } = null!;
     public DbSet<ReadingList> ReadingList { get; set; } = null!;
     public DbSet<ReadingListItem> ReadingListItem { get; set; } = null!;
     public DbSet<Person> Person { get; set; } = null!;
+    public DbSet<PersonAlias> PersonAlias { get; set; } = null!;
     public DbSet<Genre> Genre { get; set; } = null!;
     public DbSet<Tag> Tag { get; set; } = null!;
     public DbSet<SiteTheme> SiteTheme { get; set; } = null!;
@@ -69,6 +71,7 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
     public DbSet<ExternalSeriesMetadata> ExternalSeriesMetadata { get; set; } = null!;
     public DbSet<ExternalRecommendation> ExternalRecommendation { get; set; } = null!;
     public DbSet<ManualMigrationHistory> ManualMigrationHistory { get; set; } = null!;
+    [Obsolete("Use IsBlacklisted field on Series")]
     public DbSet<SeriesBlacklist> SeriesBlacklist { get; set; } = null!;
     public DbSet<AppUserCollection> AppUserCollection { get; set; } = null!;
     public DbSet<ChapterPeople> ChapterPeople { get; set; } = null!;
@@ -76,6 +79,11 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
     public DbSet<EmailHistory> EmailHistory { get; set; } = null!;
     public DbSet<MetadataSettings> MetadataSettings { get; set; } = null!;
     public DbSet<MetadataFieldMapping> MetadataFieldMapping { get; set; } = null!;
+    public DbSet<AppUserChapterRating> AppUserChapterRating { get; set; } = null!;
+    public DbSet<AppUserReadingProfile> AppUserReadingProfiles { get; set; } = null!;
+    public DbSet<AppUserAnnotation> AppUserAnnotation { get; set; } = null!;
+    public DbSet<EpubFont> EpubFont { get; set; } = null!;
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -131,12 +139,21 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
         builder.Entity<AppUserPreferences>()
             .Property(b => b.WantToReadSync)
             .HasDefaultValue(true);
+        builder.Entity<AppUserPreferences>()
+            .Property(b => b.AllowAutomaticWebtoonReaderDetection)
+            .HasDefaultValue(true);
+        builder.Entity<AppUserPreferences>()
+            .Property(b => b.ColorScapeEnabled)
+            .HasDefaultValue(true);
 
         builder.Entity<Library>()
             .Property(b => b.AllowScrobbling)
             .HasDefaultValue(true);
         builder.Entity<Library>()
             .Property(b => b.AllowMetadataMatching)
+            .HasDefaultValue(true);
+        builder.Entity<Library>()
+            .Property(b => b.EnableMetadata)
             .HasDefaultValue(true);
 
         builder.Entity<Chapter>()
@@ -210,30 +227,18 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
 
         builder.Entity<MetadataSettings>()
             .Property(x => x.AgeRatingMappings)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<Dictionary<string, AgeRating>>(v, JsonSerializerOptions.Default) ?? new Dictionary<string, AgeRating>()
-            );
+            .HasJsonConversion([]);
 
         // Ensure blacklist is stored as a JSON array
         builder.Entity<MetadataSettings>()
             .Property(x => x.Blacklist)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default) ?? new List<string>()
-            );
+            .HasJsonConversion([]);
         builder.Entity<MetadataSettings>()
             .Property(x => x.Whitelist)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<List<string>>(v, JsonSerializerOptions.Default) ?? new List<string>()
-            );
+            .HasJsonConversion([]);
         builder.Entity<MetadataSettings>()
             .Property(x => x.Overrides)
-            .HasConversion(
-                v => JsonSerializer.Serialize(v, JsonSerializerOptions.Default),
-                v => JsonSerializer.Deserialize<List<MetadataSettingField>>(v, JsonSerializerOptions.Default) ?? new List<MetadataSettingField>()
-            );
+            .HasJsonConversion([]);
 
         // Configure one-to-many relationship
         builder.Entity<MetadataSettings>()
@@ -248,6 +253,61 @@ public sealed class DataContext : IdentityDbContext<AppUser, AppRole, int,
         builder.Entity<MetadataSettings>()
             .Property(b => b.EnableCoverImage)
             .HasDefaultValue(true);
+
+        builder.Entity<AppUserReadingProfile>()
+            .Property(b => b.BookThemeName)
+            .HasDefaultValue("Dark");
+        builder.Entity<AppUserReadingProfile>()
+            .Property(b => b.BackgroundColor)
+            .HasDefaultValue("#000000");
+        builder.Entity<AppUserReadingProfile>()
+            .Property(b => b.BookReaderWritingStyle)
+            .HasDefaultValue(WritingStyle.Horizontal);
+        builder.Entity<AppUserReadingProfile>()
+            .Property(b => b.AllowAutomaticWebtoonReaderDetection)
+            .HasDefaultValue(true);
+
+        builder.Entity<AppUserReadingProfile>()
+            .Property(rp => rp.LibraryIds)
+            .HasJsonConversion([])
+            .HasColumnType("TEXT");
+        builder.Entity<AppUserReadingProfile>()
+            .Property(rp => rp.SeriesIds)
+            .HasJsonConversion([])
+            .HasColumnType("TEXT");
+
+        builder.Entity<SeriesMetadata>()
+            .Property(sm => sm.KPlusOverrides)
+            .HasJsonConversion([])
+            .HasColumnType("TEXT")
+            .HasDefaultValue(new List<MetadataSettingField>());
+        builder.Entity<Chapter>()
+            .Property(sm => sm.KPlusOverrides)
+            .HasJsonConversion([])
+            .HasColumnType("TEXT")
+            .HasDefaultValue(new List<MetadataSettingField>());
+
+        builder.Entity<AppUserPreferences>()
+            .Property(a => a.BookReaderHighlightSlots)
+            .HasJsonConversion([])
+            .HasColumnType("TEXT")
+            .HasDefaultValue(new List<HighlightSlot>());
+
+        builder.Entity<AppUser>()
+            .Property(user => user.IdentityProvider)
+            .HasDefaultValue(IdentityProvider.Kavita);
+
+        builder.Entity<AppUserPreferences>()
+            .Property(a => a.SocialPreferences)
+            .HasJsonConversion(new AppUserSocialPreferences())
+            .HasColumnType("TEXT")
+            .HasDefaultValue(new AppUserSocialPreferences());
+
+        builder.Entity<AppUserAnnotation>()
+            .Property(a => a.Likes)
+            .HasJsonConversion(new HashSet<int>())
+            .HasColumnType("TEXT")
+            .HasDefaultValue(new HashSet<int>());
     }
 
     #nullable enable

@@ -52,10 +52,18 @@ import {ScrobblingHoldsComponent} from "../../../user-settings/user-holds/scrobb
 import {
   ManageMetadataSettingsComponent
 } from "../../../admin/manage-metadata-settings/manage-metadata-settings.component";
+import {
+  ManageReadingProfilesComponent
+} from "../../../user-settings/manage-reading-profiles/manage-reading-profiles.component";
+import {
+  ManagePublicMetadataSettingsComponent
+} from "../../../admin/manage-public-metadata-settings/manage-public-metadata-settings.component";
+import {ImportMappingsComponent} from "../../../admin/import-mappings/import-mappings.component";
+import {ManageOpenIDConnectComponent} from "../../../admin/manage-open-idconnect/manage-open-idconnect.component";
+import {FontManagerComponent} from "../../../user-settings/font-manager/font-manager/font-manager.component";
 
 @Component({
-  selector: 'app-settings',
-  standalone: true,
+    selector: 'app-settings',
   imports: [
     ChangeAgeRestrictionComponent,
     ChangeEmailComponent,
@@ -88,11 +96,16 @@ import {
     ManageUserTokensComponent,
     EmailHistoryComponent,
     ScrobblingHoldsComponent,
-    ManageMetadataSettingsComponent
+    ManageMetadataSettingsComponent,
+    ManageReadingProfilesComponent,
+    ManageOpenIDConnectComponent,
+    ManagePublicMetadataSettingsComponent,
+    ImportMappingsComponent,
+    FontManagerComponent
   ],
-  templateUrl: './settings.component.html',
-  styleUrl: './settings.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    templateUrl: './settings.component.html',
+    styleUrl: './settings.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsComponent {
 

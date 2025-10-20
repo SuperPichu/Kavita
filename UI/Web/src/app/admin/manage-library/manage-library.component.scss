@@ -1,22 +1,9 @@
-@import "../../../theme/variables";
+@use "../../../theme/variables" as theme;
 
 .custom-position {
     right: 15px;
     top: -42px;
 }
-
-.custom-position-2 {
-  right: 160px;
-  top: -42px;
-}
-
-@media(max-width: 576px) {
-  .custom-position-2 {
-    right: 65px;
-  }
-}
-
-
 
 .member-name {
     word-break: keep-all;
@@ -28,13 +15,13 @@
 }
 
 .table {
-    @media (max-width: $grid-breakpoints-sm) {
+    @media (max-width: theme.$grid-breakpoints-sm) {
         overflow-x: auto;
         width: 100% !important;
         display: block;
     }
     .btn-container {
-        @media (max-width: $grid-breakpoints-lg) {
+        @media (max-width: theme.$grid-breakpoints-lg) {
             display: flex;
             flex-direction: row;
             flex-wrap: wrap;

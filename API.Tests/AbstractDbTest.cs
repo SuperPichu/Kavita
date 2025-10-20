@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+using System;
 using System.Data.Common;
-using System.IO.Abstractions.TestingHelpers;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Data;
@@ -12,53 +10,38 @@ using API.Helpers.Builders;
 using API.Services;
 using AutoMapper;
 using Hangfire;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
+using Xunit.Abstractions;
 
 namespace API.Tests;
 
-public abstract class AbstractDbTest : IDisposable
+public abstract class AbstractDbTest(ITestOutputHelper testOutputHelper): AbstractFsTest
 {
-    protected readonly DbConnection _connection;
-    protected readonly DataContext _context;
-    protected readonly IUnitOfWork _unitOfWork;
-    protected readonly IMapper _mapper;
 
-
-    protected const string CacheDirectory = "C:/kavita/config/cache/";
-    protected const string CacheLongDirectory = "C:/kavita/config/cache-long/";
-    protected const string CoverImageDirectory = "C:/kavita/config/covers/";
-    protected const string BackupDirectory = "C:/kavita/config/backups/";
-    protected const string LogDirectory = "C:/kavita/config/logs/";
-    protected const string BookmarkDirectory = "C:/kavita/config/bookmarks/";
-    protected const string SiteThemeDirectory = "C:/kavita/config/themes/";
-    protected const string TempDirectory = "C:/kavita/config/temp/";
-    protected const string DataDirectory = "C:/data/";
-
-    protected AbstractDbTest()
+    protected async Task<(IUnitOfWork, DataContext, IMapper)> CreateDatabase()
     {
         var contextOptions = new DbContextOptionsBuilder<DataContext>()
             .UseSqlite(CreateInMemoryDatabase())
             .EnableSensitiveDataLogging()
             .Options;
 
-        _connection = RelationalOptionsExtension.Extract(contextOptions).Connection;
+        var context = new DataContext(contextOptions);
 
-        _context = new DataContext(contextOptions);
+        await context.Database.EnsureCreatedAsync();
 
-        _context.Database.EnsureCreated(); // Ensure DB schema is created
+        await SeedDb(context);
 
-        Task.Run(SeedDb).GetAwaiter().GetResult();
 
         var config = new MapperConfiguration(cfg => cfg.AddProfile<AutoMapperProfiles>());
-        _mapper = config.CreateMapper();
+        var mapper = config.CreateMapper();
 
         GlobalConfiguration.Configuration.UseInMemoryStorage();
-        _unitOfWork = new UnitOfWork(_context, _mapper, null);
+        var unitOfWork = new UnitOfWork(context, mapper, null);
+
+        return (unitOfWork, context, mapper);
     }
 
     private static DbConnection CreateInMemoryDatabase()
@@ -69,71 +52,59 @@ public abstract class AbstractDbTest : IDisposable
         return connection;
     }
 
-    private async Task<bool> SeedDb()
+    private async Task<bool> SeedDb(DataContext context)
     {
         try
         {
-            await _context.Database.EnsureCreatedAsync();
             var filesystem = CreateFileSystem();
+            await Seed.SeedSettings(context, new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), filesystem));
 
-            await Seed.SeedSettings(_context, new DirectoryService(Substitute.For<ILogger<DirectoryService>>(), filesystem));
-
-            var setting = await _context.ServerSetting.Where(s => s.Key == ServerSettingKey.CacheDirectory).SingleAsync();
+            var setting = await context.ServerSetting.Where(s => s.Key == ServerSettingKey.CacheDirectory).SingleAsync();
             setting.Value = CacheDirectory;
 
-            setting = await _context.ServerSetting.Where(s => s.Key == ServerSettingKey.BackupDirectory).SingleAsync();
+            setting = await context.ServerSetting.Where(s => s.Key == ServerSettingKey.BackupDirectory).SingleAsync();
             setting.Value = BackupDirectory;
 
-            setting = await _context.ServerSetting.Where(s => s.Key == ServerSettingKey.BookmarkDirectory).SingleAsync();
+            setting = await context.ServerSetting.Where(s => s.Key == ServerSettingKey.BookmarkDirectory).SingleAsync();
             setting.Value = BookmarkDirectory;
 
-            setting = await _context.ServerSetting.Where(s => s.Key == ServerSettingKey.TotalLogs).SingleAsync();
+            setting = await context.ServerSetting.Where(s => s.Key == ServerSettingKey.TotalLogs).SingleAsync();
             setting.Value = "10";
 
-            _context.ServerSetting.Update(setting);
+            context.ServerSetting.Update(setting);
 
 
-            _context.Library.Add(new LibraryBuilder("Manga")
+            context.Library.Add(new LibraryBuilder("Manga")
                 .WithAllowMetadataMatching(true)
                 .WithFolderPath(new FolderPathBuilder(DataDirectory).Build())
                 .Build());
 
-            await _context.SaveChangesAsync();
+            await context.SaveChangesAsync();
 
-            await Seed.SeedMetadataSettings(_context);
+            await Seed.SeedMetadataSettings(context);
 
             return true;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[SeedDb] Error: {ex.Message}");
+            testOutputHelper.WriteLine($"[SeedDb] Error: {ex.Message} \n{ex.StackTrace}");
             return false;
         }
     }
 
-    protected abstract Task ResetDb();
-
-    protected static MockFileSystem CreateFileSystem()
+    /// <summary>
+    /// Add a role to an existing User. Commits.
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="roleName"></param>
+    protected async Task AddUserWithRole(DataContext context, int userId, string roleName)
     {
-        var fileSystem = new MockFileSystem();
-        fileSystem.Directory.SetCurrentDirectory("C:/kavita/");
-        fileSystem.AddDirectory("C:/kavita/config/");
-        fileSystem.AddDirectory(CacheDirectory);
-        fileSystem.AddDirectory(CacheLongDirectory);
-        fileSystem.AddDirectory(CoverImageDirectory);
-        fileSystem.AddDirectory(BackupDirectory);
-        fileSystem.AddDirectory(BookmarkDirectory);
-        fileSystem.AddDirectory(SiteThemeDirectory);
-        fileSystem.AddDirectory(LogDirectory);
-        fileSystem.AddDirectory(TempDirectory);
-        fileSystem.AddDirectory(DataDirectory);
+        var role = new AppRole { Id = userId, Name = roleName, NormalizedName = roleName.ToUpper() };
 
-        return fileSystem;
+        await context.Roles.AddAsync(role);
+        await context.UserRoles.AddAsync(new AppUserRole { UserId = userId, RoleId = userId });
+
+        await context.SaveChangesAsync();
     }
 
-    public void Dispose()
-    {
-        _context.Dispose();
-        _connection.Dispose();
-    }
 }

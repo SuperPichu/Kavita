@@ -35,7 +35,8 @@ export enum FilterField
     Imprint = 29,
     Team = 30,
     Location = 31,
-    ReadLast = 32
+    ReadLast = 32,
+    FileSize = 33,
 }
 
 
@@ -48,7 +49,7 @@ const enumArray = Object.keys(FilterField)
 
 enumArray.sort((a, b) => a.value.localeCompare(b.value));
 
-export const allFields = enumArray
+export const allSeriesFilterFields = enumArray
     .map(key => parseInt(key.key, 10))as FilterField[];
 
 export const allPeople = [
@@ -66,7 +67,6 @@ export const allPeople = [
 
 export const personRoleForFilterField = (role: PersonRole) => {
   switch (role) {
-    case PersonRole.Artist: return FilterField.CoverArtist;
     case PersonRole.Character: return FilterField.Characters;
     case PersonRole.Colorist: return FilterField.Colorist;
     case PersonRole.CoverArtist: return FilterField.CoverArtist;

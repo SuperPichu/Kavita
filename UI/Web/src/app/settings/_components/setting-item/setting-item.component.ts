@@ -2,32 +2,40 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ContentChild, ElementRef, EventEmitter, HostListener,
-  inject,
-  Input, OnChanges, Output, SimpleChange, SimpleChanges,
+  ContentChild,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  inject, input,
+  Input,
+  OnChanges,
+  Output,
+  SimpleChange,
+  SimpleChanges,
   TemplateRef
 } from '@angular/core';
 import {TranslocoDirective} from "@jsverse/transloco";
-import {NgTemplateOutlet} from "@angular/common";
+import {NgClass, NgTemplateOutlet} from "@angular/common";
 import {SafeHtmlPipe} from "../../../_pipes/safe-html.pipe";
 import {filter, fromEvent, tap} from "rxjs";
 import {AbstractControl} from "@angular/forms";
 
 @Component({
-  selector: 'app-setting-item',
-  standalone: true,
-  imports: [
-    TranslocoDirective,
-    NgTemplateOutlet,
-    SafeHtmlPipe
-  ],
-  templateUrl: './setting-item.component.html',
-  styleUrl: './setting-item.component.scss',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-setting-item',
+    imports: [
+        TranslocoDirective,
+        NgTemplateOutlet,
+        SafeHtmlPipe,
+        NgClass
+    ],
+    templateUrl: './setting-item.component.html',
+    styleUrl: './setting-item.component.scss',
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingItemComponent implements OnChanges {
 
   private readonly cdRef = inject(ChangeDetectorRef);
+  private readonly elementRef = inject(ElementRef);
 
   @Input({required:true}) title: string = '';
   @Input() editLabel: string | undefined = undefined;
@@ -43,6 +51,11 @@ export class SettingItemComponent implements OnChanges {
   @Input() fixedExtras: boolean = false;
   @Input() control: AbstractControl<any> | null = null;
   @Output() editMode = new EventEmitter<boolean>();
+
+  /**
+   * When true, allows click events to bubble up to components within
+   */
+  allowClickEvents = input(false);
 
   /**
    * Extra information to show next to the title
@@ -63,10 +76,14 @@ export class SettingItemComponent implements OnChanges {
 
   @HostListener('click', ['$event'])
   onClickInside(event: MouseEvent) {
+    if (this.allowClickEvents()) return;
+
     event.stopPropagation(); // Prevent the click from bubbling up
   }
 
-  constructor(elementRef: ElementRef) {
+  constructor() {
+    const elementRef = inject(ElementRef);
+
     if (!this.toggleOnViewClick) return;
 
     fromEvent(window, 'click')
@@ -98,11 +115,10 @@ export class SettingItemComponent implements OnChanges {
       if (!this.canEdit) return;
       if (this.control != null && this.control.invalid) return;
 
-      console.log('isEditMode', this.isEditMode, 'currentValue', change.currentValue);
       this.isEditMode = change.currentValue;
-      //this.editMode.emit(this.isEditMode);
       this.cdRef.markForCheck();
 
+      this.focusInput();
     }
   }
 
@@ -114,7 +130,27 @@ export class SettingItemComponent implements OnChanges {
 
     this.isEditMode = !this.isEditMode;
     this.editMode.emit(this.isEditMode);
+    this.focusInput();
     this.cdRef.markForCheck();
   }
 
+  focusInput() {
+    if (this.isEditMode) {
+
+
+      setTimeout(() => {
+        const inputElem = this.findFirstInput();
+        if (inputElem) {
+          inputElem.focus();
+        }
+      }, 10);
+    }
+  }
+
+  private findFirstInput(): HTMLInputElement | null {
+    const nativeInputs = [...this.elementRef.nativeElement.querySelectorAll('input'), ...this.elementRef.nativeElement.querySelectorAll('select'), ...this.elementRef.nativeElement.querySelectorAll('textarea')];
+    if (nativeInputs.length === 0) return null;
+
+    return nativeInputs[0];
+  }
 }

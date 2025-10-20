@@ -1,10 +1,10 @@
-import {Injectable} from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {NavigationStart, Router} from '@angular/router';
 import {ReplaySubject} from 'rxjs';
 import {filter} from 'rxjs/operators';
 import {Action, ActionFactoryService, ActionItem} from '../_services/action-factory.service';
 
-type DataSource = 'volume' | 'chapter' | 'special' | 'series' | 'bookmark' | 'sideNavStream' | 'collection' | 'readingList';
+type DataSource = 'volume' | 'chapter' | 'special' | 'series' | 'bookmark' | 'sideNavStream' | 'collection' | 'readingList' | 'annotations';
 
 /**
  * Responsible for handling selections on cards. Can handle multiple card sources next to each other in different loops.
@@ -16,6 +16,8 @@ type DataSource = 'volume' | 'chapter' | 'special' | 'series' | 'bookmark' | 'si
   providedIn: 'root'
 })
 export class BulkSelectionService {
+  private actionFactory = inject(ActionFactoryService);
+
 
   private debug: boolean = false;
   private prevIndex: number = 0;
@@ -33,7 +35,9 @@ export class BulkSelectionService {
    */
   public selections$ = this.selectionsSource.asObservable();
 
-  constructor(router: Router, private actionFactory: ActionFactoryService) {
+  constructor() {
+    const router = inject(Router);
+
     router.events
       .pipe(filter(event => event instanceof NavigationStart))
       .subscribe(() => {
@@ -70,6 +74,7 @@ export class BulkSelectionService {
     }
     this.prevIndex = index;
     this.prevDataSource = dataSource;
+    this.debugLog("Setting max for " + dataSource + " to " + maxIndex);
     this.dataSourceMax[dataSource] = maxIndex;
     this.actionsSource.next(this.getActions(() => {}));
   }
@@ -144,7 +149,7 @@ export class BulkSelectionService {
    */
   getActions(callback: (action: ActionItem<any>, data: any) => void) {
     const allowedActions = [Action.AddToReadingList, Action.MarkAsRead, Action.MarkAsUnread, Action.AddToCollection,
-      Action.Delete, Action.AddToWantToReadList, Action.RemoveFromWantToReadList];
+      Action.Delete, Action.AddToWantToReadList, Action.RemoveFromWantToReadList, Action.SetReadingProfile];
 
     if (Object.keys(this.selectedCards).filter(item => item === 'series').length > 0) {
       return this.applyFilterToList(this.actionFactory.getSeriesActions(callback), allowedActions);
@@ -164,6 +169,10 @@ export class BulkSelectionService {
 
     if (Object.keys(this.selectedCards).filter(item => item === 'readingList').length > 0) {
       return this.applyFilterToList(this.actionFactory.getReadingListActions(callback), [Action.Promote, Action.UnPromote, Action.Delete]);
+    }
+
+    if (Object.keys(this.selectedCards).filter(item => item === 'annotations').length > 0) {
+      return this.actionFactory.getAnnotationActions(callback);
     }
 
     // Chapter/Volume

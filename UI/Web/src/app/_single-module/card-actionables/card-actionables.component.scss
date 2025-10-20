@@ -2,6 +2,22 @@
     content: none !important;
 }
 
+.submenu-wrapper {
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -10px;
+    width: 10px;
+    height: 100%;
+    background: transparent;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+}
+
 .submenu-toggle {
     display: block;
     width: 100%;
@@ -12,12 +28,12 @@
     color: var(--dropdown-item-text-color);
     background-color: var(--dropdown-item-bg-color);
     &:hover {
-        color: var(--dropdown-item-text-color);
+        color: var(--dropdown-item-hover-text-color);
         background-color: var(--dropdown-item-hover-bg-color);
         cursor: pointer;
     }
     &:focus-visible {
-        color: var(--dropdown-item-text-color);
+        color: var(--dropdown-item-hover-text-color);
         background-color: var(--dropdown-item-hover-bg-color);
     }
 }
@@ -26,13 +42,3 @@
     float: right;
     padding: var(--bs-dropdown-item-padding-y) 0;
 }
-
-.btn {
-    padding: 5px;
-}
-
-// Robbie added this but it broke most of the uses
-//.dropdown-toggle {
-//    padding-top: 0;
-//    padding-bottom: 0;
-//}

@@ -1,14 +1,16 @@
-<ng-container *transloco="let t; read:'user-scrobble-history'">
+<ng-container *transloco="let t; prefix:'user-scrobble-history'">
+
+  @let currentUser = accountService.currentUser$ | async;
 
   <div class="position-relative">
-    <button class="btn btn-primary-outline position-absolute custom-position" [disabled]="events.length > 0" (click)="generateScrobbleEvents()" [title]="t('generate-scrobble-events')">
+    <button class="btn btn-outline-primary position-absolute custom-position" [disabled]="hasRunScrobbleGen" (click)="generateScrobbleEvents()" [title]="t('generate-scrobble-events')">
       <i class="fa fa-plus" aria-hidden="true"></i><span class="phone-hidden ms-1">{{t('generate-scrobble-events')}}</span>
     </button>
   </div>
 
   @if (tokenExpired) {
     <p class="alert alert-warning">{{t('token-expired')}}</p>
-  } @else if (!(accountService.currentUser$ | async)!.preferences.aniListScrobblingEnabled) {
+  } @else if (!currentUser!.preferences.aniListScrobblingEnabled) {
     <p class="alert alert-warning">{{t('scrobbling-disabled')}}</p>
   }
 
@@ -18,7 +20,10 @@
     <form [formGroup]="formGroup">
       <div class="form-group pe-1">
         <label for="filter">{{t('filter-label')}}</label>
-        <input id="filter" type="text" class="form-control" formControlName="filter" autocomplete="off"/>
+        <div class="input-group">
+          <input id="filter" type="text" class="form-control" formControlName="filter" autocomplete="off" [placeholder]="t('filter-label')"/>
+          <button class="btn btn-primary" type="button" [disabled]="!selections.hasAnySelected()" (click)="bulkDelete()">{{t('delete-selected-label')}}</button>
+        </div>
       </div>
     </form>
   </div>
@@ -35,11 +40,26 @@
     [count]="pageInfo.totalElements"
     [offset]="pageInfo.pageNumber"
     [limit]="pageInfo.size"
+    [sorts]="[{prop: 'createdUtc', dir: 'desc'}]"
   >
 
-    <ngx-datatable-column prop="lastModifiedUtc" [sortable]="true" [draggable]="false" [resizeable]="false">
+    <ngx-datatable-column prop="select" [sortable]="false" [draggable]="false" [resizeable]="false">
       <ng-template let-column="column" ngx-datatable-header-template>
-        {{t('last-modified-header')}}
+        <div class="form-check">
+          <input id="select-all" type="checkbox" class="form-check-input"
+                 [ngModel]="selectAll" (change)="toggleAll()" [indeterminate]="selections.hasSomeSelected()">
+          <label for="select-all" class="form-check-label d-md-block d-none">{{t('select-all-label')}}</label>
+        </div>
+      </ng-template>
+      <ng-template let-event="row" let-idx="index" ngx-datatable-cell-template>
+        <input id="select-event-{{idx}}" type="checkbox" class="form-check-input"
+               [ngModel]="selections.isSelected(event)" (change)="handleSelection(event, idx)">
+      </ng-template>
+    </ngx-datatable-column>
+
+    <ngx-datatable-column prop="createdUtc" [sortable]="true" [draggable]="false" [resizeable]="false">
+      <ng-template let-column="column" ngx-datatable-header-template>
+        {{t('created-header')}}
       </ng-template>
       <ng-template let-value="value" ngx-datatable-cell-template>
         {{value | utcToLocalTime | defaultValue }}
@@ -60,7 +80,7 @@
         {{t('series-header')}}
       </ng-template>
       <ng-template let-item="row" let-idx="index" ngx-datatable-cell-template>
-        <a href="/library/{{item.libraryId}}/series/{{item.seriesId}}" target="_blank" id="scrobble-history--{{idx}}">{{item.seriesName}}</a>
+        <a href="{{baseUrl}}library/{{item.libraryId}}/series/{{item.seriesId}}" target="_blank" id="scrobble-history--{{idx}}">{{item.seriesName}}</a>
       </ng-template>
     </ngx-datatable-column>
 
@@ -98,7 +118,7 @@
       </ng-template>
     </ngx-datatable-column>
 
-    <ngx-datatable-column prop="isPorcessed" [sortable]="true" [draggable]="false" [resizeable]="false">
+    <ngx-datatable-column prop="isProcessed" [sortable]="true" [draggable]="false" [resizeable]="false">
       <ng-template let-column="column" ngx-datatable-header-template>
         {{t('is-processed-header')}}
       </ng-template>

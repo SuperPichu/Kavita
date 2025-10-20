@@ -100,13 +100,14 @@ public static class FilterFieldValueConverter
                 .ToList(),
             FilterField.WantToRead => bool.Parse(value),
             FilterField.ReadProgress => string.IsNullOrEmpty(value) ? 0f : value.AsFloat(),
-            FilterField.ReadingDate => DateTime.Parse(value),
+            FilterField.ReadingDate => DateTime.Parse(value, CultureInfo.InvariantCulture),
             FilterField.ReadLast => int.Parse(value),
             FilterField.Formats => value.Split(',')
                 .Select(x => (MangaFormat) Enum.Parse(typeof(MangaFormat), x))
                 .ToList(),
             FilterField.ReadTime => string.IsNullOrEmpty(value) ? 0 : int.Parse(value),
             FilterField.AverageRating => string.IsNullOrEmpty(value) ? 0f : value.AsFloat(),
+            FilterField.FileSize => value.ParseHumanReadableBytes(),
             _ => throw new ArgumentException("Invalid field type")
         };
     }

@@ -1,43 +1,54 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, HostListener, inject, OnInit} from '@angular/core';
-import { Router } from '@angular/router';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { ToastrService } from 'ngx-toastr';
-import { take } from 'rxjs/operators';
-import { JumpKey } from 'src/app/_models/jumpbar/jump-key';
-import { PaginatedResult, Pagination } from 'src/app/_models/pagination';
-import { ReadingList } from 'src/app/_models/reading-list';
-import { AccountService } from 'src/app/_services/account.service';
-import { Action, ActionFactoryService, ActionItem } from 'src/app/_services/action-factory.service';
-import { ActionService } from 'src/app/_services/action.service';
-import { ImageService } from 'src/app/_services/image.service';
-import { JumpbarService } from 'src/app/_services/jumpbar.service';
-import { ReadingListService } from 'src/app/_services/reading-list.service';
-import { CardItemComponent } from '../../../cards/card-item/card-item.component';
-import { CardDetailLayoutComponent } from '../../../cards/card-detail-layout/card-detail-layout.component';
-import { NgIf, DecimalPipe } from '@angular/common';
-import { SideNavCompanionBarComponent } from '../../../sidenav/_components/side-nav-companion-bar/side-nav-companion-bar.component';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit} from '@angular/core';
+import {Router} from '@angular/router';
+import {ToastrService} from 'ngx-toastr';
+import {take} from 'rxjs/operators';
+import {JumpKey} from 'src/app/_models/jumpbar/jump-key';
+import {PaginatedResult, Pagination} from 'src/app/_models/pagination';
+import {ReadingList} from 'src/app/_models/reading-list';
+import {AccountService} from 'src/app/_services/account.service';
+import {Action, ActionFactoryService, ActionItem} from 'src/app/_services/action-factory.service';
+import {ActionService} from 'src/app/_services/action.service';
+import {ImageService} from 'src/app/_services/image.service';
+import {JumpbarService} from 'src/app/_services/jumpbar.service';
+import {ReadingListService} from 'src/app/_services/reading-list.service';
+import {CardItemComponent} from '../../../cards/card-item/card-item.component';
+import {CardDetailLayoutComponent} from '../../../cards/card-detail-layout/card-detail-layout.component';
+import {DecimalPipe} from '@angular/common';
+import {
+  SideNavCompanionBarComponent
+} from '../../../sidenav/_components/side-nav-companion-bar/side-nav-companion-bar.component';
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {CardActionablesComponent} from "../../../_single-module/card-actionables/card-actionables.component";
 import {Title} from "@angular/platform-browser";
 import {WikiLink} from "../../../_models/wiki";
 import {BulkSelectionService} from "../../../cards/bulk-selection.service";
 import {BulkOperationsComponent} from "../../../cards/bulk-operations/bulk-operations.component";
-import {KEY_CODES} from "../../../shared/_services/utility.service";
+import {User} from "../../../_models/user";
 
 @Component({
     selector: 'app-reading-lists',
     templateUrl: './reading-lists.component.html',
     styleUrls: ['./reading-lists.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
-  imports: [SideNavCompanionBarComponent, CardActionablesComponent, NgIf, CardDetailLayoutComponent, CardItemComponent, DecimalPipe, TranslocoDirective, BulkOperationsComponent]
+  imports: [SideNavCompanionBarComponent, CardActionablesComponent, CardDetailLayoutComponent, CardItemComponent,
+    DecimalPipe, TranslocoDirective, BulkOperationsComponent]
 })
 export class ReadingListsComponent implements OnInit {
-
-  public readonly bulkSelectionService = inject(BulkSelectionService);
-  public readonly actionService = inject(ActionService);
+  private readingListService = inject(ReadingListService);
+  imageService = inject(ImageService);
+  private actionFactoryService = inject(ActionFactoryService);
+  private accountService = inject(AccountService);
+  private toastr = inject(ToastrService);
+  private router = inject(Router);
+  private jumpbarService = inject(JumpbarService);
+  private readonly cdRef = inject(ChangeDetectorRef);
+  private titleService = inject(Title);
 
   protected readonly WikiLink = WikiLink;
+
+  protected readonly bulkSelectionService = inject(BulkSelectionService);
+  protected readonly actionService = inject(ActionService);
+
 
   lists: ReadingList[] = [];
   loadingLists = false;
@@ -48,11 +59,6 @@ export class ReadingListsComponent implements OnInit {
   actions: {[key: number]: Array<ActionItem<ReadingList>>} = {};
   globalActions: Array<ActionItem<any>> = [];
   trackByIdentity = (index: number, item: ReadingList) => `${item.id}_${item.title}_${item.promoted}`;
-
-
-  constructor(private readingListService: ReadingListService, public imageService: ImageService, private actionFactoryService: ActionFactoryService,
-    private accountService: AccountService, private toastr: ToastrService, private router: Router,
-    private jumpbarService: JumpbarService, private readonly cdRef: ChangeDetectorRef, private ngbModal: NgbModal, private titleService: Title) { }
 
   ngOnInit(): void {
     this.accountService.currentUser$.pipe(take(1)).subscribe(user => {
@@ -69,10 +75,8 @@ export class ReadingListsComponent implements OnInit {
   }
 
   getActions(readingList: ReadingList) {
-    const d = this.actionFactoryService.getReadingListActions(this.handleReadingListActionCallback.bind(this))
-      .filter(action => this.readingListService.actionListFilter(action, readingList, this.isAdmin || this.hasPromote));
-
-    return this.actionFactoryService.getReadingListActions(this.handleReadingListActionCallback.bind(this))
+    return this.actionFactoryService
+      .getReadingListActions(this.handleReadingListActionCallback.bind(this), this.shouldRenderReadingListAction.bind(this))
       .filter(action => this.readingListService.actionListFilter(action, readingList, this.isAdmin || this.hasPromote));
   }
 
@@ -170,6 +174,17 @@ export class ReadingListsComponent implements OnInit {
           this.bulkSelectionService.deselectAll();
         });
         break;
+    }
+  }
+
+  shouldRenderReadingListAction(action: ActionItem<ReadingList>, entity: ReadingList, user: User) {
+    switch (action.action) {
+      case Action.Promote:
+        return !entity.promoted;
+      case Action.UnPromote:
+        return entity.promoted;
+      default:
+        return true;
     }
   }
 }

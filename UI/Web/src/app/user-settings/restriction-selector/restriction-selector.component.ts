@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { AgeRestriction } from 'src/app/_models/metadata/age-restriction';
 import { Member } from 'src/app/_models/auth/member';
@@ -15,10 +15,12 @@ import {TranslocoModule} from "@jsverse/transloco";
     templateUrl: './restriction-selector.component.html',
     styleUrls: ['./restriction-selector.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
-  imports: [ReactiveFormsModule, NgbTooltip, TitleCasePipe, TranslocoModule, NgTemplateOutlet]
+    imports: [ReactiveFormsModule, NgbTooltip, TitleCasePipe, TranslocoModule, NgTemplateOutlet]
 })
 export class RestrictionSelectorComponent implements OnInit, OnChanges {
+  private metadataService = inject(MetadataService);
+  private readonly cdRef = inject(ChangeDetectorRef);
+
 
   @Input() member: Member | undefined | User;
   @Input() isAdmin: boolean = false;
@@ -32,8 +34,6 @@ export class RestrictionSelectorComponent implements OnInit, OnChanges {
 
   ageRatings: Array<AgeRatingDto> = [];
   restrictionForm: FormGroup | undefined;
-
-  constructor(private metadataService: MetadataService, private readonly cdRef: ChangeDetectorRef) { }
 
   ngOnInit(): void {
 

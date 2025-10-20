@@ -5,11 +5,16 @@ using System.Linq.Expressions;
 using System.Threading.Tasks;
 using API.Data.Misc;
 using API.Data.Repositories;
+using API.DTOs;
+using API.DTOs.Annotations;
 using API.DTOs.Filtering;
 using API.DTOs.KavitaPlus.Manage;
+using API.DTOs.Metadata.Browse;
 using API.Entities;
 using API.Entities.Enums;
+using API.Entities.Person;
 using API.Entities.Scrobble;
+using AutoMapper.QueryableExtensions;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Extensions.QueryExtensions;
@@ -83,6 +88,34 @@ public static class QueryableExtensions
             .Where(lib => lib.AppUsers.Any(user => user.Id == userId))
             .IsRestricted(queryContext)
             .AsSplitQuery()
+            .Select(lib => lib.Id);
+    }
+
+    /// <summary>
+    /// Returns all library ids for a user
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="libraryId">0 for no library filter</param>
+    /// <param name="queryContext">Defaults to None - The context behind this query, so appropriate restrictions can be placed</param>
+    /// <returns></returns>
+    public static IQueryable<int> GetLibraryIdsForUser(this DbSet<AppUser> query, int userId, int libraryId = 0, QueryContext queryContext = QueryContext.None)
+    {
+        var user = query
+            .AsSplitQuery()
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .AsSingleQuery();
+
+        if (libraryId == 0)
+        {
+            return user.SelectMany(l => l.Libraries)
+                .IsRestricted(queryContext)
+                .Select(lib => lib.Id);
+        }
+
+        return user.SelectMany(l => l.Libraries)
+            .Where(lib => lib.Id == libraryId)
+            .IsRestricted(queryContext)
             .Select(lib => lib.Id);
     }
 
@@ -255,6 +288,7 @@ public static class QueryableExtensions
                 ScrobbleEventSortField.Type => query.OrderByDescending(s => s.ScrobbleEventType),
                 ScrobbleEventSortField.Series => query.OrderByDescending(s => s.Series.NormalizedName),
                 ScrobbleEventSortField.IsProcessed => query.OrderByDescending(s => s.IsProcessed),
+                ScrobbleEventSortField.ScrobbleEventFilter => query.OrderByDescending(s => s.ScrobbleEventType),
                 _ => query
             };
         }
@@ -267,7 +301,48 @@ public static class QueryableExtensions
             ScrobbleEventSortField.Type => query.OrderBy(s => s.ScrobbleEventType),
             ScrobbleEventSortField.Series => query.OrderBy(s => s.Series.NormalizedName),
             ScrobbleEventSortField.IsProcessed => query.OrderBy(s => s.IsProcessed),
+            ScrobbleEventSortField.ScrobbleEventFilter => query.OrderBy(s => s.ScrobbleEventType),
             _ => query
+        };
+    }
+
+    public static IQueryable<Person> SortBy(this IQueryable<Person> query, PersonSortOptions? sort)
+    {
+        if (sort == null)
+        {
+            return query.OrderBy(p => p.Name);
+        }
+
+        return sort.SortField switch
+        {
+            PersonSortField.Name when sort.IsAscending => query.OrderBy(p => p.Name),
+            PersonSortField.Name => query.OrderByDescending(p => p.Name),
+            PersonSortField.SeriesCount when sort.IsAscending => query.OrderBy(p => p.SeriesMetadataPeople.Count),
+            PersonSortField.SeriesCount => query.OrderByDescending(p => p.SeriesMetadataPeople.Count),
+            PersonSortField.ChapterCount when sort.IsAscending => query.OrderBy(p => p.ChapterPeople.Count),
+            PersonSortField.ChapterCount => query.OrderByDescending(p => p.ChapterPeople.Count),
+            _ => query.OrderBy(p => p.Name),
+        };
+    }
+
+    public static IQueryable<AppUserAnnotation> SortBy(this IQueryable<AppUserAnnotation> query, AnnotationSortOptions? sort)
+    {
+        if (sort == null)
+        {
+            return query.OrderBy(a => a.CreatedUtc);
+        }
+
+        return sort.SortField switch
+        {
+            AnnotationSortField.Owner when sort.IsAscending => query.OrderBy(a => a.AppUser.UserName),
+            AnnotationSortField.Owner => query.OrderByDescending(a => a.AppUser.UserName),
+            AnnotationSortField.Created when sort.IsAscending => query.OrderBy(a => a.CreatedUtc),
+            AnnotationSortField.Created => query.OrderByDescending(a => a.CreatedUtc),
+            AnnotationSortField.LastModified when sort.IsAscending => query.OrderBy(a => a.LastModifiedUtc),
+            AnnotationSortField.LastModified => query.OrderByDescending(a => a.LastModifiedUtc),
+            AnnotationSortField.Color when sort.IsAscending => query.OrderBy(a => a.SelectedSlotIndex),
+            AnnotationSortField.Color => query.OrderByDescending(a => a.SelectedSlotIndex),
+            _ => query.OrderBy(a => a.CreatedUtc),
         };
     }
 
@@ -298,5 +373,14 @@ public static class QueryableExtensions
             MatchStateOption.DontMatch => query.Where(s => s.DontMatch),
             _ => query
         };
+    }
+
+    public static IQueryable<FullAnnotationDto> OrderFullAnnotation(this IQueryable<FullAnnotationDto> query)
+    {
+        return query
+            .OrderBy(a => a.SeriesId)
+            .ThenBy(a => a.VolumeId)
+            .ThenBy(a => a.ChapterId)
+            .ThenBy(a => a.PageNumber);
     }
 }

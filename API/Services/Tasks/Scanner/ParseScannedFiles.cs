@@ -804,7 +804,7 @@ public class ParseScannedFiles
         {
             // Process files sequentially
             result.ParserInfos = files
-                .Select(file => _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type))
+                .Select(file => _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type, library.EnableMetadata))
                 .Where(info => info != null)
                 .ToList()!;
         }
@@ -812,7 +812,7 @@ public class ParseScannedFiles
         {
             // Process files in parallel
             var tasks = files.Select(file => Task.Run(() =>
-                _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type)));
+                _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type, library.EnableMetadata)));
 
             var infos = await Task.WhenAll(tasks);
             result.ParserInfos = infos.Where(info => info != null).ToList()!;
@@ -871,7 +871,10 @@ public class ParseScannedFiles
             var prevIssue = string.Empty;
             foreach (var chapter in chapters)
             {
-                if (float.TryParse(chapter.Chapters, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedChapter))
+                // Use MinNumber in case there is a range, as otherwise sort order will cause it to be processed last
+                var chapterNum =
+                    $"{Parser.Parser.MinNumberFromRange(chapter.Chapters).ToString(CultureInfo.InvariantCulture)}";
+                if (float.TryParse(chapterNum, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedChapter))
                 {
                     // Parsed successfully, use the numeric value
                     counter = parsedChapter;

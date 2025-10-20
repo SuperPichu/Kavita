@@ -33,6 +33,7 @@ public interface ILicenseService
     Task<bool> HasActiveSubscription(string? license);
     Task<bool> ResetLicense(string license, string email);
     Task<LicenseInfoDto?> GetLicenseInfo(bool forceCheck = false);
+    Task<bool> ResendWelcomeEmail();
 }
 
 public class LicenseService(
@@ -130,22 +131,23 @@ public class LicenseService(
             if (cacheValue.HasValue) return cacheValue.Value;
         }
 
+        var result = false;
         try
         {
             var serverSetting = await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey);
-            var result = await IsLicenseValid(serverSetting.Value);
-            await provider.FlushAsync();
-            await provider.SetAsync(CacheKey, result, _licenseCacheTimeout);
-            return result;
+            result = await IsLicenseValid(serverSetting.Value);
         }
         catch (Exception ex)
         {
             logger.LogError(ex, "There was an issue connecting to Kavita+");
+        }
+        finally
+        {
             await provider.FlushAsync();
-            await provider.SetAsync(CacheKey, false, _licenseCacheTimeout);
+            await provider.SetAsync(CacheKey, result, _licenseCacheTimeout);
         }
 
-        return false;
+        return result;
     }
 
     /// <summary>
@@ -263,7 +265,6 @@ public class LicenseService(
             if (cacheValue.HasValue) return cacheValue.Value;
         }
 
-
         try
         {
             var encryptedLicense = await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey);
@@ -278,21 +279,29 @@ public class LicenseService(
             var releases = await versionUpdaterService.GetAllReleases();
             response.IsValidVersion = releases
                 .Where(r => !r.UpdateTitle.Contains("Hotfix")) // We don't care about Hotfix releases
-                .Where(r => !r.IsPrerelease || BuildInfo.Version.IsWithinStableRelease(new Version(r.UpdateVersion))) // Ensure we don't take current nightlies within the current/last stable
+                .Where(r => !r.IsPrerelease) // Ensure we don't take current nightlies within the current/last stable
                 .Take(3)
                 .All(r => new Version(r.UpdateVersion) <= BuildInfo.Version);
 
             response.HasLicense = hasLicense;
+            response.InstallId = HashUtil.ServerToken();
 
             // Cache if the license is valid here as well
             var licenseProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.License);
             await licenseProvider.SetAsync(CacheKey, response.IsActive, _licenseCacheTimeout);
+
+            // TODO: If info.IsCancelled && notActive, let's remove the license so we aren't constantly checking
+            if (response is {IsCancelled: true, IsActive: false})
+            {
+                //logger.LogWarning("Kavita+ License is no longer active, removing Server registration");
+            }
 
             // Cache the license info if IsActive and ExpirationDate > DateTime.UtcNow + 2
             if (response.IsActive && response.ExpirationDate > DateTime.UtcNow.AddDays(2))
             {
                 await licenseInfoProvider.SetAsync(LicenseInfoCacheKey, response, _licenseCacheTimeout);
             }
+
 
             return response;
         }
@@ -302,5 +311,35 @@ public class LicenseService(
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Attempts to resend a welcome email to the registered user. The sub does not need to be active.
+    /// </summary>
+    /// <returns></returns>
+    public async Task<bool> ResendWelcomeEmail()
+    {
+        try
+        {
+            var encryptedLicense = await unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey);
+            if (string.IsNullOrEmpty(encryptedLicense.Value)) return false;
+
+            var httpResponse = await (Configuration.KavitaPlusApiUrl + "/api/license/resend-welcome-email")
+                .WithKavitaPlusHeaders(encryptedLicense.Value)
+                .PostAsync();
+
+            var response = await httpResponse.GetStringAsync();
+
+            if (response == null) return false;
+
+
+            return response == "true";
+        }
+        catch (FlurlHttpException e)
+        {
+            logger.LogError(e, "An error happened during the request to Kavita+ API");
+        }
+
+        return false;
     }
 }

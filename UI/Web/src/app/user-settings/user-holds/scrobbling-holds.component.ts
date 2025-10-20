@@ -6,14 +6,14 @@ import {ImageComponent} from "../../shared/image/image.component";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
 import {ScrobbleHold} from "../../_models/scrobbling/scrobble-hold";
 import {ColumnMode, NgxDatatableModule} from "@siemens/ngx-datatable";
+import {APP_BASE_HREF} from "@angular/common";
 
 @Component({
-  selector: 'app-user-holds',
-  standalone: true,
-  imports: [TranslocoDirective, ImageComponent, UtcToLocalTimePipe, NgxDatatableModule],
-  templateUrl: './scrobbling-holds.component.html',
-  styleUrls: ['./scrobbling-holds.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-user-holds',
+    imports: [TranslocoDirective, ImageComponent, UtcToLocalTimePipe, NgxDatatableModule],
+    templateUrl: './scrobbling-holds.component.html',
+    styleUrls: ['./scrobbling-holds.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ScrobblingHoldsComponent {
   protected readonly ColumnMode = ColumnMode;
@@ -21,6 +21,7 @@ export class ScrobblingHoldsComponent {
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly scrobblingService = inject(ScrobblingService);
   protected readonly imageService = inject(ImageService);
+  protected readonly baseUrl = inject(APP_BASE_HREF);
 
   isLoading = true;
   data: Array<ScrobbleHold> = [];

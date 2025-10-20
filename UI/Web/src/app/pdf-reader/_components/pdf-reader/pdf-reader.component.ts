@@ -1,17 +1,17 @@
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component, DestroyRef,
+  Component,
+  DestroyRef,
   ElementRef,
   HostListener,
   inject,
-  Inject,
   OnDestroy,
-  OnInit,
+  OnInit, signal,
   ViewChild
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
-import {NgxExtendedPdfViewerModule, PageViewModeType, ProgressBarEvent, ScrollModeType} from 'ngx-extended-pdf-viewer';
+import {NgxExtendedPdfViewerModule, pdfDefaultOptions, PageViewModeType, ProgressBarEvent, ScrollModeType} from 'ngx-extended-pdf-viewer';
 import {ToastrService} from 'ngx-toastr';
 import {take} from 'rxjs';
 import {BookService} from 'src/app/book-reader/_services/book.service';
@@ -30,19 +30,20 @@ import {PdfLayoutMode} from "../../../_models/preferences/pdf-layout-mode";
 import {PdfScrollMode} from "../../../_models/preferences/pdf-scroll-mode";
 import {PdfTheme} from "../../../_models/preferences/pdf-theme";
 import {PdfSpreadMode} from "../../../_models/preferences/pdf-spread-mode";
-import {SpreadType} from "ngx-extended-pdf-viewer/lib/options/spread-type";
-import {PdfLayoutModePipe} from "../../_pipe/pdf-layout-mode.pipe";
+import {SpreadType} from "node_modules/ngx-extended-pdf-viewer/lib/options/spread-type";
 import {PdfScrollModeTypePipe} from "../../_pipe/pdf-scroll-mode.pipe";
 import {PdfSpreadTypePipe} from "../../_pipe/pdf-spread-mode.pipe";
+import {ReadingProfileService} from "../../../_services/reading-profile.service";
+import {ReadingProfile} from "../../../_models/preferences/reading-profiles";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 @Component({
-    selector: 'app-pdf-reader',
-    templateUrl: './pdf-reader.component.html',
-    styleUrls: ['./pdf-reader.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
+  selector: 'app-pdf-reader',
+  templateUrl: './pdf-reader.component.html',
+  styleUrls: ['./pdf-reader.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [NgStyle, NgxExtendedPdfViewerModule, NgbTooltip, AsyncPipe, TranslocoDirective,
-    PdfLayoutModePipe, PdfScrollModeTypePipe, PdfSpreadTypePipe]
+    PdfScrollModeTypePipe, PdfSpreadTypePipe]
 })
 export class PdfReaderComponent implements OnInit, OnDestroy {
 
@@ -55,9 +56,11 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   private readonly themeService = inject(ThemeService);
   private readonly cdRef = inject(ChangeDetectorRef);
   public readonly accountService = inject(AccountService);
+  private readonly readingProfileService = inject(ReadingProfileService);
   public readonly readerService = inject(ReaderService);
   public readonly utilityService = inject(UtilityService);
   public readonly destroyRef = inject(DestroyRef);
+  public readonly document = inject(DOCUMENT);
 
   protected readonly ScrollModeType = ScrollModeType;
   protected readonly Breakpoint = Breakpoint;
@@ -70,6 +73,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   chapterId!: number;
   chapter!: Chapter;
   user!: User;
+  readingProfile!: ReadingProfile;
 
   /**
    * Reading List id. Defaults to -1.
@@ -106,6 +110,10 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   backgroundColor: string = this.themeMap[this.theme].background;
   fontColor: string = this.themeMap[this.theme].font;
 
+  /**
+   * True if Preferences.DataSaver is true
+   */
+  disableLoadingIndicator = signal(false);
   isLoading: boolean = true;
   /**
    * How much of the current document is loaded
@@ -116,8 +124,9 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   pageLayoutMode: PageViewModeType = 'multiple';
   scrollMode: ScrollModeType = ScrollModeType.vertical;
   spreadMode: SpreadType = 'off';
+  isSearchOpen: boolean = false;
 
-  constructor(@Inject(DOCUMENT) private document: Document) {
+  constructor() {
       this.navService.hideNavBar();
       this.themeService.clearThemes();
       this.navService.hideSideNav();
@@ -161,6 +170,16 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
     this.seriesId = parseInt(seriesId, 10);
     this.chapterId = parseInt(chapterId, 10);
     this.incognitoMode = this.route.snapshot.queryParamMap.get('incognitoMode') === 'true';
+
+    this.route.data.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(data => {
+      this.readingProfile = data['readingProfile'];
+      if (this.readingProfile == null) {
+        this.router.navigateByUrl('/home');
+        return;
+      }
+      this.setupReaderSettings();
+      this.cdRef.markForCheck();
+    });
 
 
     const readingListId = this.route.snapshot.queryParamMap.get('readingListId');
@@ -234,14 +253,19 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
     }
   }
 
-  init() {
-
+  setupReaderSettings() {
     this.pageLayoutMode = this.convertPdfLayoutMode(PdfLayoutMode.Multiple);
-    this.scrollMode = this.convertPdfScrollMode(this.user.preferences.pdfScrollMode || PdfScrollMode.Vertical);
-    this.spreadMode = this.convertPdfSpreadMode(this.user.preferences.pdfSpreadMode || PdfSpreadMode.None);
-    this.theme = this.convertPdfTheme(this.user.preferences.pdfTheme || PdfTheme.Dark);
+    this.scrollMode = this.convertPdfScrollMode(this.readingProfile.pdfScrollMode || PdfScrollMode.Vertical);
+    this.spreadMode = this.convertPdfSpreadMode(this.readingProfile.pdfSpreadMode || PdfSpreadMode.None);
+    this.theme = this.convertPdfTheme(this.readingProfile.pdfTheme || PdfTheme.Dark);
+  }
+
+  init() {
     this.backgroundColor = this.themeMap[this.theme].background;
     this.fontColor = this.themeMap[this.theme].font; // TODO: Move this to an observable or something
+
+    this.disableLoadingIndicator.set(this.user.preferences.dataSaver);
+    pdfDefaultOptions.disableAutoFetch = this.user.preferences.dataSaver;
 
     this.calcScrollbarNeeded();
 
@@ -337,7 +361,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   }
 
   closeReader() {
-    this.readerService.closeReader(this.readingListMode, this.readingListId);
+    this.readerService.closeReader(this.libraryId, this.seriesId, this.chapterId, this.readingListMode, this.readingListId);
   }
 
   updateLoading(state: boolean) {
@@ -354,6 +378,11 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
      console.log('event.tool', event);
   }
 
+  updateSearchOpen(event: boolean) {
+     this.isSearchOpen = event;
+     this.cdRef.markForCheck();
+  }
+
   prevPage() {
      this.currentPage--;
      if (this.currentPage < 0) this.currentPage = 0;
@@ -365,5 +394,6 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
     if (this.currentPage > this.maxPages) this.currentPage = this.maxPages;
     this.cdRef.markForCheck();
   }
+
 
 }

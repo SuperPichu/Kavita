@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {TextResonse} from "../_types/text-response";
-import { HttpClient } from "@angular/common/http";
+import {HttpClient} from "@angular/common/http";
 import {environment} from "../../environments/environment";
 import {DashboardStream} from "../_models/dashboard/dashboard-stream";
 
@@ -8,8 +8,9 @@ import {DashboardStream} from "../_models/dashboard/dashboard-stream";
   providedIn: 'root'
 })
 export class DashboardService {
+  private httpClient = inject(HttpClient);
+
   baseUrl = environment.apiUrl;
-  constructor(private httpClient: HttpClient) { }
 
   getDashboardStreams(visibleOnly = true) {
     return this.httpClient.get<Array<DashboardStream>>(this.baseUrl + 'stream/dashboard?visibleOnly=' + visibleOnly);
@@ -25,5 +26,9 @@ export class DashboardService {
 
   createDashboardStream(smartFilterId: number) {
     return this.httpClient.post<DashboardStream>(this.baseUrl + 'stream/add-dashboard-stream?smartFilterId=' + smartFilterId, {});
+  }
+
+  deleteSmartFilterStream(streamId: number) {
+    return this.httpClient.delete(this.baseUrl + 'stream/smart-filter-dashboard-stream?dashboardStreamId=' + streamId, {});
   }
 }

@@ -7,7 +7,7 @@ namespace API.DTOs.Stats.V3;
 /// <summary>
 /// Represents information about a Kavita Installation for Kavita Stats v3 API
 /// </summary>
-public class ServerInfoV3Dto
+public sealed record ServerInfoV3Dto
 {
     /// <summary>
     /// Unique Id that represents a unique install
@@ -131,6 +131,10 @@ public class ServerInfoV3Dto
     /// Is this server using Kavita+
     /// </summary>
     public bool ActiveKavitaPlusSubscription { get; set; }
+    /// <summary>
+    ///  Is OIDC enabled
+    /// </summary>
+    public bool OidcEnabled { get; set; }
     #endregion
 
     #region Users

@@ -2,6 +2,7 @@
     "confirm-email": "You must confirm your email first",
     "locked-out": "You've been locked out from too many authorization attempts. Please wait 10 minutes.",
     "disabled-account": "Your account is disabled. Contact the server admin.",
+    "password-authentication-disabled": "Password authentication has been disabled, login via OpenID Connect",
     "register-user": "Something went wrong when registering user",
     "validate-email": "There was an issue validating your email: {0}",
     "confirm-token-gen": "There was an issue generating a confirmation token",
@@ -17,6 +18,8 @@
     "generate-token": "There was an issue generating a confirmation email token. See logs",
     "age-restriction-update": "There was an error updating the age restriction",
     "no-user": "User does not exist",
+    "oidc-managed": "Users managed by OIDC cannot be edited.",
+    "cannot-change-identity-provider-original-user": "Identity Provider of the original admin account cannot be changed",
     "username-taken": "Username already taken",
     "email-taken": "Email already in use",
     "user-already-confirmed": "User is already confirmed",
@@ -42,6 +45,7 @@
     "email-not-enabled": "Email is not enabled on this server. You cannot perform this action.",
     "account-email-invalid": "The email on file for the admin account is not a valid email. Cannot send test email.",
     "email-settings-invalid": "Email settings missing information. Ensure all email settings are saved.",
+    "oidc-invalid-authority": "OIDC authority is invalid",
 
     "chapter-doesnt-exist": "Chapter does not exist",
     "file-missing": "File was not found in book",
@@ -112,6 +116,9 @@
     "generic-reading-list-create": "There was an issue creating the reading list",
     "reading-list-doesnt-exist": "Reading list does not exist",
 
+    "annotation-failed-create": "Failed to create annotation, try again",
+    "annotation-delete": "Couldn't delete annotation",
+
     "series-restricted": "User does not have access to this Series",
 
     "generic-scrobble-hold": "An error occurred while adding the hold",
@@ -153,6 +160,7 @@
     "generic-user-pref": "There was an issue saving preferences",
 
     "opds-disabled": "OPDS is not enabled on this server",
+    "opds-continue-reading-title": "Continue Reading from: {0}",
     "on-deck": "On Deck",
     "browse-on-deck": "Browse On Deck",
     "recently-added": "Recently Added",
@@ -186,6 +194,10 @@
     "external-source-required": "ApiKey and Host required",
     "external-source-doesnt-exist": "External Source doesn't exist",
     "external-source-already-in-use": "There is an existing stream with this External Source",
+    "sidenav-stream-only-delete-smart-filter": "Only smart filter streams can be deleted from the SideNav",
+    "dashboard-stream-only-delete-smart-filter": "Only smart filter streams can be deleted from the dashboard",
+    "smart-filter-name-required": "Smart Filter name required",
+    "smart-filter-system-name": "You cannot use the name of a system provided stream",
 
     "not-authenticated": "User is not authenticated",
     "unable-to-register-k+": "Unable to register license due to error. Reach out to Kavita+ Support",
@@ -208,6 +220,7 @@
     "user-no-access-library-from-series": "User does not have access to the library this series belongs to",
     "series-restricted-age-restriction": "User is not allowed to view this series due to age restrictions",
     "kavitaplus-restricted": "This is restricted to Kavita+ only",
+    "aliases-have-overlap": "One or more of the aliases have overlap with other people, cannot update",
 
     "volume-num": "Volume {0}",
     "book-num": "Book {0}",
@@ -225,6 +238,11 @@
     "scan-libraries": "Scan Libraries",
     "kavita+-data-refresh": "Kavita+ Data Refresh",
     "backup": "Backup",
-    "update-yearly-stats": "Update Yearly Stats"
+    "update-yearly-stats": "Update Yearly Stats",
 
+    "generated-reading-profile-name": "Generated from {0}",
+    "genre-doesnt-exist": "Genre doesn't exist",
+    "font-url-not-allowed": "Uploading a Font by url is only allowed from Google Fonts",
+    "annotation-export-failed": "Unable to export Annotations, check logs",
+    "download-not-allowed": "User does not have download permissions"
 }

@@ -5,7 +5,8 @@
         "password": "{{common.password}}",
         "password-validation": "{{validation.password-validation}}",
         "forgot-password": "Zabudli ste heslo?",
-        "submit": "Prihlásiť sa"
+        "submit": "Prihlásiť sa",
+        "oidc": "OpenID Connect"
     },
     "dashboard": {
         "no-libraries": "Momentálne nie sú vytvorené žiadne knižnice. Vytvorte nejaké v",
@@ -26,7 +27,14 @@
         "saving": "Ukladanie…",
         "update": "Aktualizovať",
         "account-detail-title": "Podrobnosti o účte",
-        "invalid-email-warning": "Neplatný e-mail zablokuje niektoré funkcie Kavity"
+        "invalid-email-warning": "Neplatný e-mail zablokuje niektoré funkcie Kavity",
+        "notice": "Pozor!",
+        "out-of-sync": "Tento používateľ bol vytvorený prostredníctvom OIDC. Ak je povolené nastavenie SyncUsers, všetky zmeny vykonané v tomto účte môžu byť prepísané.",
+        "oidc-managed": "Tento používateľ je spravovaný prostredníctvom OIDC. Ak chcete vykonať akékoľvek zmeny, kontaktujte svojho správcu OIDC.",
+        "identity-provider": "Poskytovateľ identity",
+        "identity-provider-tooltip": "Používatelia Kavity nie sú nikdy synchronizovaní s účtami OIDC.",
+        "libraries-label": "{{common.libraries}}",
+        "roles-label": "{{common.roles}}"
     },
     "user-scrobble-history": {
         "title": "História Scrobblingu",
@@ -50,7 +58,9 @@
         "volume-num": "Zväzok {{num}}",
         "generate-scrobble-events": "Záložné udalosti",
         "token-expired": "Platnosť vášho tokenu AniList vypršala! Scrobbling udalosti sa spracujú až po obnovení na stránke Účty.",
-        "scrobbling-disabled": "Scrobblovanie je zakázané v nastaveniach vášho účtu."
+        "scrobbling-disabled": "Scrobblovanie je zakázané v nastaveniach vášho účtu.",
+        "select-all-label": "Vybrať všetko",
+        "delete-selected-label": "Odstrániť vybraté"
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "Pokrok v čítaní",
@@ -62,15 +72,6 @@
     "spoiler": {
         "click-to-show": "Spojler, kliknite na zobrazenie"
     },
-    "review-series-modal": {
-        "title": "Upraviť recenziu",
-        "review-label": "Recenzia",
-        "close": "{{common.close}}",
-        "save": "{{common.save}}",
-        "delete": "{{common.delete}}",
-        "required": "{{validation.required-field}}",
-        "min-length": "Recenzia musí obsahovať aspoň {{count}} znakov"
-    },
     "review-card-modal": {
         "close": "{{common.close}}",
         "external-mod": "(externé)",
@@ -81,7 +82,8 @@
         "your-review": "Toto je Vaša recenzia",
         "external-review": "Externá recenzia",
         "local-review": "Lokálna Recenzia",
-        "rating-percentage": "Hodnotenie {{r}}%"
+        "rating-percentage": "Hodnotenie {{r}}%",
+        "critic": "kritika"
     },
     "want-to-read": {
         "title": "Chcem prečítať",
@@ -91,7 +93,7 @@
     },
     "user-preferences": {
         "title": "Používateľský panel",
-        "pref-description": "Toto sú globálne nastavenia, ktoré sú viazané na Váš účet.",
+        "pref-description": "Toto sú globálne nastavenia, ktoré sú prepojené s vaším účtom. Nastavenia čitateľa sa nachádzajú v časti Profilov čitateľa.",
         "account-tab": "{{tabs.account-tab}}",
         "preferences-tab": "{{tabs.preferences-tab}}",
         "theme-tab": "{{tabs.theme-tab}}",
@@ -114,69 +116,38 @@
         "collapse-series-relationships-label": "Zbaliť vzťahy série",
         "collapse-series-relationships-tooltip": "Mala by Kavita ukázať seriál, ktorý nemá žiadne vzťahy alebo je nadradeným/prequel",
         "share-series-reviews-label": "Zdieľať recenzie série",
-        "share-series-reviews-tooltip": "Ak má Kavita zahrnúť vaše recenzie na Série pre iných používateľov",
-        "image-reader-settings-title": "Čítačka obrázkov",
-        "reading-direction-label": "Smer čítania",
-        "reading-direction-tooltip": "Smer pre kliknutie na prejdenie na ďalšiu stránku. Sprava doľava znamená, že kliknutím na ľavú stranu obrazovky prejdete na ďalšiu stránku.",
-        "scaling-option-label": "Možnosti škálovania",
-        "scaling-option-tooltip": "Ako zmeniť mierku obrázka na obrazovku.",
-        "page-splitting-label": "Rozdelenie stránky",
-        "page-splitting-tooltip": "Ako rozdeliť obrázok na celú šírku (tj ľavý a pravý obrázok sa skombinujú)",
-        "reading-mode-label": "Režim čítania",
-        "layout-mode-label": "Režim rozloženia",
-        "layout-mode-tooltip": "Vykreslite jeden obrázok na obrazovku alebo dva obrázky vedľa seba",
-        "background-color-label": "Farba pozadia",
-        "auto-close-menu-label": "Automaticky zatvoriť menu",
-        "show-screen-hints-label": "Zobraziť tipy na obrazovke",
-        "emulate-comic-book-label": "Napodobniť komiks",
-        "swipe-to-paginate-label": "Potiahnuť pre Stránkovanie",
-        "book-reader-settings-title": "Čítačka kníh",
-        "tap-to-paginate-label": "Klepnutím môžete stránkovať",
-        "tap-to-paginate-tooltip": "Ak strany obrazovky čítačky kníh umožňujú ťuknutím na ňu prejsť na predchádzajúcu/nasledujúcu stranu",
-        "immersive-mode-label": "Imerzívny režim",
-        "immersive-mode-tooltip": "Ponuka sa skryje pri kliknutí na dokument čítačky a zapne dotyk pre listovanie strán",
-        "reading-direction-book-label": "Smer čítania",
-        "reading-direction-book-tooltip": "Smer na kliknutie pre prejdenie na ďalšiu stránku. Sprava doľava znamená, že kliknutím na ľavú stranu obrazovky prejdete na ďalšiu stránku.",
-        "font-family-label": "Typ Písma",
-        "font-family-tooltip": "Typ písma na načítanie. Predvolené načíta predvolené písmo knihy",
-        "writing-style-label": "Štýl písania",
-        "writing-style-tooltip": "Zmení smer textu. Horizontálne je zľava doprava, vertikálne je zhora nadol.",
-        "layout-mode-book-label": "Režim Rozloženia",
-        "layout-mode-book-tooltip": "Ako by mal byť obsah usporiadaný. Zvitok je taký, ako ho balí kniha. 1 alebo 2 stĺpce sa prispôsobia výške zariadenia a zmestia sa 1 alebo 2 stĺpce textu na stranu",
-        "color-theme-book-tooltip": "Akú farebnú tému použiť na obsah a ponuku čítačky kníh",
-        "font-size-book-label": "Veľkosť Písma",
-        "line-height-book-label": "Riadkovanie",
-        "line-height-book-tooltip": "Koľko medzier medzi riadkami knihy",
-        "margin-book-label": "Okraj stránky",
-        "margin-book-tooltip": "Koľko medzier na každej strane obrazovky. Na mobilných zariadeniach sa to prepíše na 0 bez ohľadu na toto nastavenie.",
+        "share-series-reviews-tooltip": "Povoliť zobrazenie vašich recenzií ostatným používateľom na tomto serveri",
         "clients-opds-description": "Všetci klienti tretích strán budú používať kľúč API alebo pripájaciu adresu URL nižšie. Musí sa s nimi zaobchádzať dôverne, rovnako ako s heslami.",
         "clients-api-key-tooltip": "Kľúč API je ako heslo. Jeho obnovenie zruší platnosť všetkých existujúcich klientov.",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "reading-mode-tooltip": "Zmeňte čítačku na zvislé, vodorovné stránkovanie alebo na nekonečné posúvanie",
-        "clients-opds-alert": "OPDS nie je na tomto serveri povolené. Toto neovplyvní používateľov Tachiyomi.",
+        "clients-opds-alert": "OPDS nie je na tomto serveri povolený. Toto neovplyvní používateľov Mihonu.",
         "clients-opds-url-tooltip": "Pozrite si zoznam podporovaných klientov OPDS: ",
-        "color-theme-book-label": "Farebný motív",
-        "pdf-reader-settings-title": "PDF Čítačka",
-        "pdf-scroll-mode-label": "Režim scrollovania",
-        "pdf-scroll-mode-tooltip": "Ako listujete stránkami. Vertikálne/horizontálne a stránkovanie klepnutím (bez posúvania)",
-        "pdf-spread-mode-label": "Režim šírenia",
-        "swipe-to-paginate-tooltip": "Potiahnutie prstom po obrazovke by malo spôsobiť spustenie nasledujúcej alebo predchádzajúcej stránky",
-        "font-size-book-tooltip": "Percento mierky, ktorá sa má použiť na písmo v knihe",
-        "pdf-theme-tooltip": "Farebná téma čitateľa",
         "clients-opds-url-label": "OPDS URL",
         "clients-api-key-label": "API kľúč",
-        "background-color-tooltip": "Farba pozadia čítačky obrázkov",
-        "auto-close-menu-tooltip": "Malo by sa menu automaticky zatvoriť",
-        "show-screen-hints-tooltip": "Zobrazte prekrytie, ktoré vám pomôže pochopiť oblasť a smer stránkovania",
-        "emulate-comic-book-tooltip": "Aplikuje tieňový efekt na emuláciu čítania z knihy",
-        "pdf-spread-mode-tooltip": "Ako by mali byť stránky usporiadané. Jedno alebo dvojlôžkové (nepárne/párne)",
-        "pdf-theme-label": "Téma",
         "kavitaplus-settings-title": "Kavita+",
         "anilist-scrobbling-label": "AniList Scrobblovanie",
         "anilist-scrobbling-tooltip": "Umožniť Kavite scrobblovať (jednosmerná synchronizácia) priebeh čítania a hodnotenia do zoznamu AniList",
         "want-to-read-sync-label": "Synchronizovať \"chcem čítať\"",
-        "want-to-read-sync-tooltip": "Povoľte Kavite pridávať položky do vášho zoznamu Chcete si prečítať na základe AniListu a MAL sérií v zozname čakajúcich na prečítanie"
+        "want-to-read-sync-tooltip": "Povoľte aplikácii Kavita pridávať položky do zoznamu Chcem si prečítať na základe sérií AniList a MAL v zozname Čakajúce na prečítanie",
+        "font-tab": "Písmo",
+        "social-settings-title": "Sociálne nastavenia",
+        "highlight-bar-label": "Farby zvýrazňovania anotácií",
+        "highlight-bar-tooltip": "Tieto farby sú spoločné pre všetky knihy",
+        "colorscape-label": "Použite ColorScape",
+        "colorscape-tooltip": "Globálny prepínač na zapnutie/vypnutie funkcie dynamického prechodu. Prepíše nastavenia témy",
+        "data-saver-label": "Šetrič dát",
+        "data-saver-tooltip": "Minimalizuje spotrebu dát tým, že zabraňuje automatickému predbežnému načítaniu (napr. čítačka PDF)",
+        "share-annotations-label": "Zdieľať anotácie",
+        "share-annotations-tooltip": "Povoliť zobrazovanie vašich anotácií ostatným používateľom na tomto serveri",
+        "view-other-annotations-label": "Zobraziť zdieľané anotácie",
+        "view-other-annotations-tooltip": "Zobrazenie anotácií iných používateľov počas čítania",
+        "social-libraries-label": "Sociálne knižnice",
+        "social-libraries-tooltip": "Knižnice, v ktorých by mali byť sociálne funkcie povolené. Ak nevyberiete žiadnu možnosť, sociálne funkcie sa aktivujú všade. Ak chcete používať konkrétne funkcie nikde, vypnite ich.",
+        "social-max-age-rating-label": "Maximálne vekové hodnotenie",
+        "social-max-age-rating-tooltip": "Maximálne vekové obmedzenie, pri ktorom budú sociálne funkcie fungovať",
+        "social-include-unknowns-label": "Zahrňte neznáme",
+        "social-include-unknowns-tooltip": "Povoliť sociálne funkcie pre série a kapitoly s neznámym vekovým obmedzením"
     },
     "user-holds": {
         "title": "Scrobble tituly",
@@ -189,7 +160,7 @@
     "theme-manager": {
         "title": "Správca tém",
         "site-themes": "Témy/Motívy stránok",
-        "set-default": "Nastaviť ako predvolené",
+        "set-default": "Nastaviť predvolené",
         "download": "{{changelog.download}}",
         "apply": "{{common.apply}}",
         "applied": "Aplikované",
@@ -199,7 +170,7 @@
         "add": "{{common.add}}",
         "default-theme": "Predvolené",
         "active-theme": "Aktívne",
-        "description": "Kavita prichádza vo svojich farbách, nájdite si farebnú schému, ktorá vyhovuje vašim potrebám alebo si ju vytvorte sami a zdieľajte ju. Motívy môžu byť použité pre váš účet alebo pre všetky účty.",
+        "description": "Kavita je dostupná v mnohých farbách, nájdite si farebnú schému, ktorá vyhovuje vašim potrebám, alebo si ju vytvorte sami a zdieľajte. Témy je možné použiť pre váš účet alebo pre všetky účty.",
         "downloaded": "Stiahnuté",
         "downloadable": "Stiahnuteľné",
         "preview-default-admin": "Najprv vyberte tému alebo ju nahrajte ručne",
@@ -241,7 +212,8 @@
         "email-setup-alert": "Chcete posielať súbory do svojich zariadení? Správca musí prv nakonfigurovať nastavenia e-mailu!",
         "no-devices": "Zatiaľ nie sú nastavené žiadne zariadenia",
         "email-label": "Email",
-        "name-label": "Meno"
+        "name-label": "Meno",
+        "warning": "Pozor"
     },
     "edit-device-modal": {
         "device-name-label": "{{manage-devices.name-label}}",
@@ -304,7 +276,8 @@
         "regen-warning": "Opätovné vygenerovanie kľúča API zruší platnosť všetkých existujúcich klientov.",
         "no-key": "CHYBA – KĽÚČ NIE JE NASTAVENÝ",
         "confirm-reset": "Toto zruší platnosť všetkých konfigurácií OPDS, ktoré ste nastavili. Ste si istý, že chcete pokračovať?",
-        "key-reset": "Obnovenie kľúča API"
+        "key-reset": "Obnovenie kľúča API",
+        "reset": "Resetovať"
     },
     "scrobbling-providers": {
         "title": "Poskytovatelia scrobbblingu",
@@ -381,7 +354,7 @@
         "comics-label": "Komiks: {{value}} hod"
     },
     "role-selector": {
-        "title": "Roly",
+        "title": "{{common.roles}}",
         "deselect-all": "{{common.deselect-all}}",
         "select-all": "{{common.select-all}}"
     },
@@ -514,11 +487,11 @@
     },
     "library-type-pipe": {
         "book": "Kniha",
-        "comic": "Komiks",
+        "comic": "Komiks (flexibilný)",
         "manga": "Manga",
         "image": "Obrázok",
         "lightNovel": "Light Novel",
-        "comicVine": "Comic Vine"
+        "comicVine": "Comic"
     },
     "age-rating-pipe": {
         "unknown": "Neznámy",
@@ -595,10 +568,12 @@
         "inviting": "Pozýva sa…",
         "cancel": "{{common.cancel}}",
         "email-not-sent": "{{toasts.email-not-sent}}",
-        "notice": "{{manage-settings.notice}}"
+        "notice": "{{manage-settings.notice}}",
+        "libraries-label": "{{common.libraries}}",
+        "roles-label": "{{common.roles}}"
     },
     "library-selector": {
-        "title": "Knižnice",
+        "title": "{{common.libraries}}",
         "select-all": "{{common.select-all}}",
         "deselect-all": "{{common.deselect-all}}",
         "no-data": "Zatiaľ nie sú nastavené žiadne knižnice."
@@ -652,7 +627,13 @@
         "k+-license-overwrite": "Licencia je zaregistrovaná v inej inštancii Kavita. Môže sa to stať pri opätovnej inštalácii a zriedkavo kvôli aktualizáciám systému. Vyberte prepísať, aby ste vynútili registráciu tejto inštancie v Kavita+.",
         "k+-already-registered-header": "Licencia je už zaregistrovaná",
         "overwrite": "Prepísať",
-        "k+-unlocked": "Kavita+ odomknutá!"
+        "k+-unlocked": "Kavita+ odomknutá!",
+        "kavita+-warning": "Kavita+ je oddelená od aplikácie Kavita. Odinštalovanie bez predchádzajúceho zrušenia predplatného bude pokračovať vo fakturačnom cykle.",
+        "cancel-label": "Zrušiť predplatné",
+        "cancel-tooltip": "Zrušte svoje predplatné a odstráňte licenciu v aplikácii Kavita.",
+        "resend-license-email": "Pošlite licenciu na email",
+        "resend-license-email-tooltip": "Znovu odošlite licenciu Kavita+ na e-mail. Licencia musí byť prepojená s týmto serverom, aby fungovala.",
+        "supportId-label": "Support Id"
     },
     "book-line-overlay": {
         "copy": "Kopírovať",
@@ -660,7 +641,8 @@
         "close": "{{common.close}}",
         "required-field": "{{common.required-field}}",
         "bookmark-label": "Meno Záložky",
-        "save": "{{common.save}}"
+        "save": "{{common.save}}",
+        "annotate": "Komentovať"
     },
     "book-reader": {
         "title": "Nastavenia Knihy",
@@ -682,15 +664,23 @@
         "incognito-mode-label": "Inkognito Mód",
         "next": "Ďalej",
         "previous": "Späť",
-        "go-to-page-prompt": "Počet stránok: {{totalPages}}. Na akú stránku chceš ísť?",
+        "go-to-page-prompt": "Existuje {{totalPages}} stránok. Na ktorú stránku chcete prejsť? Stránka začína na čísle 1.",
         "toc-header": "ToC",
         "loading-book": "Načítava sa kniha…",
-        "close-reader": "Zavrieť Čítačku"
+        "close-reader": "Zavrieť Čítačku",
+        "go-to-first-page": "Prejsť na prvú stránku",
+        "page-num-label": "Strana {{strana}}",
+        "completion-label": "{{percent}} hotových",
+        "force-selected-one-column": "Režim rozloženia prepnutý na jeden stĺpec z dôvodu nedostatku miesta na vykreslenie dvoch stĺpcov",
+        "forced-vertical-switch": "Režim rozloženia bol prepnutý, pretože dvojstĺpcové rozloženie nefunguje so zvislým štýlom písania"
     },
     "personal-table-of-contents": {
         "no-data": "Zatiaľ nič nie je v záložkách",
-        "page": "Strana {{value}}",
-        "delete": "Zmazať {{bookmarkName}}"
+        "delete": "Zmazať {{bookmarkName}}",
+        "page-title": "Strana {{strana}}",
+        "chapter-and-page-title": "Kapitola {{chapterTitle}}, Strana {{page}}",
+        "no-match": "Žiadne záložky nezodpovedajú filtru",
+        "filter-label": "{{common.filter}}"
     },
     "confirm-email": {
         "title": "Registrovať",
@@ -733,7 +723,7 @@
     "series-detail": {
         "page-settings-title": "Nastavenie Stránky",
         "close": "{{common.close}}",
-        "layout-mode-label": "{{user-preferences.layout-mode-book-label}}",
+        "layout-mode-label": "{{manage-reading-profiles.layout-mode-book-label}}",
         "layout-mode-option-card": "Karta",
         "continue-from": "Pokračovať {{title}}",
         "read": "{{common.read}}",
@@ -777,18 +767,20 @@
         "volume-num": "{{common.volume-num}}",
         "reading-lists-title": "{{side-nav.reading-lists}}",
         "time-to-read-alt": "{{sort-field-pipe.time-to-read}}",
-        "scrobbling-tooltip": "{{settings.scrobbling}}",
+        "scrobbling-tooltip": "{{settings.scrobbling}}: {{value}}",
         "time-left-alt": "Zostávajúci čas",
         "layout-mode-option-list": "Zoznam",
         "more-alt": "Viac",
         "publication-status-title": "Publikácia",
         "publication-status-tooltip": "Stav publikácie",
-        "user-reviews-local": "Miestne recenzie",
-        "user-reviews-plus": "Externé recenzie",
         "pages-count": "{{num}} Strán",
         "words-count": "{{num}} Slov",
         "weblinks-title": "Odkazy",
-        "release-date-title": "Vydanie"
+        "release-date-title": "Vydanie",
+        "on": "{{reader-settings.on}}",
+        "off": "{{reader-settings.off}}",
+        "annotations-tab": "{{tabs.annotations-tab}}",
+        "loading": "{{common.loading}}"
     },
     "metadata-fields": {
         "collections-title": "{{side-nav.collections}}",
@@ -816,7 +808,8 @@
         "close": "{{common.close}}",
         "entry-label": "Pozri detaily",
         "kavita-tooltip": "Vaše hodnotenie + Celkové",
-        "kavita-rating-title": "Vaše hodnotenie"
+        "kavita-rating-title": "Vaše hodnotenie",
+        "critic": "{{review-card.critic}}"
     },
     "badge-expander": {
         "more-items": "a {{count}} ďalších"
@@ -839,7 +832,7 @@
     },
     "side-nav": {
         "home": "Domov",
-        "want-to-read": "Chcem čítať",
+        "want-to-read": "Obľúbené",
         "collections": "Zbierky",
         "reading-lists": "Čítacie Zoznamy",
         "bookmarks": "Záložky",
@@ -851,7 +844,9 @@
         "back": "Naspäť",
         "more": "Viac",
         "customize": "{{settings.customize}}",
-        "browse-authors": "Prezerať autorov"
+        "edit": "{{common.edit}}",
+        "cancel-edit": "Zavrieť zmenu poradia",
+        "browse-people": "Prehľadávať ľudí"
     },
     "library-settings-modal": {
         "close": "{{common.close}}",
@@ -862,18 +857,18 @@
         "cover-tab": "{{tabs.cover-tab}}",
         "advanced-tab": "{{tabs.advanced-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
-        "name-label": "Názov",
+        "name-label": "Meno",
         "library-name-unique": "Názov knižnice musí byť jedinečný",
         "last-scanned-label": "Naposledy skenované:",
         "type-label": "Typ",
-        "kavitaplus-eligible-tooltip": "Bude Kavita+ získavať informácie alebo podporovať Scrobbling",
+        "kavitaplus-eligible-tooltip": "Podporuje funkcie metadát Kavita+ a/alebo Scrobbling",
         "folder-description": "Pridajte priečinky do svojej knižnice",
         "browse": "Prehľadávať priečinky médií",
         "help-us-part-2": "náš sprievodca",
         "help-us-part-3": "na pomenovanie a usporiadanie vašich médií.",
         "naming-conventions-part-1": "Kavita má ",
         "naming-conventions-part-2": "požiadavky na priečinok.",
-        "naming-conventions-part-3": "Skontrolujte tento odkaz, aby ste sa uistili, že ho sledujete, inak sa súbory nezobrazia pri skenovaní.",
+        "naming-conventions-part-3": "Skontrolujte tento odkaz, aby ste sa uistili, že postupujete podľa pokynov, inak sa súbory pri kontrole nemusia zobraziť.",
         "cover-description": "Ikony obrázkov vlastnej knižnice sú voliteľné",
         "cover-description-extra": "Obrázok knižnice by nemal byť veľký. Zamerajte sa na malý súbor s veľkosťou 32 x 32 pixelov. Kavita nevykonáva overenie veľkosti.",
         "manage-collection-label": "Spravovať Zbierky",
@@ -904,7 +899,12 @@
         "type-tooltip": "Typ knižnice určuje, ako sa analyzujú názvy súborov a či používateľské rozhranie zobrazuje kapitoly (manga) vs. čísla (komiksy). Viac podrobností o rozdieloch medzi typmi knižníc nájdete na wiki.",
         "kavitaplus-eligible-label": "Kavita+ Oprávnené",
         "allow-metadata-matching-label": "Povoliť zhodu metadát",
-        "allow-metadata-matching-tooltip": "Mala by Kavita stiahnuť metadáta pre série v rámci tejto knižnice. Toto sa uskutoční len vtedy, ak má server aktívne predplatné Kavita+."
+        "allow-metadata-matching-tooltip": "Mala by Kavita stiahnuť metadáta pre série v rámci tejto knižnice. Toto sa uskutoční len vtedy, ak má server aktívne predplatné Kavita+.",
+        "enable-metadata-label": "Povoliť metadáta (ComicInfo/Epub/PDF)",
+        "enable-metadata-tooltip": "Povoliť Kavite čítať súbory s metadátami, ktoré prepíšu analýzu názvov súborov.",
+        "remove-prefix-for-sortname-label": "Odstránenie bežných predpon pre názov zoradenia",
+        "remove-prefix-for-sortname-tooltip": "Kavita odstráni z názvov pre názov zoradenia bežné predpony ako „The“, „A“, „An“. Neprepíše nastavené metadáta.",
+        "files-at-root-warning": "Jeden alebo viacero priečinkov obsahuje súbory v koreňovom adresári. Kavita to nepodporuje."
     },
     "file-type-group-pipe": {
         "archive": "Archív",
@@ -914,27 +914,27 @@
     },
     "reader-settings": {
         "general-settings-title": "Všeobecné Nastavenia",
-        "font-family-label": "{{user-preferences.font-family-label}}",
-        "font-size-label": "{{user-preferences.font-size-book-label}}",
-        "line-spacing-label": "{{user-preferences.line-height-book-label}}",
-        "margin-label": "{{user-preferences.margin-book-label}}",
+        "font-family-label": "{{manage-reading-profiles.font-family-label}}",
+        "font-size-label": "{{manage-reading-profiles.font-size-book-label}}",
+        "line-spacing-label": "{{manage-reading-profiles.line-height-book-label}}",
+        "margin-label": "{{manage-reading-profiles.margin-book-label}}",
         "reset-to-defaults": "Obnoviť predvolené nastavenia",
         "reader-settings-title": "Nastavenia čítačky",
-        "reading-direction-label": "{{user-preferences.reading-direction-book-label}}",
+        "reading-direction-label": "{{manage-reading-profiles.reading-direction-book-label}}",
         "right-to-left": "Zprava doľava",
         "left-to-right": "Zľava doprava",
         "horizontal": "Horizontálne",
         "vertical": "Vertikálne",
-        "writing-style-label": "{{user-preferences.writing-style-label}}",
+        "writing-style-label": "{{manage-reading-profiles.writing-style-label}}",
         "tap-to-paginate-label": "Klepnite na Stránkovanie",
         "tap-to-paginate-tooltip": "Pre stránkovanie kliknite na okraje obrazovky",
         "on": "Zapnuté",
         "off": "Vypnuté",
-        "immersive-mode-label": "{{user-preferences.immersive-mode-label}}",
+        "immersive-mode-label": "{{manage-reading-profiles.immersive-mode-label}}",
         "immersive-mode-tooltip": "Ponuka sa skryje pri kliknutí na dokument čítačky a zapne dotyk pre listovanie strán",
         "fullscreen-label": "Celá obrazovka",
         "fullscreen-tooltip": "Prepnite čítačku do režimu celej obrazovky",
-        "layout-mode-label": "{{user-preferences.layout-mode-book-label}}",
+        "layout-mode-label": "{{manage-reading-profiles.layout-mode-book-label}}",
         "layout-mode-option-scroll": "Skrolovať",
         "layout-mode-option-1col": "1 Stĺpec",
         "layout-mode-option-2col": "2 Stĺpce",
@@ -946,7 +946,15 @@
         "writing-style-tooltip": "Zmení smer textu. Vodorovný je zľava doprava, zvislý zhora nadol.",
         "exit": "Ukončiť",
         "enter": "Enter",
-        "layout-mode-tooltip": "Posúvanie: Zrkadlí súbor epub (zvyčajne jedna dlhá rolovacia stránka na kapitolu).<br/>1 stĺpec: Vytvorí jednu virtuálnu stránku naraz.<br/>2 stĺpec: Vytvorí dve virtuálne stránky naraz rozložené vedľa seba."
+        "layout-mode-tooltip": "Posúvanie: Zrkadlí súbor epub (zvyčajne jedna dlhá rolovacia stránka na kapitolu).<br/>1 stĺpec: Vytvorí jednu virtuálnu stránku naraz.<br/>2 stĺpec: Vytvorí dve virtuálne stránky naraz rozložené vedľa seba.",
+        "loading": "načítavanie",
+        "create-new-tooltip": "Vytvorte nový spravovateľný profil z vášho súčasného implicitného profilu",
+        "reading-profile-updated": "Profil čítania bol aktualizovaný",
+        "line-spacing-max-label": "2.5x",
+        "create-new": "Nový profil z implicitného",
+        "reading-profile-promoted": "Profil čítania bol povýšený",
+        "update-parent": "Uložiť do {{name}}",
+        "line-spacing-min-label": "1x"
     },
     "table-of-contents": {
         "no-data": "Táto kniha nemá v metadátach ani v súbore toc nastavený obsah"
@@ -970,7 +978,8 @@
     },
     "card-detail-layout": {
         "total-items": "Celkový počet položiek: {{count}}",
-        "jumpkey-count": "{{count}} Série"
+        "jumpkey-count": "{{count}} Série",
+        "no-data": "{{common.no-data}}"
     },
     "card-item": {
         "cannot-read": "Nedá sa čítať"
@@ -996,7 +1005,9 @@
         "language-title": "{{edit-chapter-modal.language-label}}",
         "release-title": "{{sort-field-pipe.release-year}}",
         "format-title": "{{metadata-filter.format-label}}",
-        "length-title": "{{edit-chapter-modal.words-label}}"
+        "length-title": "{{edit-chapter-modal.words-label}}",
+        "age-rating-title": "{{metadata-fields.age-rating-title}}",
+        "file-path-title": "Cesta k priečinku"
     },
     "related-tab": {
         "reading-lists-title": "{{reading-lists.title}}",
@@ -1068,7 +1079,7 @@
         "email-settings-title": "Nastavenia e-mailu",
         "reset": "{{common.reset}}",
         "test": "Test",
-        "host-name-tooltip": "Názov domény (reverzného proxy). Vyžaduje sa pre funkčnosť e-mailu. Ak nieje reverzné proxy, použite ľubovoľnú url adresu.",
+        "host-name-tooltip": "Názov domény vášho reverzného proxy servera, potrebný pre fungovanie e-mailu. Ak nepoužívate reverzný proxy server, môžete použiť ľubovoľnú URL adresu vrátane http://externalip:port/",
         "host-name-validation": "Hostname musí začínať http(s) a nesmie končiť na /",
         "sender-address-label": "Adresa odosielateľa",
         "sender-address-tooltip": "Toto je e-mailová adresa, z ktorej príjemca uvidí, keď dostane e-mail. Zvyčajne ide o e-mailovú adresu priradenú k účtu.",
@@ -1094,7 +1105,7 @@
         "setting-description": "Ak chcete v Kavite používať funkcie založené na e-mailoch, musíte vyplniť nastavenia názvu hostiteľa aj SMTP."
     },
     "manage-library": {
-        "title": "Knižnice",
+        "title": "{{common.libraries}}",
         "add-library": "Pridať knižnicu",
         "no-data": "Neexistujú žiadne knižnice. Skúste si nejakú vytvoriť.",
         "loading": "{{common.loading}}",
@@ -1266,9 +1277,6 @@
         "backup-database-task-success": "Úloha na zálohovanie databázy bola zaradená do fronty",
         "download-logs-task": "Stiahnuť logy",
         "download-logs-task-desc": "Skompiluje všetky log súbory do .zip a stiahne súbor.",
-        "analyze-files-task": "Analyzovať súbory",
-        "analyze-files-task-desc": "Spustí dlhotrvajúcu úlohu, ktorá bude analyzovať súbory, aby sa vygenerovala prípona a veľkosť. Toto by malo byť spustené iba raz pre vydanie v0.7. Nie je potrebné, ak ste nainštalovali po v0.7.",
-        "analyze-files-task-success": "Analýza súborov bola zaradená do fronty",
         "check-for-updates-task": "Skontroluj aktualizácie",
         "check-for-updates-task-desc": "Zistite, či sú pred vašou verziou nejaké stabilné vydania.",
         "clean-up-task": "Všeobecné čistenie",
@@ -1301,7 +1309,6 @@
         "change-password-alt": "Zmeniť heslo {{user}}",
         "resend": "Znovu odoslať",
         "setup": "Nastaviť",
-        "admin": "Administrátor",
         "none": "Žiadne",
         "never": "Nikdy",
         "online-now-tooltip": "Práve online",
@@ -1310,10 +1317,13 @@
         "actions-header": "Akcie",
         "last-active-header": "Posledná aktivita",
         "too-many-libraries": "Veľa",
-        "roles-header": "Roly",
+        "roles-header": "{{common.roles}}",
         "name-header": "Meno",
         "sharing-header": "Zdieľanie",
-        "pending-tooltip": "Tento používateľ neoveril svoj e-mail"
+        "pending-tooltip": "Tento používateľ neoveril svoj e-mail",
+        "all-libraries": "Všetky knižnice",
+        "identity-provider-oidc-tooltip": "OIDC",
+        "identity-provider-native-tooltip": "Natívne"
     },
     "edit-collection-tags": {
         "title": "Upraviť zbierku {{collectionName}}",
@@ -1325,7 +1335,7 @@
         "cover-image-tab": "{{tabs.cover-tab}}",
         "info-tab": "{{tabs.info-tab}}",
         "series-tab": "{{tabs.series-tab}}",
-        "name-label": "Názov",
+        "name-label": "Meno",
         "name-validation": "Názov musí byť jedinečný",
         "promote-label": "Povýšiť",
         "promote-tooltip": "Povýšenie znamená, že tag možno vidieť na celom serveri, nielen pre správcov. Všetky série, ktoré majú tento tag, budú mať stále obmedzenia prístupu používateľov.",
@@ -1350,7 +1360,7 @@
     },
     "settings": {
         "kavitaplus-section-title": "Kavita+",
-        "admin-libraries": "Knižnice",
+        "admin-libraries": "{{common.libraries}}",
         "account": "Účet",
         "admin-kavitaplus": "Licencia",
         "preferences": "Nastavenia",
@@ -1379,7 +1389,12 @@
         "admin-email-history": "História e-mailov",
         "admin-matched-metadata": "Zhodné metadáta",
         "scrobble-holds": "Scrobble chyty",
-        "admin-metadata": "Spravovať metadáta"
+        "admin-metadata": "Spravovať metadáta",
+        "reading-profiles": "Čítanie profilov",
+        "admin-oidc": "OpenID Connect",
+        "admin-mappings-import": "Nastavenia metadát",
+        "font": "Písma Epub",
+        "admin-public-metadata": "Spravovať metadáta"
     },
     "collection-detail": {
         "no-data": "Neexistujú žiadne položky. Skúste pridať sériu.",
@@ -1416,7 +1431,8 @@
     },
     "reading-list-item": {
         "remove": "{{common.remove}}",
-        "read": "{{common.read}}"
+        "read": "{{common.read}}",
+        "released-label": "Vydané: {{date}}"
     },
     "stream-list-item": {
         "remove": "{{common.remove}}",
@@ -1424,7 +1440,8 @@
         "provided": "Poskytnuté",
         "smart-filter": "Smart Filter",
         "library": "Knižnica",
-        "external-source": "Externý zdroj"
+        "external-source": "Externý zdroj",
+        "delete": "{{common.delete}}"
     },
     "reading-list-detail": {
         "item-count": "{{common.item-count}}",
@@ -1436,7 +1453,19 @@
         "read-options-alt": "Možnosti čítania",
         "incognito-alt": "(Inkognito)",
         "no-data": "Nič nebolo pridané",
-        "characters-title": "{{metadata-fields.characters-title}}"
+        "characters-title": "{{metadata-fields.characters-title}}",
+        "writers-title": "{{metadata-fields.writers-title}}",
+        "edit-alt": "{{common.edit}}",
+        "storyline-tab": "{{series-detail.storyline-tab}}",
+        "details-tab": "{{series-detail.details-tab}}",
+        "more-alt": "{{series-detail.more-alt}}",
+        "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
+        "publishers-title": "{{metadata-fields.publishers-title}}",
+        "items-title": "Položky",
+        "edit-label": "Režim úprav",
+        "reorder-alt": "Preusporiadať položky",
+        "date-range-title": "Rozsah dátumov",
+        "dnd-warning": "Funkcia „drag and drop“ nie je k dispozícii na mobilných zariadeniach alebo ak zoznam na čítanie obsahuje viac ako 100 položiek."
     },
     "events-widget": {
         "title-alt": "Aktivita",
@@ -1469,12 +1498,13 @@
         "tags": "Tagy",
         "genres": "{{metadata-fields.genres-title}}",
         "bookmarks": "{{side-nav.bookmarks}}",
-        "libraries": "Knižnice",
+        "libraries": "{{common.libraries}}",
         "reading-lists": "Čítacie zoznamy",
         "collections": "Zbierky",
         "close": "{{common.close}}",
         "loading": "{{common.loading}}",
-        "include-extras": "Zahrnúť kapitoly a súbory"
+        "include-extras": "Zahrnúť kapitoly a súbory",
+        "annotations": "{{tabs.annotations-tab}}"
     },
     "nav-header": {
         "skip-alt": "Preskočiť na hlavný obsah",
@@ -1489,7 +1519,11 @@
         "logout": "Odhlásiť sa",
         "all-filters": "Smart Filtre",
         "close": "{{common.close}}",
-        "nav-link-header": "Možnosti navigácie"
+        "nav-link-header": "Možnosti navigácie",
+        "person-aka-status": "Zhoduje sa s aliasom",
+        "browse-tags": "Prehľadávať značky",
+        "browse-genres": "Prehľadávať žánre",
+        "all-annotations": "Prehľadávať anotácie"
     },
     "promoted-icon": {
         "promoted": "{{common.promoted}}"
@@ -1528,7 +1562,7 @@
         "title": "MAL záujmy Stack Importovanie",
         "nothing-found": "Nič sa nenašlo",
         "description": "Importujte svoje MAL záujmy Stacks a vytvorte zbierky v rámci Kavita",
-        "restack-count": "{{num}} Restacks",
+        "restack-count": "{{num}} Restackov",
         "track": "Skladba"
     },
     "edit-chapter-progress": {
@@ -1561,7 +1595,7 @@
         "comicvine-parsing-label": "Použite zhodu Comic Vine Serií"
     },
     "pdf-reader": {
-        "loading-message": "Načítavanie……súborov PDF môže trvať dlhšie, ako sa očakávalo",
+        "loading-message": "Načítavanie...",
         "incognito-mode": "Mód Inkognito",
         "light-theme-alt": "Svetlá téma",
         "dark-theme-alt": "Tmavá téma",
@@ -1576,7 +1610,6 @@
     },
     "manga-reader": {
         "back": "Naspäť",
-        "save-globally": "Uložiť globálne",
         "incognito-alt": "Režim inkognito je zapnutý. Prepínačom vypnete.",
         "incognito-title": "Režim inkognito:",
         "shortcuts-menu-alt": "Modálne klávesové skratky",
@@ -1597,7 +1630,7 @@
         "height": "Výška",
         "width": "Šírka",
         "original": "Originál",
-        "auto-close-menu-label": "{{user-preferences.auto-close-menu-label}}",
+        "auto-close-menu-label": "{{manage-reading-profiles.auto-close-menu-label}}",
         "swipe-enabled-label": "Potiahnutie prstom je povolené",
         "enable-comic-book-label": "Napodobniť komiks",
         "brightness-label": "Jas",
@@ -1608,12 +1641,17 @@
         "layout-mode-switched": "Režim rozloženia bol prepnutý na Single z dôvodu nedostatku miesta na vykreslenie dvojitého rozloženia",
         "no-next-chapter": "Žiadna ďalšia kapitola",
         "no-prev-chapter": "Žiadna predchádzajúca kapitola",
-        "user-preferences-updated": "Predvoľby používateľa boli aktualizované",
-        "emulate-comic-book-label": "{{user-preferences.emulate-comic-book-label}}",
+        "emulate-comic-book-label": "{{manage-reading-profiles.emulate-comic-book-label}}",
         "series-progress": "Priebeh série: {{percentage}}",
         "collapse": "Zabaliť",
-        "off": "Vypnuté",
-        "width-override-label": "Prepísanie šírky"
+        "off": "{{reader-settings.off}}",
+        "width-override-label": "Prepísanie šírky",
+        "create-new-tooltip": "{{reader-settings.create-new-tooltip}}",
+        "create-new": "{{reader-settings.create-new}}",
+        "loading": "{{reader-settings.loading}}",
+        "update-parent": "{{reader-settings.update-parent}}",
+        "reading-profile-updated": "Profil čítania bol aktualizovaný",
+        "reading-profile-promoted": "Profil čítania bol povýšený"
     },
     "metadata-filter": {
         "filter-title": "{{common.filter}}",
@@ -1626,7 +1664,7 @@
         "save": "{{common.save}}",
         "limit-label": "Limit",
         "format-label": "Formát",
-        "libraries-label": "Knižnice",
+        "libraries-label": "{{common.libraries}}",
         "collections-label": "Zbierky",
         "genres-label": "{{metadata-fields.genres-title}}",
         "tags-label": "{{metadata-fields.tags-title}}",
@@ -1659,7 +1697,10 @@
         "unit-average-rating": "Externé hodnotenie Kavita+, percent",
         "unit-reading-progress": "Percent",
         "unit-user-rating": "0.0 – 5.0 hviezdičiek",
-        "unit-read-last": "Dni od DNES"
+        "unit-read-last": "Dni od DNES",
+        "disclaimer-highlight-slots": "Pri použití tohto poľa sa zobrazia iba vaše vlastné anotácie",
+        "unit-file-size": "GB, MB, KB, B",
+        "disclaimer-file-size": "Veľkosť súboru musí zahŕňať jednotku"
     },
     "sort-field-pipe": {
         "sort-name": "Zoradenie podľa mena",
@@ -1670,7 +1711,13 @@
         "release-year": "Rok vydania",
         "read-progress": "Naposledy čítané",
         "average-rating": "Priemerné hodnotenie",
-        "random": "Náhodný"
+        "random": "Náhodný",
+        "person-chapter-count": "Počet kapitol",
+        "person-name": "Meno",
+        "person-series-count": "Počet sérií",
+        "annotation-owner": "Vlastník",
+        "annotation-series": "Názov série",
+        "annotation-color": "Farba"
     },
     "edit-series-modal": {
         "title": "Podrobnosti o {{seriesName}}",
@@ -1702,7 +1749,7 @@
         "publication-status-label": "Stav publikácie",
         "required-field": "{{validation.required-field}}",
         "close": "{{common.close}}",
-        "name-label": "Názov",
+        "name-label": "Meno",
         "sort-name-label": "Triediť podľa názvu",
         "localized-name-label": "Lokalizovaný názov",
         "summary-label": "Zhrnutie",
@@ -1806,8 +1853,8 @@
         "cover-image-tab": "{{tabs.cover-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
         "info-tab": "{{tabs.info-tab}}",
-        "pages-label": "{{edit-chapter-modal.pages-count}}",
-        "words-label": "{{edit-chapter-modal.length-title}}",
+        "pages-label": "{{edit-chapter-modal.pages-label}}",
+        "words-label": "{{edit-chapter-modal.words-label}}",
         "pages-count": "{{edit-chapter-modal.pages-count}}",
         "words-count": "{{edit-chapter-modal.words-count}}",
         "reading-time-label": "{{edit-chapter-modal.reading-time-label}}",
@@ -1929,7 +1976,28 @@
         "invalid-password-reset-url": "Neplatná adresa URL na obnovenie hesla",
         "theme-manual-upload": "Pri vytváraní témy z manuálneho nahrávania sa vyskytol problém",
         "delete-theme-in-use": "Tému momentálne používa aspoň jeden používateľ, nemožno ju odstrániť",
-        "theme-already-in-use": "Téma s týmto názvom už existuje"
+        "theme-already-in-use": "Téma s týmto názvom už existuje",
+        "delete-font-in-use": "Písmo momentálne používa aspoň jeden používateľ, nedá sa odstrániť",
+        "font-manual-upload": "Pri vytváraní písma z manuálneho nahrania sa vyskytol problém",
+        "font-already-in-use": "Písmo s týmto názvom už existuje",
+        "import-fields": {
+            "non-unique-age-ratings": "Kľúče mapovania vekového obmedzenia nie sú jedinečné, opravte importovaný súbor",
+            "non-unique-fields": "Mapovanie polí nemá jedinečné ID, opravte importovaný súbor"
+        },
+        "oidc": {
+            "missing-external-id": "OIDC nevrátil platný identifikátor",
+            "missing-email": "OIDC nevrátil platný e-mail",
+            "email-not-verified": "Pre prihlásenie cez OIDC je potrebné overiť váš e-mail",
+            "no-account": "Nebol nájdený žiadny zodpovedajúci účet",
+            "disabled-account": "Tento účet je deaktivovaný, kontaktujte prosím správcu",
+            "creating-user": "Nepodarilo sa vytvoriť nového používateľa, kontaktujte správcu",
+            "role-not-assigned": "Nemáte priradené požadované role na prístup k tejto aplikácii",
+            "failed-to-update-email": "Aktualizácia e-mailu zlyhala",
+            "failed-to-update-username": "Používateľské meno sa nepodarilo aktualizovať",
+            "email-in-use": "E-mail už používa iný účet",
+            "syncing-user": "Synchronizácia vášho účtu z OIDC zlyhala, kontaktujte správcu"
+        },
+        "upload-too-large": "Súbor je na nahranie príliš veľký, vyberte menší obrázok a skúste to znova."
     },
     "metadata-builder": {
         "or": "Zhoda z ľubovolnej z nasledujúcich možností",
@@ -1947,14 +2015,16 @@
         "sidenav": "Bočná navigácia",
         "external-sources": "Externé zdroje",
         "smart-filters": "Smart Filtre",
-        "help": "{{common.help}}"
+        "help": "{{common.help}}",
+        "description": "Rôzne aspekty Kavity si môžete prispôsobiť zmenou poradia, prepnutím viditeľnosti a naviazaním inteligentných filtrov/externých zdrojov na vašu domovskú stránku alebo bočnú navigáciu."
     },
     "customize-dashboard-streams": {
         "no-data": "Všetky smart filtre boli pridané do Dashboard-u alebo ešte neboli vytvorené.",
         "save": "{{common.save}}",
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
-        "clear": "{{common.clear}}"
+        "clear": "{{common.clear}}",
+        "smart-filter-title": "{{customize-dashboard-modal.title-smart-filters}}"
     },
     "customize-sidenav-streams": {
         "no-data": "Všetky Smart filtre boli pridané do bočnej navigácie alebo ešte neboli vytvorené žiadne.",
@@ -1982,13 +2052,21 @@
         "no-data": "Neboli vytvorené žiadne Smart filtre",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
-        "errored": "Vo filtri je chyba kódovania. Musíte to znova vytvoriť."
+        "errored": "Vo filtri je chyba kódovania. Musíte to znova vytvoriť.",
+        "save": "{{common.save}}",
+        "edit-smart-filter": "Upraviť {{name}}",
+        "name-label": "Meno",
+        "required-field": "Inteligentné filtre potrebujú názov",
+        "close": "{{common.close}}",
+        "filter-name-unique": "Názvy inteligentných filtrov musia byť jedinečné",
+        "edit": "{{common.edit}}",
+        "cancel": "{{common.cancel}}"
     },
     "edit-external-source-item": {
         "not-unique": "Externý zdroj už existuje s týmto host-om. Uistite sa, že nemáte duplikáty",
         "title": "Nový externý zdroj",
         "host-label": "Host",
-        "name-label": "Názov",
+        "name-label": "Meno",
         "api-key-label": "API kľúč",
         "save": "{{common.save}}",
         "edit": "{{common.edit}}",
@@ -2007,7 +2085,7 @@
         "reading-lists": "{{side-nav.reading-lists}}",
         "bookmarks": "{{side-nav.bookmarks}}",
         "all-series": "{{side-nav.all-series}}",
-        "browse-authors": "{{side-nav.browse-authors}}"
+        "browse-authors": "{{side-nav.browse-people}}"
     },
     "filter-field-pipe": {
         "age-rating": "{{metadata-fields.age-rating-title}}",
@@ -2018,7 +2096,7 @@
         "formats": "Formáty",
         "genres": "{{metadata-fields.genres-title}}",
         "languages": "Jazyky",
-        "libraries": "Knižnice",
+        "libraries": "{{common.libraries}}",
         "publication-status": "Stav publikácie",
         "publisher": "Vydavateľ",
         "read-progress": "Stav čítania",
@@ -2042,7 +2120,8 @@
         "penciller": "Kreslič",
         "letterer": "Listár",
         "colorist": "Kolorista",
-        "location": "Poloha"
+        "location": "Poloha",
+        "file-size": "Veľkosť súboru"
     },
     "filter-comparison-pipe": {
         "begins-with": "Začína s",
@@ -2080,7 +2159,7 @@
         "series-added-to-collection": "Séria bola pridaná do zbierky {{collectionName}}",
         "no-series-collection-warning": "POZOR! Nie sú vybraté žiadne série, uložením sa zbierka odstráni. Ste si istý, že chcete pokračovať?",
         "collection-updated": "Zbierka bola aktualizovaná",
-        "reading-list-deleted": "Zoznam na čítanie bol odstránený",
+        "reading-list-deleted": "Zoznam na čítanie bo zmazaný",
         "reading-list-updated": "Zoznam na čítanie bol aktualizovaný",
         "confirm-delete-reading-list": "Naozaj chcete vymazať zoznam na čítanie? Toto nie je možné vrátiť späť.",
         "item-removed": "Položka bola odstránená",
@@ -2152,7 +2231,7 @@
         "collection-tag-deleted": "Tag zbierky bol odstránený",
         "force-kavita+-refresh-success": "Externé metadáta Kavita+ boli zrušené",
         "collections-unpromoted": "Nepropagované zbierky",
-        "confirm-delete-theme": "Odstránením tejto témy sa odstráni aj z disku. Pred odstránením ju môžete stiahnuť z dočasného adresára",
+        "confirm-delete-theme": "Odstránením tejto témy sa vymaže z disku. Pred odstránením si ju môžete stiahnuť z dočasného adresára.",
         "reading-list-unpromoted": "Nepropagované zoznamy čítania",
         "confirm-delete-collections": "Naozaj chcete odstrániť viacero kolekcií?",
         "reading-lists-unpromoted": "Nepropagované zoznamy na čítanie",
@@ -2180,7 +2259,20 @@
         "confirm-delete-multiple-chapters": "Naozaj chcete odstrániť {{count}} kapitolu/zväzky? Nezmení súbory na disku.",
         "bulk-delete-libraries": "Naozaj chcete odstrániť {{count}} knižnice?",
         "match-success": "Séria správne priradená",
-        "webtoon-override": "Prepnutie do režimu Webtoon kvôli obrázkom reprezentujúcim webtoon."
+        "webtoon-override": "Prepnutie do režimu Webtoon kvôli obrázkom reprezentujúcim webtoon.",
+        "confirm-delete-multiple-volumes": "Naozaj chcete odstrániť {{count}} zväzkov? Týmto sa nezmenia súbory na disku.",
+        "library-bound-to-reading-profile": "Knižnica prepojená s čitateľským profilom {{name}}",
+        "scrobble-gen-init": "Zaradená úloha na generovanie udalostí Scrobblingu z histórie čítania a hodnotení v minulosti a ich synchronizáciu s pripojenými službami.",
+        "series-added-want-to-read": "Séria bola pridaná zo zoznamu Chcem si prečítať",
+        "series-bound-to-reading-profile": "Séria viazaná na čitateľský profil {{name}}",
+        "external-match-rate-error": "Kavite došla sadzba pri hľadaní {{seriesName}}. Skúste to znova o 5 minút.",
+        "confirm-delete-bookmark": "Naozaj chcete odstrániť túto záložku?",
+        "confirm-delete-annotation": "Naozaj chcete odstrániť túto anotáciu?",
+        "confirm-delete-font": "Odstránením tohto písma ho vymažete z disku. Pred odstránením ho môžete získať z dočasného adresára.",
+        "confirm-force-delete-font": "Toto písmo sa momentálne používa. Chcete ho vynútiť odstránenie? Toto prinúti používateľov vrátiť sa k predvolenému písmu.",
+        "font-in-use": "Nedá sa odstrániť, pretože písmo používa jeden alebo viacero používateľov.",
+        "k+-resend-welcome-email-success": "Na vašu e-mailovú adresu Kavita+ bol odoslaný e-mail",
+        "k+-resend-welcome-email-error": "Pri odosielaní vašej licencie Kavita+ sa vyskytla chyba. Môže to byť spôsobené tým, že už nemáte aktívny účet. Kontaktujte podporu."
     },
     "actionable": {
         "scan-library": "Skenovať knižnicu",
@@ -2247,7 +2339,20 @@
         "unpromote-tooltip": "Obmedzte viditeľnosť iba na svoj účet",
         "copy-settings": "Kopírovať nastavenia z",
         "match": "Zhoda",
-        "match-tooltip": "Zoraďte sériu s Kavitou+ manuálne"
+        "match-tooltip": "Zoraďte sériu s Kavitou+ manuálne",
+        "merge": "Zlúčiť",
+        "clear-reading-profile": "Vymazať profil čítania",
+        "clear-reading-profile-tooltip": "Vymazať profil čítania pre túto knižnicu",
+        "cleared-profile": "Vymazaný profil čítania",
+        "reading-profiles": "Profily čítania",
+        "set-reading-profile-tooltip": "Prepojiť čitateľský profil s touto knižnicou",
+        "reorder": "Zmeniť poradie",
+        "rename": "Premenovať",
+        "rename-tooltip": "Premenovanie inteligentného filtra",
+        "set-reading-profile": "Nastaviť profil čítania",
+        "export": "Exportovať",
+        "like": "Páči sa mi",
+        "unlike": "Odstráňte lajky"
     },
     "preferences": {
         "left-to-right": "Zľava doprava",
@@ -2287,7 +2392,9 @@
         "required-field": "Toto pole je povinné",
         "valid-email": "Toto musí byť platný e-mail",
         "password-validation": "Heslo musí mať dĺžku 6 až 256 znakov",
-        "year-validation": "Toto musí byť platný rok, dlhší ako 1 000 a 4 znaky"
+        "year-validation": "Toto musí byť platný rok, dlhší ako 1 000 a 4 znaky",
+        "other-field-required": "{{name}} je povinný, keď je nastavený {{other}}",
+        "invalid-uri": "Zadaný URI je neplatný"
     },
     "entity-type": {
         "volume": "zväzok",
@@ -2337,24 +2444,25 @@
         "volume-nums": "Zväzky",
         "issue-nums": "Vydania",
         "chapter-count": "{{num}} kapitol",
-        "no-data": "Žiadne údaje"
+        "no-data": "Žiadne údaje",
+        "issue-count": "{{num}} Problémov",
+        "unknown": "Neznámy",
+        "roles": "Roly",
+        "libraries": "Knižnice"
     },
     "person-detail": {
-        "all-roles": "Roly",
+        "all-roles": "{{common.roles}}",
         "individual-role-title": "Ako {{role}}",
         "browse-person-title": "Všetky diela {{name}}",
         "known-for-title": "Známy pre",
         "browse-person-by-role-title": "Všetky diela {{name}} ako {{role}}",
-        "anilist-url": "{{edit-person-modal.anilist-tooltip}}"
+        "anilist-url": "{{edit-person-modal.anilist-tooltip}}",
+        "aka-title": "Tiež známe ako ",
+        "no-info": "Žiadne informácie o tejto osobe"
     },
     "download-button": {
         "download-tooltip": "Stiahnuť",
         "downloading-status": "Sťahuje sa…"
-    },
-    "browse-authors": {
-        "title": "Prezerať autorov a spisovateľov",
-        "author-count": "{{num}} Ľudí",
-        "cover-image-description": "{{edit-series-modal.cover-image-description}}"
     },
     "pdf-scroll-mode-pipe": {
         "horizontal": "Horizontálne",
@@ -2389,7 +2497,8 @@
         "storyline-tab": "Dej",
         "books-tab": "Knihy",
         "related-tab": "Súvisiace",
-        "volumes-tab": "Zväzky"
+        "volumes-tab": "Zväzky",
+        "annotations-tab": "Anotácie"
     },
     "browse-themes-modal": {
         "title": "Prehliadať témy"
@@ -2416,7 +2525,8 @@
         "confirm": "Potvrdiť",
         "info": "Info",
         "cancel": "{{common.cancel}}",
-        "ok": "Ok"
+        "ok": "Ok",
+        "prompt": "Otázka"
     },
     "collection-owner": {
         "collection-created-label": "Vytvorené: {{owner}}",
@@ -2439,11 +2549,16 @@
         "asin-label": "ASIN",
         "asin-tooltip": "https://www.amazon.com/stores/J.K.-Rowling/auto/{ASIN}",
         "description-label": "Popis",
-        "required-field": "{{validations.required-field}}",
+        "required-field": "{{validation.required-field}}",
         "cover-image-description-extra": "Alternatívne si môžete stiahnuť obal z CoversDB, ak je k dispozícii.",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "save": "{{common.save}}",
-        "download-coversdb": "Stiahnuť z CoversDB"
+        "download-coversdb": "Stiahnuť z CoversDB",
+        "aliases-tab": "Aliasy",
+        "aliases-label": "Upraviť aliasy",
+        "alias-overlap": "Tento alias už odkazuje na inú osobu alebo je menom tejto osoby, zvážte ich zlúčenie.",
+        "aliases-tooltip": "Keď je séria označená aliasom osoby, táto osoba je priradená, nie je vytvorená nová osoba. Pri odstraňovaní aliasu budete musieť znova prehľadať sériu, aby sa zmena prejavila.",
+        "invalid-asin": "ASIN musí byť v platnom formáte ISBN-10 alebo ISBN-13"
     },
     "kavitaplus-metadata-breakdown-stats": {
         "completed-series-label": "Dokončené série",
@@ -2460,7 +2575,9 @@
     "read-time-pipe": {
         "hours": "Hodín",
         "less-than-hour": "<1 Hodina",
-        "hour": "Hodina"
+        "hour": "Hodina",
+        "hour-left": "Zostáva hodina",
+        "hours-left": "Zostáva hodín"
     },
     "download-indicator": {
         "progress": "{{percentage}}% stiahnuté"
@@ -2508,7 +2625,9 @@
         "library-name-header": "Knižnica",
         "actions-header": "Akcie",
         "dont-match-status-label": "{{dont-match-label}}",
-        "match-alt": "Zhoda {{seriesName}}"
+        "match-alt": "Zhoda {{seriesName}}",
+        "matched-state-label": "Stav zhody",
+        "library-type": "Typ knižnice"
     },
     "match-series-modal": {
         "description": "Vyberte zhodu na opätovné prepojenie metadát Kavita+ a regeneráciu scrobble udalostí. \"Nezhoda\" sa dá použiť na obmedzenie Kavity v zhode metadát a scrobblingu.",
@@ -2517,7 +2636,7 @@
         "close": "{{common.close}}",
         "no-results": "Nedá sa nájsť zhoda. Skúste pridať adresu URL od podporovaného poskytovateľa a skúste to znova.",
         "query-label": "Dopyt",
-        "query-tooltip": "Zadajte názov série, webovú adresu AniList/MyAnimeList. Adresy URL budú používať priame vyhľadávanie.",
+        "query-tooltip": "Zadajte názov série, URL adresu AniList/MyAnimeList/ComicBookRoundup. URL adresy budú používať priame vyhľadávanie.",
         "dont-match-label": "Nezhoduj",
         "dont-match-tooltip": "Rozhodnite sa pre túto sériu z párovania a scrobblingu",
         "search": "Hľadať"
@@ -2546,7 +2665,8 @@
         "volume-count": "{{server-stats.volume-count}}",
         "releasing": "Vydanie",
         "details": "Zobraziť stránku",
-        "updating-metadata-status": "Aktualizácia metadát"
+        "updating-metadata-status": "Aktualizácia metadát",
+        "issue-count": "{{common.issue-count}}"
     },
     "manage-metadata-settings": {
         "tag": "Tag/Značka",
@@ -2562,7 +2682,7 @@
         "enable-start-date-tooltip": "Umožniť zápis dátumu začiatku série do série",
         "enable-genres-label": "Žánre",
         "overrides-label": "Prepísania",
-        "field-mapping-description": "Nastavte pravidlá pre určité reťazce nájdené v poli Žáner/Značka(Tag) a namapujte ich na nový reťazec v Žáner/Značka(Tag) a prípadne ho odstráňte zo zoznamu Zdroja. Použiteľné iba vtedy, keď je povolený zápis žánru/značky(tagu).",
+        "field-mapping-description": "Nastavte pravidlá pre určité reťazce nájdené v poli Žáner/Tag a namapujte ich na nový reťazec v poli Žáner/Tag a voliteľne ich odstráňte zo zoznamu zdrojov. Zhoda je normalizovaná a nerozlišuje sa na veľké a malé písmená, používa sa prvá zhodná hodnota. Platí iba vtedy, keď je povolený zápis pre Žáner/Tag.",
         "overrides-description": "Umožnite Kavite zapísať uzamknuté polia.",
         "enabled-label": "Povolenie preberania metadát",
         "summary-label": "Zhrnutie",
@@ -2578,7 +2698,7 @@
         "enable-tags-label": "Tagy/Značky",
         "whitelist-tooltip": "Povoliť zápis reťazca v tomto zozname iba pre <b>Tagy/Značky</b>. Uistite sa, že sú oddelené čiarkami.",
         "age-rating-mapping-title": "Priradenie vekového hodnotenia",
-        "age-rating-mapping-description": "Akékoľvek reťazce vľavo, ak sa nachádzajú v žánri alebo v tagoch/značkách, nastavia vekové hodnotenie série.",
+        "age-rating-mapping-description": "Akékoľvek reťazce vľavo, ak sa nachádzajú v žánri alebo tagoch, nastavia vekové obmedzenie seriálu. Zhoda je normalizovaná a nerozlišuje veľké a malé písmená, používa sa najvyššie vekové obmedzenie.",
         "genre": "Žáner",
         "whitelist-label": "Biely zoznam(Whitelist) tagov/značiek",
         "add-age-rating-mapping-label": "Pridajte mapovanie vekového hodnotenia",
@@ -2586,8 +2706,34 @@
         "add-field-mapping-label": "Pridať mapovanie polí",
         "remove-source-tag-label": "Odstrániť zdroj značky/tagu",
         "first-last-name-label": "Meno Priezvisko Pomenovanie",
-        "person-roles-label": "Roly",
-        "first-last-name-tooltip": "Uistite sa, že mená osôb sú napísané najprv s krstným menom a potom s priezviskom"
+        "person-roles-label": "{{common.roles}}",
+        "first-last-name-tooltip": "Uistite sa, že mená osôb sú napísané najprv s krstným menom a potom s priezviskom",
+        "enable-chapter-release-date-label": "Dátum vydania",
+        "enable-chapter-release-date-tooltip": "Umožniť napísanie dátumu vydania kapitoly/čísla",
+        "enable-chapter-publisher-label": "Vydavateľ",
+        "enable-chapter-publisher-tooltip": "Povoliť vydavateľovi kapitoly/čísla napísať",
+        "enable-chapter-cover-label": "Obálka kapitoly",
+        "enable-chapter-cover-tooltip": "Povoliť nastavenie obálky kapitoly/čísla",
+        "chapter-header": "Polia kapitoly",
+        "enable-chapter-title-label": "Názov",
+        "enable-chapter-title-tooltip": "Umožniť napísanie názvu kapitoly/vydania",
+        "enable-chapter-summary-label": "{{manage-metadata-settings.summary-label}}",
+        "enable-chapter-summary-tooltip": "{{manage-metadata-settings.summary-tooltip}}",
+        "k+-warning": "Nižšie uvedené nastavenia sú zdieľané s nastaveniami na stránke K+. Môžete ich zmeniť na ktoromkoľvek z týchto miest",
+        "export-settings": "Exportovať",
+        "export-tooltip": "Exportujte si čiernu a bielu listinu, vekové hodnotenie a mapovanie polí",
+        "export-file-name": "Nastavenia metadát Kavita Export.json",
+        "import-settings": "Importovať",
+        "import-tooltip": "Importujte svoje alebo cudzie nastavenia",
+        "enable-extended-metadata-processing-label": "Rozšírené spracovanie metadát",
+        "enable-extended-metadata-processing-tooltip": "Mali by sa žánre a tagy pochádzajúce z ComicInfo alebo pridané prostredníctvom používateľského rozhrania spracovávať pomocou čiernej listiny, bielej listiny, priradení vekových kategórií a priradení polí.",
+        "remove-age-rating-mapping-label": "Odstráňte mapovanie vekového hodnotenia",
+        "remove-field-mapping-label": "Odstrániť mapovanie poľa",
+        "series-header": "Polia série",
+        "people-header": "Ľudia",
+        "tags-header": "Tagy",
+        "source-genre-tags-placeholder": "Zdrojový žáner/tag",
+        "dest-genre-tags-placeholder": "Žáner/tag cieľa"
     },
     "metadata-setting-field-pipe": {
         "start-date": "{{manage-metadata-settings.enable-start-date-label}}",
@@ -2598,6 +2744,391 @@
         "people": "{{tabs.people-tab}}",
         "summary": "{{filter-field-pipe.summary}}",
         "tags": "{{metadata-fields.tags-title}}",
-        "localized-name": "{{edit-series-modal.localized-name-label}}"
+        "localized-name": "{{edit-series-modal.localized-name-label}}",
+        "chapter-covers": "Obálky (kapitola)",
+        "chapter-title": "Názov (kapitola)",
+        "chapter-release-date": "Dátum vydania (kapitola)",
+        "chapter-summary": "Zhrnutie (kapitola)",
+        "chapter-publisher": "{{person-role-pipe.publisher}} (Chapter)"
+    },
+    "log-level-pipe": {
+        "trace": "Trace/stopy",
+        "warning": "Pozor",
+        "critical": "Kritické",
+        "debug": "Debugovanie",
+        "information": "Informácie"
+    },
+    "role-localized-pipe": {
+        "change-password": "Zmeniť heslo",
+        "download": "Stiahnuť",
+        "login": "Prihlásenie",
+        "change-restriction": "Zmeniť obmedzenie",
+        "admin": "Admin",
+        "bookmark": "Záložka",
+        "promote": "Propagovať",
+        "read-only": "Iba na čítanie"
+    },
+    "merge-person-modal": {
+        "title": "{{personName}}",
+        "src": "Zlúčiť osobu",
+        "save": "{{common.save}}",
+        "close": "{{common.close}}",
+        "known-for-title": "Známy pre",
+        "merge-warning": "Ak budete pokračovať, vybraná osoba bude odstránená. Meno vybranej osoby bude pridané ako alias a všetky jej role budú prenesené.",
+        "alias-title": "Nové aliasy"
+    },
+    "manage-reading-profiles": {
+        "no-selected": "Nie je vybratý žiadny profil",
+        "confirm": "Naozaj chcete odstrániť čitateľský profil {{name}}?",
+        "scaling-option-tooltip": "Ako prispôsobiť obrázok veľkosti obrazovky.",
+        "auto-close-menu-label": "Menu automatického zatvorenia",
+        "auto-close-menu-tooltip": "Ponuka by sa mala automaticky zatvoriť",
+        "show-screen-hints-label": "Zobraziť rady na obrazovke",
+        "show-screen-hints-tooltip": "Zobraziť prekrytie, ktoré pomôže pochopiť oblasť a smer stránkovania",
+        "width-override-label": "{{manga-reader.width-override-label}}",
+        "reset": "{{common.reset}}",
+        "book-reader-settings-title": "Čítačka kníh",
+        "tap-to-paginate-label": "Klepnutie pre stránkovanie",
+        "tap-to-paginate-tooltip": "Mali by bočné strany obrazovky čítačky kníh umožňovať klepnutie na prechod na predchádzajúcu/nasledujúcu stranu",
+        "immersive-mode-label": "Imerzívny režim",
+        "reading-direction-book-label": "Smer čítania",
+        "reading-direction-book-tooltip": "Smer kliknutia pre presun na ďalšiu stránku. Sprava doľava znamená, že kliknutím na ľavú stranu obrazovky prejdete na ďalšiu stránku.",
+        "font-family-label": "Skupina písma",
+        "writing-style-label": "Štýl písania",
+        "writing-style-tooltip": "Mení smer textu. Horizontálne je zľava doprava, vertikálne je zhora nadol.",
+        "layout-mode-book-label": "Režim rozloženia",
+        "font-size-book-label": "Veľkosť písma",
+        "margin-book-label": "Okraj",
+        "margin-book-tooltip": "Veľkosť rozstupu na každej strane obrazovky. Na mobilných zariadeniach sa táto hodnota prepíše na 0 bez ohľadu na toto nastavenie.",
+        "pdf-reader-settings-title": "PDF Čítačka",
+        "pdf-scroll-mode-label": "Režim scrolovania",
+        "pdf-scroll-mode-tooltip": "Spôsob posúvania medzi stránkami. Vertikálne/vodorovne a klepnutím pre stránkovanie (bez posúvania)",
+        "pdf-theme-tooltip": "Farebná téma čítačky",
+        "reading-profile-series-settings-title": "Série",
+        "profiles-title": "Vaše čitateľské profily",
+        "add": "{{common.add}}",
+        "delete": "{{common.delete}}",
+        "selection-tip": "Vyberte profil zo zoznamu alebo si vytvorte nový v pravom hornom rohu",
+        "font-size-book-tooltip": "Percentuálna zmena mierky, ktorá sa má použiť na písmo v knihe",
+        "line-height-book-tooltip": "Aké medzery medzi riadkami v knihe",
+        "extra-tip": "Priraďte čitateľské profily prostredníctvom ponuky akcií v sériách a knižniciach alebo hromadne. Pri zmene nastavení v čítačke sa vytvorí skrytý profil, ktorý si pamätá vaše voľby pre danú sériu (nie pre súbory PDF). Tento profil sa odstráni, keď k sérii priradíte jeden z vlastných čitateľských profilov. Viac informácií nájdete na",
+        "default-profile": "Predvolené",
+        "add-tooltip": "Váš nový profil bude uložený po vykonaní zmien",
+        "make-default": "Nastaviť ako predvolené",
+        "scaling-option-label": "Možnosti škálovania",
+        "description": "Nie všetky vaše série sa dajú čítať rovnakým spôsobom, preto si pre každú knižnicu alebo sériu nastavte samostatné čitateľské profily, aby bol návrat k sérii čo najplynulejší.",
+        "immersive-mode-tooltip": "Týmto sa ponuka skryje za kliknutím na dokument čítačky a zapne sa možnosť klepnutia pre stránkovanie",
+        "image-reader-settings-title": "Čítačka obrázkov",
+        "pdf-spread-mode-tooltip": "Ako by mali byť stránky rozložené. Jednoduché alebo dvojité (párne/nepárne)",
+        "page-splitting-label": "Rozdelenie stránky",
+        "swipe-to-paginate-tooltip": "Malo by potiahnutie prstom po obrazovke spustiť ďalšiu alebo predchádzajúcu stránku",
+        "layout-mode-book-tooltip": "Ako by mal byť obsah rozložený. Posúvanie je také, aké je v knihe. 1 alebo 2 stĺpce sa prispôsobia výške zariadenia a zmestia sa 1 alebo 2 stĺpce textu na stranu",
+        "color-theme-book-label": "Farebný motív",
+        "page-splitting-tooltip": "Ako rozdeliť obrázok na celú šírku (t. j. ľavý aj pravý obrázok sa spoja)",
+        "allow-auto-webtoon-reader-label": "Automatický režim čítačky webových karikatúr",
+        "reading-direction-label": "Smer čítania",
+        "reading-direction-tooltip": "Smer kliknutia pre presun na ďalšiu stránku. Sprava doľava znamená, že kliknutím na ľavú stranu obrazovky prejdete na ďalšiu stránku.",
+        "emulate-comic-book-tooltip": "Aplikuje efekt tieňa na emuláciu čítania z knihy",
+        "background-color-tooltip": "Farba pozadia čítačky obrázkov",
+        "reading-mode-tooltip": "Zmeňte čítačku na vertikálne, horizontálne stránkovanie alebo nekonečné posúvanie",
+        "layout-mode-label": "Režim rozloženia",
+        "allow-auto-webtoon-reader-tooltip": "Ak stránky vyzerajú ako webtoon, prepnite do režimu čítačky webtoonov. Môžu sa vyskytnúť falošne pozitívne výsledky.",
+        "pdf-spread-mode-label": "Režim šírenia",
+        "layout-mode-tooltip": "Zobrazenie jedného obrázka na obrazovke alebo dvoch obrázkov vedľa seba",
+        "emulate-comic-book-label": "Napodobniť komiks",
+        "swipe-to-paginate-label": "Prejdením prstom prejdete na stránkovanie",
+        "line-height-book-label": "Riadkovanie",
+        "background-color-label": "Farba pozadia",
+        "reading-profile-library-settings-title": "Knižnica",
+        "width-override-tooltip": "Prepísať šírku obrázkov v čítačke",
+        "font-family-tooltip": "Skupina písiem, ktoré sa majú načítať. Predvolené načíta predvolené písmo knihy",
+        "color-theme-book-tooltip": "Akú farebnú tému použiť na obsah a ponuku čítačky kníh",
+        "reading-mode-label": "Režim čítania",
+        "pdf-theme-label": "Téma",
+        "wiki-title": "wiki",
+        "disable-width-override-tooltip": "Zabráňte tomu, aby sa prepísanie šírky prejavilo, keď je obrazovka aspoň na úrovni nakonfigurovaného bodu zlomu alebo menšia",
+        "disable-width-override-label": "Zakázať prepísanie šírky",
+        "page-calc-method-label": "{{reader-settings.page-calc-method-label}}",
+        "page-calc-method-tooltip": "{{reader-settings.page-calc-method-tooltip}}"
+    },
+    "bulk-set-reading-profile-modal": {
+        "close": "{{common.close}}",
+        "title": "Nastaviť profil čítania",
+        "filter-label": "{{common.filter}}",
+        "clear": "{{common.clear}}",
+        "no-data": "Zatiaľ nie sú vytvorené žiadne zbierky",
+        "loading": "{{common.loading}}",
+        "bound": "Väzba",
+        "create": "{{common.create}}"
+    },
+    "reviews": {
+        "user-reviews-local": "Miestne recenzie",
+        "user-reviews-plus": "Externé recenzie"
+    },
+    "review-modal": {
+        "title": "Upraviť recenziu",
+        "review-label": "Recenzia",
+        "close": "{{common.close}}",
+        "save": "{{common.save}}",
+        "delete": "{{common.delete}}",
+        "min-length": "Recenzia musí mať aspoň {{count}} znakov",
+        "required": "{{validation.required-field}}"
+    },
+    "browse-people": {
+        "title": "Prehľadávať ľudí",
+        "name-label": "Meno",
+        "series-count-label": "Počet sérií",
+        "roles-label": "{{common.roles}}",
+        "sort-label": "Usporiadať",
+        "issue-count": "{{common.issue-count}}",
+        "series-count": "{{common.series-count}}",
+        "cover-image-description": "{{edit-series-modal.cover-image-description}}",
+        "issue-count-label": "Počet vydaní",
+        "author-count": "{{num}} Ľudia"
+    },
+    "browse-genres": {
+        "title": "Prehľadávať žánre",
+        "genre-count": "{{num}} Žánrov",
+        "issue-count": "{{common.issue-count}}",
+        "series-count": "{{common.series-count}}"
+    },
+    "browse-tags": {
+        "genre-count": "Značky ({{num}})",
+        "series-count": "{{common.series-count}}",
+        "title": "Prehľadávať značky",
+        "issue-count": "{{common.issue-count}}"
+    },
+    "browse-title-pipe": {
+        "user-rating": "Hodnotenie hviezdičkami: {{value}}",
+        "translator": "Preložil/a {{value}}",
+        "character": "Má charakter {{value}}",
+        "publisher": "Publikované {{value}}",
+        "editor": "Upravené {{value}}",
+        "colorist": "Kolorizované {{value}}",
+        "inker": "Tlačené {{value}}",
+        "penciller": "Kreslené {{value}}",
+        "writer": "Napísal/a {{value}}",
+        "letterer": "Spísané {{value}}",
+        "format": "Formát {{value}}",
+        "release-year": "Vydané v {{value}}",
+        "imprint": "Odtlačok {{value}}",
+        "publication-status": "{{value}} funguje",
+        "age-rating": "Hodnotené ako {{value}}",
+        "tag": "Má značku {{value}}",
+        "genre": "Má žáner {{value}}",
+        "team": "Tím {{value}}",
+        "location": "V lokalite {{value}}",
+        "artist": "Nakreslené {{value}}",
+        "library": "V knižnici {{value}}"
+    },
+    "generic-filter-field-pipe": {
+        "person-name": "Meno",
+        "person-series-count": "Počet sérií",
+        "person-chapter-count": "Počet kapitol",
+        "person-role": "Rola",
+        "average-rating": "Priemerné hodnotenie",
+        "annotation-owner": "Vlastník",
+        "annotation-series": "Názov série",
+        "annotation-spoiler": "Spojler",
+        "annotation-highlights": "Farba zvýraznenia",
+        "annotation-comment": "Text anotácie",
+        "annotation-selection": "Zvýraznite Text",
+        "series": "{{tabs.series-tab}}"
+    },
+    "breakpoint-pipe": {
+        "never": "Nikdy",
+        "mobile": "Mobil",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+    },
+    "oidc": {
+        "title": "OIDC-Callback",
+        "login": "Späť na prihlasovaciu stránku",
+        "error-loading-info": "Pri načítavaní informácií OIDC sa vyskytla chyba, kontaktujte svojho správcu",
+        "timeout": "Časový limit rozlíšenia OIDC uplynul alebo sa vyskytla chyba"
+    },
+    "manage-oidc-connect": {
+        "save": "{{common.save}}",
+        "save-success": "Nastavenia OIDC boli úspešne aktualizované",
+        "notice": "Poznámka",
+        "restart-required": "Zmena autority alebo ID klienta vyžaduje manuálny reštart aplikácie Kavita, aby sa prejavila.",
+        "provider-title": "Poskytovateľ",
+        "provider-tooltip": "Nastavenia poskytovateľa vyžadujú manuálne kliknutie na tlačidlo Uložiť. Kavita musí byť nakonfigurovaná ako dôverný klient a potrebuje URL adresu presmerovania. Viac informácií nájdete na <a href='https://wiki.kavitareader.com/guides/admin-settings/open-id-connect/' target='_blank' rel='noreferrer noopener'>wiki</a>.",
+        "behavior-title": "Správanie",
+        "other-field-required": "{{validation.other-field-required}}",
+        "invalid-uri": "{{validation.invalid-uri}}",
+        "manual-save-label": "Zmena nastavení poskytovateľa vyžaduje manuálne uloženie",
+        "authority-label": "Autorita",
+        "authority-tooltip": "URL adresa vášho poskytovateľa OIDC, nezahŕňa cestu .well-known/openid-configuration",
+        "client-id-label": "ID klienta",
+        "client-id-tooltip": "ID Klienta nastavené vo vašom poskytovateľovi OIDC môže byť ľubovoľné",
+        "secret-label": "Tajomstvo klienta",
+        "secret-tooltip": "Tajný kód vygenerovaný vaším poskytovateľom OIDC sa po nastavení nezobrazí",
+        "provision-accounts-label": "Účty rezerv",
+        "provision-accounts-tooltip": "Automaticky vytvoriť nový účet pri prihlásení cez OIDC, ak ho nemožno priradiť k existujúcemu účtu",
+        "require-verified-email-label": "Vyžadovať overené e-maily",
+        "require-verified-email-tooltip": "Vyžaduje overenie e-mailu pri vytváraní nového účtu alebo priraďovaní k existujúcemu. Ak má novovytvorený účet overený e-mail, bude automaticky overený aj na strane Kavity.",
+        "sync-user-settings-label": "Synchronizácia používateľských nastavení s rolami OIDC",
+        "sync-user-settings-tooltip": "Používatelia vytvorení prostredníctvom OIDC budú plne spravovaní poskytovateľom identity vrátane rolí, prístupu k knižnici a vekového obmedzenia. Ak je táto možnosť vypnutá, používatelia nebudú mať po vytvorení účtu prístup k žiadnemu obsahu. Ďalšie podrobnosti nájdete v dokumentácii.",
+        "auto-login-label": "Automatické prihlásenie",
+        "auto-login-tooltip": "Automatické presmerovanie na poskytovateľa OIDC pri otvorení prihlasovacej obrazovky",
+        "disable-password-authentication-label": "Zakázať autentifikáciu heslom",
+        "disable-password-authentication-tooltip": "Používatelia s rolou administrátora môžu toto obmedzenie obísť",
+        "provider-name-label": "Meno poskytovateľa",
+        "provider-name-tooltip": "Meno zobrazené na prihlasovacej obrazovke",
+        "defaults-title": "Predvolené",
+        "defaults-requirement": "Nasledujúce nastavenia sa používajú, keď je používateľ registrovaný prostredníctvom OIDC a je vypnutá funkcia Synchronizácia používateľských nastavení",
+        "default-include-unknowns-label": "Zahrňte neznáme",
+        "default-include-unknowns-tooltip": "Zahrňte neznáme vekové hodnotenia",
+        "default-age-restriction-label": "Vekové hodnotenie",
+        "default-age-restriction-tooltip": "Maximálne vekové obmedzenie zobrazené novým používateľom",
+        "no-restriction": "{{restriction-selector.no-restriction}}",
+        "default-roles-label": "{{common.roles}}",
+        "default-libraries-label": "{{common.libraries}}",
+        "advanced-title": "Pokročilé nastavenia",
+        "advanced-tooltip": "Tieto možnosti upravte iba v prípade, že rozumiete ich vplyvu.",
+        "roles-prefix-label": "Predpona rolí",
+        "roles-prefix-tooltip": "Kavita bude brať do úvahy iba role, ktoré začínajú touto predponou.",
+        "roles-claim-label": "Nárok na role",
+        "roles-claim-tooltip": "Nárok, ktorý Kavita použije na extrakciu rolí. Ak chcete použiť predvolenú hodnotu, ponechajte pole prázdne.",
+        "custom-scopes-label": "Vlastné rozsahy",
+        "custom-scopes-tooltip": "Ďalšie rozsahy, ktoré si môžete vyžiadať od poskytovateľa OIDC počas prihlásenia. Viaceré rozsahy oddeľte čiarkami. Nesprávne hodnoty môžu zabrániť prihláseniu."
+    },
+    "identity-provider-pipe": {
+        "kavita": "Kavita",
+        "oidc": "OpenID Connect"
+    },
+    "multi-check-box-form": {
+        "select-all": "Vybrať všetko",
+        "deselect-all": "Zrušiť výber všetkého"
+    },
+    "font-manager": {
+        "description": "Čítačka epub súborov Kavita obsahuje niekoľko vstavaných fontov, pridajte si tu svoje vlastné fonty. Nahrajte súbor alebo použite URL adresu fontov Google. Viac informácií nájdete na <a href='{{wikiLink}}' target='_blank' rel='noreferrer noopener'>wiki</a>.",
+        "enter-an-url-pre-title": "Zadajte {{url}}",
+        "url": "URL",
+        "add": "{{common.add}}",
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
+        "upload-continued": "súbor s písmom",
+        "preview-default": "Nahrajte si vlastné písmo cez súbor alebo URL adresu písma Google",
+        "delete": "{{common.delete}}",
+        "url-label": "URL",
+        "back": "Späť",
+        "load": "Načítať",
+        "no-preview": "Toto písmo nie je možné zobraziť v ukážke. Predvolený štýl sa použije z knihy.",
+        "brown-fox": "Rýchla hnedá líška preskakuje lenivého psa",
+        "filter-system-fonts-label": "Filtrovať systémové písma"
+    },
+    "library-type-subtitle-pipe": {
+        "book": "Knižnica s univerzálnymi knihami.",
+        "comic": "Knižnica komiksov s podporou zoskupovania zväzkov a výmeny brožovaných vydaní v rámci jednej série. Nepodporuje viacero vydaní v rámci tej istej série.",
+        "manga": "Japonské komiksy s podporou zoskupovania zväzkov. Zvláda aj niektoré voľné konfigurácie obrázkov.",
+        "comicVine": "Striktná implementácia komiksov založená na metadátach Comic Vine s integráciou pre špecializované nástroje.",
+        "image": "Voľné obrazové súbory s obmedzenou podporou. Musia sa do značnej miery riadiť dokumentáciou wiki.",
+        "lightNovel": "Knižnica so špeciálnym spracovaním optimalizovaným pre ľahké romány"
+    },
+    "annotation-card": {
+        "page-num": "{{book-reader.page-num-label}}",
+        "contains-spoilers-label": "Spoilery",
+        "view-in-reader-label": "Zobraziť v aplikácii Reader",
+        "location-tooltip": "{{library}} - {{series}}",
+        "liked": "Páči sa {{amount}} ľuďom vrátane vás",
+        "not-liked": "Páči sa {{amount}} ľuďom, vám sa to nepáčilo"
+    },
+    "annotations-tab": {
+        "title": "{{tabs.annotations-tab}}"
+    },
+    "view-annotations-drawer": {
+        "title": "{{tabs.annotations-tab}}",
+        "close": "{{common.close}}",
+        "filter-label": "Filtrovať anotácie",
+        "no-data": "{{common.no-data}}"
+    },
+    "view-edit-annotation-drawer": {
+        "view-title": "Zobraziť anotáciu",
+        "edit-title": "Upraviť anotáciu",
+        "create-title": "Vytvoriť anotáciu",
+        "create": "Vytvorte",
+        "close": "{{common.close}}",
+        "contains-spoilers-label": "{{annotation-card.contains-spoilers-label}}",
+        "edit": "Upraviť",
+        "delete": "Odstrániť"
+    },
+    "quill-wrapper": {
+        "clean-tooltip": "Odstráňte všetky štýly"
+    },
+    "view-bookmark-drawer": {
+        "title": "Záložky",
+        "close": "{{common.close}}",
+        "no-data": "{{common.no-data}}",
+        "page-num-label": "{{book-reader.page-num-label}}",
+        "load-bookmark": "Načítať",
+        "image-header": "Obrázok",
+        "text-header": "Text"
+    },
+    "page-chapter-label-pipe": {
+        "page-only": "— Strana {{pageNumber}}",
+        "full": "— Strana {{pageNumber}}, kapitola \"{{chapterTitle}}\""
+    },
+    "view-toc-drawer": {
+        "title": "Obsah",
+        "close": "{{common.close}}",
+        "toc-header": "Kniha",
+        "personal-header": "Osobné"
+    },
+    "epub-setting-drawer": {
+        "title": "Nastavenia knihy",
+        "close": "{{common.close}}"
+    },
+    "highlight-bar": {
+        "add-new-color-alt": "Pridať vlastnú farbu",
+        "slot-label": "Zvýraznite slot {{slot}}",
+        "edit": "{{common.edit}}",
+        "close": "{{common.close}}"
+    },
+    "all-annotations": {
+        "title": "Všetky anotácie",
+        "filter": {
+            "true": "Pravda",
+            "false": "False"
+        },
+        "annotations-count": "{{num}} Anotácie",
+        "export": "Export"
+    },
+    "import-mappings": {
+        "import-step": "Importovať",
+        "configure-step": "Konfigurovať",
+        "conflicts-step": "Riešenie kolízií",
+        "finalize-step": "Dokončiť",
+        "prev": "{{import-cbl-modal.prev}}",
+        "import": "{{import-cbl-modal.import}}",
+        "next": "{{import-cbl-modal.next}}",
+        "save": "{{common.save}}",
+        "import-description": "Nahrajte súbor, ktorý ste vy alebo niekto iný exportoval, aby ste ho nahradili alebo zlúčili s vašimi aktuálnymi nastaveniami.",
+        "select-files-warning": "Ak chcete pokračovať, musíte nahrať súbor JSON",
+        "invalid-file": "Nepodarilo sa analyzovať súbor, skontrolujte vstup",
+        "file-no-valid-content": "Váš import neobsahoval žiadne zmysluplné údaje, v ktorých by bolo možné pokračovať",
+        "fields-to-import": "Nastavenia",
+        "fields-to-import-tooltip": "Zakážte, ak chcete nastavenie úplne preskočiť",
+        "whitelist-label": "Zoznam povolených tagov",
+        "blacklist-label": "Čierna listina Tagov",
+        "age-ratings-label": "Mapovanie vekového hodnotenia",
+        "field-mappings-label": "Mapovanie polí",
+        "age-ratings-conflicts-tooltip": "Rozhodnite sa, ktoré vekové obmedzenie použijete",
+        "field-mappings-conflicts-tooltip": "Rozhodnite sa, ktorý výsledok cieľa použijete",
+        "import-mode-label": "Režim importu",
+        "import-mode-tooltip": "Nahradenie ignoruje vaše aktuálne nastavenia, zlúčenie sa pokúsi vyriešiť konflikty spôsobom, ktorý ste nakonfigurovali",
+        "merge": "Zlúčiť",
+        "replace": "Nahradiť",
+        "resolution-label": "Riešenie konfliktov",
+        "resolution-tooltip": "Rozhodnite, ako má Kavita riešiť konflikty",
+        "manual": "Manuál",
+        "keep": "Ponechať",
+        "to-pick": "Vyberte rozlíšenie",
+        "finalize-title": "Ukážka nastavení, kliknutím na tlačidlo Uložiť dokončite import"
+    },
+    "epub-page-calc-method-pipe": {
+        "default": "Predvolené",
+        "calc1": "Calc 1"
     }
 }

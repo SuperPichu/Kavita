@@ -10,11 +10,9 @@ using API.Entities.Interfaces;
 using API.Extensions;
 using Microsoft.Extensions.Logging;
 using NetVips;
-using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Processing;
 using SixLabors.ImageSharp.Processing.Processors.Quantization;
-using Color = System.Drawing.Color;
 using Image = NetVips.Image;
 
 namespace API.Services;
@@ -32,8 +30,9 @@ public interface IImageService
     /// <param name="fileName"></param>
     /// <param name="encodeFormat">Convert and save as encoding format</param>
     /// <param name="thumbnailWidth">Width of thumbnail</param>
-    /// <returns>File name with extension of the file. This will always write to <see cref="DirectoryService.CoverImageDirectory"/></returns>
-    string CreateThumbnailFromBase64(string encodedImage, string fileName, EncodeFormat encodeFormat, int thumbnailWidth = 320);
+    /// <param name="targetDirectory">If null, will write to <see cref="DirectoryService.CoverImageDirectory"/></param>
+    /// <returns>File name with extension of the file. </returns>
+    string CreateThumbnailFromBase64(string encodedImage, string fileName, EncodeFormat encodeFormat, int thumbnailWidth = 320, string? targetDirectory = null);
     /// <summary>
     /// Writes out a thumbnail by stream input
     /// </summary>
@@ -578,14 +577,16 @@ public class ImageService : IImageService
 
 
     /// <inheritdoc />
-    public string CreateThumbnailFromBase64(string encodedImage, string fileName, EncodeFormat encodeFormat, int thumbnailWidth = ThumbnailWidth)
+    public string CreateThumbnailFromBase64(string encodedImage, string fileName, EncodeFormat encodeFormat, int thumbnailWidth = ThumbnailWidth, string? targetDirectory = null)
     {
         // TODO: This code has no concept of cropping nor Thumbnail Size
         try
         {
+            targetDirectory ??= _directoryService.CoverImageDirectory;
             using var thumbnail = Image.ThumbnailBuffer(Convert.FromBase64String(encodedImage), thumbnailWidth);
             fileName += encodeFormat.GetExtension();
-            thumbnail.WriteToFile(_directoryService.FileSystem.Path.Join(_directoryService.CoverImageDirectory, fileName));
+            thumbnail.WriteToFile(_directoryService.FileSystem.Path.Join(targetDirectory, fileName));
+
             return fileName;
         }
         catch (Exception e)
@@ -750,7 +751,7 @@ public class ImageService : IImageService
     }
 
 
-    public static Color HexToRgb(string? hex)
+    public static (int R, int G, int B) HexToRgb(string? hex)
     {
         if (string.IsNullOrEmpty(hex)) throw new ArgumentException("Hex cannot be null");
 
@@ -774,7 +775,7 @@ public class ImageService : IImageService
         var g = Convert.ToInt32(hex.Substring(2, 2), 16);
         var b = Convert.ToInt32(hex.Substring(4, 2), 16);
 
-        return Color.FromArgb(r, g, b);
+        return (r, g, b);
     }
 
 

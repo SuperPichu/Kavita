@@ -47,7 +47,7 @@ public class PdfComicInfoExtractor : IPdfComicInfoExtractor
     {
         if (string.IsNullOrEmpty(text)) return null;
 
-        if (float.TryParse(text, out var value)) return value;
+        if (float.TryParse(text, CultureInfo.InvariantCulture, out var value)) return value;
 
         return null;
     }
@@ -58,7 +58,7 @@ public class PdfComicInfoExtractor : IPdfComicInfoExtractor
 
         // Dates stored in the XMP metadata stream (PDF Spec 14.3.2)
         // are stored in ISO 8601 format, which is handled by C# out of the box
-        if (DateTime.TryParse(text, out var date)) return date;
+        if (DateTime.TryParse(text, CultureInfo.InvariantCulture, out var date)) return date;
 
         // Dates stored in the document information directory (PDF Spec 14.3.3)
         // are stored in a proprietary format (PDF Spec 7.9.4) that needs to be
@@ -71,7 +71,7 @@ public class PdfComicInfoExtractor : IPdfComicInfoExtractor
 
         foreach(var format in _pdfDateFormats)
         {
-            if (DateTime.TryParseExact(text, format, null, System.Globalization.DateTimeStyles.None, out var pdfDate)) return pdfDate;
+            if (DateTime.TryParseExact(text, format, CultureInfo.InvariantCulture, DateTimeStyles.None, out var pdfDate)) return pdfDate;
         }
 
         return null;
@@ -130,7 +130,7 @@ public class PdfComicInfoExtractor : IPdfComicInfoExtractor
     {
         try
         {
-            var extractor = new PdfMetadataExtractor(_logger, filePath);
+            using var extractor = new PdfMetadataExtractor(_logger, filePath);
 
             return GetComicInfoFromMetadata(extractor.GetMetadata(), filePath);
         }
@@ -138,8 +138,11 @@ public class PdfComicInfoExtractor : IPdfComicInfoExtractor
         {
             _logger.LogWarning(ex, "[GetComicInfo] There was an exception parsing PDF metadata for {File}", filePath);
             _mediaErrorService.ReportMediaIssue(filePath, MediaErrorProducer.BookService,
-                "There was an exception parsing PDF metadata", ex);
+                ex.Message == "Encryption not supported"
+                    ? "Encrypted PDFs are not supported"
+                    : "There was an exception parsing PDF metadata", ex);
         }
+
 
         return null;
     }

@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy} from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, inject } from '@angular/core';
 import { FormControl, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
@@ -16,10 +16,17 @@ import {take} from "rxjs/operators";
     templateUrl: './confirm-email.component.html',
     styleUrls: ['./confirm-email.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-    standalone: true,
-  imports: [SplashContainerComponent, ReactiveFormsModule, NgbTooltip, NgTemplateOutlet, TranslocoDirective]
+    imports: [SplashContainerComponent, ReactiveFormsModule, NgbTooltip, NgTemplateOutlet, TranslocoDirective]
 })
 export class ConfirmEmailComponent implements OnDestroy {
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+  private accountService = inject(AccountService);
+  private toastr = inject(ToastrService);
+  private themeService = inject(ThemeService);
+  private navService = inject(NavService);
+  private readonly cdRef = inject(ChangeDetectorRef);
+
   /**
    * Email token used for validating
    */
@@ -37,9 +44,7 @@ export class ConfirmEmailComponent implements OnDestroy {
   errors: Array<string> = [];
 
 
-  constructor(private route: ActivatedRoute, private router: Router, private accountService: AccountService,
-    private toastr: ToastrService, private themeService: ThemeService, private navService: NavService,
-    private readonly cdRef: ChangeDetectorRef) {
+  constructor() {
       this.navService.hideSideNav();
       this.themeService.setTheme(this.themeService.defaultTheme);
       const token = this.route.snapshot.queryParamMap.get('token');

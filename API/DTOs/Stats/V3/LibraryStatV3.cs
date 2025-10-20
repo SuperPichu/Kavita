@@ -4,7 +4,7 @@ using API.Entities.Enums;
 
 namespace API.DTOs.Stats.V3;
 
-public class LibraryStatV3
+public sealed record LibraryStatV3
 {
     public bool IncludeInDashboard { get; set; }
     public bool IncludeInSearch { get; set; }
@@ -21,6 +21,10 @@ public class LibraryStatV3
     /// Will this library create reading lists from ComicInfo
     /// </summary>
     public bool CreateReadingListsFromMetadata { get; set; }
+    /// <summary>
+    /// If the library has metadata turned on
+    /// </summary>
+    public bool EnabledMetadata { get; set; }
     /// <summary>
     /// Type of the Library
     /// </summary>

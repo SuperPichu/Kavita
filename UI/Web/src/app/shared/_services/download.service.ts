@@ -1,32 +1,25 @@
-import { HttpClient } from '@angular/common/http';
-import {DestroyRef, inject, Inject, Injectable} from '@angular/core';
-import { Series } from 'src/app/_models/series';
-import { environment } from 'src/environments/environment';
-import { ConfirmService } from '../confirm.service';
-import { Chapter } from 'src/app/_models/chapter';
-import { Volume } from 'src/app/_models/volume';
-import {
-  asyncScheduler,
-  BehaviorSubject,
-  Observable,
-  tap,
-  finalize,
-  of,
-  filter,
-} from 'rxjs';
-import { download, Download } from '../_models/download';
-import { PageBookmark } from 'src/app/_models/readers/page-bookmark';
+import {HttpClient} from '@angular/common/http';
+import {DestroyRef, inject, Injectable} from '@angular/core';
+import {Series} from 'src/app/_models/series';
+import {environment} from 'src/environments/environment';
+import {ConfirmService} from '../confirm.service';
+import {Chapter} from 'src/app/_models/chapter';
+import {Volume} from 'src/app/_models/volume';
+import {asyncScheduler, BehaviorSubject, filter, finalize, Observable, of, tap,} from 'rxjs';
+import {download, Download} from '../_models/download';
+import {PageBookmark} from 'src/app/_models/readers/page-bookmark';
 import {switchMap, take, takeWhile, throttleTime} from 'rxjs/operators';
-import { AccountService } from 'src/app/_services/account.service';
-import { BytesPipe } from 'src/app/_pipes/bytes.pipe';
+import {AccountService} from 'src/app/_services/account.service';
+import {BytesPipe} from 'src/app/_pipes/bytes.pipe';
 import {translate} from "@jsverse/transloco";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {SAVER, Saver} from "../../_providers/saver.provider";
+import {SAVER} from "../../_providers/saver.provider";
 import {UtilityService} from "./utility.service";
 import {UserCollection} from "../../_models/collection-tag";
 import {RecentlyAddedItem} from "../../_models/recently-added-item";
 import {NextExpectedChapter} from "../../_models/series-detail/next-expected-chapter";
-import {BrowsePerson} from "../../_models/person/browse-person";
+import {BrowsePerson} from "../../_models/metadata/browse/browse-person";
+import {ReaderService} from "../../_services/reader.service";
 
 export const DEBOUNCE_TIME = 100;
 
@@ -94,8 +87,10 @@ export class DownloadService {
   private readonly accountService = inject(AccountService);
   private readonly httpClient = inject(HttpClient);
   private readonly utilityService = inject(UtilityService);
+  private readonly readerService = inject(ReaderService);
+  private readonly save = inject(SAVER);
 
-  constructor(@Inject(SAVER) private save: Saver) {
+  constructor() {
     this.downloadQueue.subscribe((queue) => {
       if (queue.length > 0) {
         const entity = queue.shift();
@@ -182,12 +177,14 @@ export class DownloadService {
       switchMap(() => {
       return (downloadCall || of(undefined)).pipe(
         tap((d) => {
+          this.readerService.enableWakeLock();
           if (callback) callback(d);
         }),
         takeWhile((val: Download) => {
           return val.state != 'DONE';
         }),
         finalize(() => {
+          this.readerService.disableWakeLock();
           if (callback) callback(undefined);
         }))
     }), takeUntilDestroyed(this.destroyRef)
@@ -384,5 +381,22 @@ export class DownloadService {
     }
 
     return null;
+  }
+
+  /**
+   * Download the given data as a json file
+   * @param data
+   * @param title may include the json file extension
+   */
+  downloadObjectAsJson(data: any, title: string) {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = title.endsWith('.json') ? title : title + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
   }
 }

@@ -1,17 +1,24 @@
 ﻿using System.Collections.Generic;
+using API.DTOs.Settings;
 using API.Entities;
 using API.Entities.Enums;
+using API.Entities.MetadataMatching;
 using NotImplementedException = System.NotImplementedException;
 
 namespace API.DTOs.KavitaPlus.Metadata;
 
 
-public class MetadataSettingsDto
+public sealed record MetadataSettingsDto: FieldMappingsDto
 {
     /// <summary>
     /// If writing any sort of metadata from upstream (AniList, Hardcover) source is allowed
     /// </summary>
     public bool Enabled { get; set; }
+
+    /// <summary>
+    /// Enable processing of metadata outside K+; e.g. disk and API
+    /// </summary>
+    public bool EnableExtendedMetadataProcessing { get; set; }
 
     /// <summary>
     /// Allow the Summary to be written
@@ -42,6 +49,29 @@ public class MetadataSettingsDto
     /// </summary>
     public bool EnableCoverImage { get; set; }
 
+    #region Chapter Metadata
+    /// <summary>
+    /// Allow Summary to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterSummary { get; set; }
+    /// <summary>
+    /// Allow Release Date to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterReleaseDate { get; set; }
+    /// <summary>
+    /// Allow Title to be set within Chapter/Issue
+    /// </summary>
+        public bool EnableChapterTitle { get; set; }
+    /// <summary>
+    /// Allow Publisher to be set within Chapter/Issue
+    /// </summary>
+    public bool EnableChapterPublisher { get; set; }
+    /// <summary>
+    /// Allow setting the cover image for the Chapter/Issue
+    /// </summary>
+    public bool EnableChapterCoverImage { get; set; }
+    #endregion
+
     // Need to handle the Genre/tags stuff
     public bool EnableGenres { get; set; } = true;
     public bool EnableTags { get; set; } = true;
@@ -52,27 +82,10 @@ public class MetadataSettingsDto
     public bool FirstLastPeopleNaming { get; set; }
 
     /// <summary>
-    /// Any Genres or Tags that if present, will trigger an Age Rating Override. Highest rating will be prioritized for matching.
-    /// </summary>
-    public Dictionary<string, AgeRating> AgeRatingMappings { get; set; }
-
-    /// <summary>
-    /// A list of rules that allow mapping a genre/tag to another genre/tag
-    /// </summary>
-    public List<MetadataFieldMappingDto> FieldMappings { get; set; }
-    /// <summary>
     /// A list of overrides that will enable writing to locked fields
     /// </summary>
     public List<MetadataSettingField> Overrides { get; set; }
 
-    /// <summary>
-    /// Do not allow any Genre/Tag in this list to be written to Kavita
-    /// </summary>
-    public List<string> Blacklist { get; set; }
-    /// <summary>
-    /// Only allow these Tags to be written to Kavita
-    /// </summary>
-    public List<string> Whitelist { get; set; }
     /// <summary>
     /// Which Roles to allow metadata downloading for
     /// </summary>
@@ -98,4 +111,31 @@ public class MetadataSettingsDto
     {
         return PersonRoles.Contains(character);
     }
+}
+
+/// <summary>
+/// Decoupled from <see cref="MetadataSettingsDto"/> to allow reuse without requiring the full metadata settings in
+/// <see cref="ImportFieldMappingsDto"/>
+/// </summary>
+public record FieldMappingsDto
+{
+    /// <summary>
+    /// Do not allow any Genre/Tag in this list to be written to Kavita
+    /// </summary>
+    public List<string> Blacklist { get; set; }
+
+    /// <summary>
+    /// Only allow these Tags to be written to Kavita
+    /// </summary>
+    public List<string> Whitelist { get; set; }
+
+    /// <summary>
+    /// Any Genres or Tags that if present, will trigger an Age Rating Override. Highest rating will be prioritized for matching.
+    /// </summary>
+    public Dictionary<string, AgeRating> AgeRatingMappings { get; set; }
+
+    /// <summary>
+    /// A list of rules that allow mapping a genre/tag to another genre/tag
+    /// </summary>
+    public List<MetadataFieldMappingDto> FieldMappings { get; set; }
 }
