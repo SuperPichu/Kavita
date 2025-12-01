@@ -96,6 +96,8 @@ public class LibraryController : BaseApiController
             .Select(t => new LibraryExcludePattern() {Pattern = t, LibraryId = library.Id})
             .Distinct()
             .ToList();
+        library.RemovePrefixForSortName = dto.RemovePrefixForSortName;
+        library.DefaultLanguage = dto.DefaultLanguage;
 
         // Override Scrobbling for Comic libraries since there are no providers to scrobble to
         if (library.Type == LibraryType.Comic)
@@ -182,18 +184,15 @@ public class LibraryController : BaseApiController
     /// <returns></returns>
     [Authorize(Policy = "RequireAdminRole")]
     [HttpPost("has-files-at-root")]
-    public ActionResult<IDictionary<string, bool>> AnyFilesAtRoot(CheckForFilesInFolderRootsDto dto)
+    public ActionResult<IList<string>> AnyFilesAtRoot(CheckForFilesInFolderRootsDto dto)
     {
-        var results = new Dictionary<string, bool>();
-        foreach (var root in dto.Roots)
-        {
-            results.TryAdd(root,
-                _directoryService
-                    .GetFilesWithCertainExtensions(root, Parser.SupportedExtensions, SearchOption.TopDirectoryOnly)
-                    .Any());
-        }
+        var foldersWithFilesAtRoot = dto.Roots
+            .Where(root => _directoryService
+                .GetFilesWithCertainExtensions(root, Parser.SupportedExtensions, SearchOption.TopDirectoryOnly)
+                .Any())
+            .ToList();
 
-        return Ok(results);
+        return Ok(foldersWithFilesAtRoot);
     }
 
     /// <summary>
@@ -657,6 +656,8 @@ public class LibraryController : BaseApiController
         library.AllowMetadataMatching = dto.AllowMetadataMatching;
         library.EnableMetadata = dto.EnableMetadata;
         library.RemovePrefixForSortName = dto.RemovePrefixForSortName;
+        library.InheritWebLinksFromFirstChapter = dto.InheritWebLinksFromFirstChapter;
+        library.DefaultLanguage = dto.DefaultLanguage;
 
         library.LibraryFileTypes = dto.FileGroupTypes
             .Select(t => new LibraryFileTypeGroup() {FileTypeGroup = t, LibraryId = library.Id})

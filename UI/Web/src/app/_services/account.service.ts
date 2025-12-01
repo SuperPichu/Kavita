@@ -69,6 +69,7 @@ export class AccountService {
 
   public readonly currentUserSignal = toSignal(this.currentUser$);
   public readonly userId = computed(() => this.currentUserSignal()?.id);
+  public readonly isReadOnly = computed(() => this.currentUserSignal()?.roles.includes(Role.ReadOnly) ?? true);
 
   /**
    * SetTimeout handler for keeping track of refresh token call
@@ -300,7 +301,7 @@ export class AccountService {
     this.messageHub.stopHubConnection();
 
     if (!user.token) {
-      window.location.href = '/oidc/logout';
+      window.location.href = this.baseUrl.substring(0, environment.apiUrl.indexOf("api")) + 'oidc/logout';
       return;
     }
 

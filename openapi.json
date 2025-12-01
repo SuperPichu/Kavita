@@ -2,12 +2,12 @@
   "openapi": "3.0.4",
   "info": {
     "title": "Kavita",
-    "description": "Kavita provides a set of APIs that are authenticated by JWT. JWT token can be copied from local storage. Assume all fields of a payload are required. Built against v0.8.8.0",
+    "description": "Kavita provides a set of APIs that are authenticated by JWT. JWT token can be copied from local storage. Assume all fields of a payload are required. Built against v0.8.8.7",
     "license": {
       "name": "GPL-3.0",
       "url": "https://github.com/Kareadita/Kavita/blob/develop/LICENSE"
     },
-    "version": "0.8.8.0"
+    "version": "0.8.8.7"
   },
   "servers": [
     {
@@ -4075,25 +4075,25 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 }
               },
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 }
               },
               "text/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "boolean"
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 }
               }
@@ -7273,30 +7273,31 @@
       }
     },
     "/api/Person/valid-alias": {
-      "get": {
+      "post": {
         "tags": [
           "Person"
         ],
         "summary": "Ensure the alias is valid to be added. For example, the alias cannot be on another person or be the same as the current person name/alias.",
-        "parameters": [
-          {
-            "name": "personId",
-            "in": "query",
-            "description": "",
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          },
-          {
-            "name": "alias",
-            "in": "query",
-            "description": "",
-            "schema": {
-              "type": "string"
+        "requestBody": {
+          "description": "alias check request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonAliasCheckDto"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonAliasCheckDto"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonAliasCheckDto"
+              }
             }
           }
-        ],
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -18635,6 +18636,20 @@
         },
         "additionalProperties": false
       },
+      "AppUserOpdsPreferences": {
+        "type": "object",
+        "properties": {
+          "embedProgressIndicator": {
+            "type": "boolean",
+            "description": "Embed Progress Indicator in Title"
+          },
+          "includeContinueFrom": {
+            "type": "boolean",
+            "description": "Insert a \"Continue From X\" entry in OPDS fields to avoid finding your last reading point (Emulates Kavita's Continue button)"
+          }
+        },
+        "additionalProperties": false
+      },
       "AppUserPreferences": {
         "required": [
           "theme"
@@ -18860,6 +18875,80 @@
             "type": "boolean",
             "description": "Enable data saver mode across Kavita, limiting information that is pre-fetched"
           },
+          "customKeyBinds": {
+            "type": "object",
+            "properties": {
+              "NavigateToSettings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "OpenSearch": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "NavigateToScrobbling": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "ToggleFullScreen": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "BookmarkPage": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "OpenHelp": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "GoTo": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "ToggleMenu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "PageLeft": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "PageRight": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "Escape": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              }
+            },
+            "additionalProperties": false,
+            "description": "JSON dictionary mappings for custom keybinds across the web app.\nValues are a list of key codes that need to be pressed at the same time for the keybind to be valid",
+            "nullable": true
+          },
           "aniListScrobblingEnabled": {
             "type": "boolean",
             "description": "Should this account have Scrobbling enabled for AniList"
@@ -18875,6 +18964,9 @@
           },
           "socialPreferences": {
             "$ref": "#/components/schemas/AppUserSocialPreferences"
+          },
+          "opdsPreferences": {
+            "$ref": "#/components/schemas/AppUserOpdsPreferences"
           },
           "appUser": {
             "$ref": "#/components/schemas/AppUser"
@@ -19881,6 +19973,39 @@
           "hardcoverId": {
             "type": "string",
             "description": "https://hardcover.app/authors/{HardcoverId}",
+            "nullable": true
+          },
+          "webLinks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Web links derived from the various id of external websites",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "All roles as if returned by the /api/person/roles endpoint",
             "nullable": true
           },
           "seriesCount": {
@@ -23332,6 +23457,35 @@
         },
         "additionalProperties": false
       },
+      "KeyBind": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "nullable": true
+          },
+          "control": {
+            "type": "boolean"
+          },
+          "shift": {
+            "type": "boolean"
+          },
+          "meta": {
+            "type": "boolean"
+          },
+          "alt": {
+            "type": "boolean"
+          },
+          "controllerSequence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
       "KoreaderBookDto": {
         "type": "object",
         "properties": {
@@ -23480,6 +23634,15 @@
           "removePrefixForSortName": {
             "type": "boolean",
             "description": "Should Kavita remove sort articles \"The\" for the sort name"
+          },
+          "inheritWebLinksFromFirstChapter": {
+            "type": "boolean",
+            "description": "Should series inherit web links from the first chapter/volume"
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "description": "Language to assign to series if none is set in the metadata",
+            "nullable": true
           },
           "created": {
             "type": "string",
@@ -23647,6 +23810,13 @@
           "removePrefixForSortName": {
             "type": "boolean",
             "description": "Should Kavita remove sort articles \"The\" for the sort name"
+          },
+          "inheritWebLinksFromFirstChapter": {
+            "type": "boolean"
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -24743,6 +24913,32 @@
         },
         "additionalProperties": false
       },
+      "PersonAliasCheckDto": {
+        "required": [
+          "alias",
+          "name",
+          "personId"
+        ],
+        "type": "object",
+        "properties": {
+          "personId": {
+            "type": "integer",
+            "description": "The person to check against",
+            "format": "int32"
+          },
+          "name": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The persons name in the form. In case it differs from the one in the database"
+          },
+          "alias": {
+            "minLength": 1,
+            "type": "string",
+            "description": "The alias to check"
+          }
+        },
+        "additionalProperties": false
+      },
       "PersonDto": {
         "required": [
           "name"
@@ -24801,6 +24997,39 @@
           "hardcoverId": {
             "type": "string",
             "description": "https://hardcover.app/authors/{HardcoverId}",
+            "nullable": true
+          },
+          "webLinks": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Web links derived from the various id of external websites",
+            "nullable": true
+          },
+          "roles": {
+            "type": "array",
+            "items": {
+              "enum": [
+                1,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12,
+                13,
+                14,
+                15
+              ],
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "All roles as if returned by the /api/person/roles endpoint",
             "nullable": true
           }
         },
@@ -28754,6 +28983,7 @@
           "id",
           "includeInDashboard",
           "includeInSearch",
+          "inheritWebLinksFromFirstChapter",
           "manageCollections",
           "manageReadingLists",
           "name",
@@ -28814,6 +29044,13 @@
           },
           "removePrefixForSortName": {
             "type": "boolean"
+          },
+          "inheritWebLinksFromFirstChapter": {
+            "type": "boolean"
+          },
+          "defaultLanguage": {
+            "type": "string",
+            "nullable": true
           },
           "fileGroupTypes": {
             "type": "array",
@@ -29428,6 +29665,14 @@
       "UpdateStreamPositionDto": {
         "type": "object",
         "properties": {
+          "streamName": {
+            "type": "string",
+            "nullable": true
+          },
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
           "fromPosition": {
             "type": "integer",
             "format": "int32"
@@ -29436,13 +29681,9 @@
             "type": "integer",
             "format": "int32"
           },
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "streamName": {
-            "type": "string",
-            "nullable": true
+          "positionIncludesInvisible": {
+            "type": "boolean",
+            "description": "If the API.DTOs.Dashboard.UpdateStreamPositionDto.ToPosition has taken into account non-visible items"
           }
         },
         "additionalProperties": false
@@ -29657,10 +29898,13 @@
           "bookReaderHighlightSlots",
           "collapseSeriesRelationships",
           "colorScapeEnabled",
+          "customKeyBinds",
           "dataSaver",
           "locale",
           "noTransitions",
+          "opdsPreferences",
           "promptForDownloadSize",
+          "socialPreferences",
           "theme"
         ],
         "type": "object",
@@ -29698,6 +29942,78 @@
           "dataSaver": {
             "type": "boolean"
           },
+          "customKeyBinds": {
+            "type": "object",
+            "properties": {
+              "NavigateToSettings": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "OpenSearch": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "NavigateToScrobbling": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "ToggleFullScreen": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "BookmarkPage": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "OpenHelp": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "GoTo": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "ToggleMenu": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "PageLeft": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "PageRight": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              },
+              "Escape": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/KeyBind"
+                }
+              }
+            },
+            "additionalProperties": false
+          },
           "aniListScrobblingEnabled": {
             "type": "boolean"
           },
@@ -29712,6 +30028,9 @@
           },
           "socialPreferences": {
             "$ref": "#/components/schemas/AppUserSocialPreferences"
+          },
+          "opdsPreferences": {
+            "$ref": "#/components/schemas/AppUserOpdsPreferences"
           }
         },
         "additionalProperties": false

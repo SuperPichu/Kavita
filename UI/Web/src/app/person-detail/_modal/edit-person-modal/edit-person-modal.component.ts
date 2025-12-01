@@ -9,7 +9,7 @@ import {
   ValidationErrors,
   Validators
 } from "@angular/forms";
-import {Person} from "../../../_models/metadata/person";
+import {Person, PersonRole} from "../../../_models/metadata/person";
 import {
   NgbActiveModal,
   NgbNav,
@@ -22,7 +22,7 @@ import {
 import {PersonService} from "../../../_services/person.service";
 import {translate, TranslocoDirective} from '@jsverse/transloco';
 import {CoverImageChooserComponent} from "../../../cards/cover-image-chooser/cover-image-chooser.component";
-import {forkJoin, map, of} from "rxjs";
+import {concat, map, of} from "rxjs";
 import {UploadService} from "../../../_services/upload.service";
 import {SettingItemComponent} from "../../../settings/_components/setting-item/setting-item.component";
 import {AccountService} from "../../../_services/account.service";
@@ -84,6 +84,11 @@ export class EditPersonModalComponent implements OnInit {
   coverImageReset = false;
   touchedCoverImage = false;
   fetchDisabled: boolean = false;
+  /**
+   * Suffix to include in the tooltip for external ids if they support characters
+   */
+  tooltip: string = '';
+
 
   ngOnInit() {
     if (this.person) {
@@ -96,6 +101,11 @@ export class EditPersonModalComponent implements OnInit {
 
       this.editForm.addControl('coverImageIndex', new FormControl(0, []));
       this.editForm.addControl('coverImageLocked', new FormControl(this.person.coverImageLocked, []));
+
+      const roles = (this.person.roles ?? []);
+      if (roles.length === 1 && roles.includes(PersonRole.Character)) {
+        this.tooltip = '-character';
+      }
 
       this.cdRef.markForCheck();
     } else {
@@ -110,12 +120,6 @@ export class EditPersonModalComponent implements OnInit {
 
   save() {
     const apis = [];
-
-    const hasCoverChanges = this.touchedCoverImage || this.coverImageReset;
-
-    if (hasCoverChanges) {
-      apis.push(this.uploadService.updatePersonCoverImage(this.person.id, this.selectedCover, !this.coverImageReset));
-    }
 
     const person: Person = {
       id: this.person.id,
@@ -132,7 +136,13 @@ export class EditPersonModalComponent implements OnInit {
     };
     apis.push(this.personService.updatePerson(person));
 
-    forkJoin(apis).subscribe(_ => {
+    const hasCoverChanges = this.touchedCoverImage || this.coverImageReset;
+    if (hasCoverChanges) {
+      apis.push(this.uploadService.updatePersonCoverImage(this.person.id, this.selectedCover, !this.coverImageReset));
+    }
+
+    // Run api calls in sequency to prevent them from overwriting each-other in a race condition
+    concat(...apis).subscribe(_ => {
       this.modal.close({success: true, coverImageUpdate: hasCoverChanges, person: person});
     });
   }
@@ -179,17 +189,18 @@ export class EditPersonModalComponent implements OnInit {
 
   aliasValidator(): AsyncValidatorFn {
     return (control: AbstractControl) => {
-      const name = control.value;
-      if (!name || name.trim().length === 0) {
+      const alias = control.value;
+      if (!alias || alias.trim().length === 0) {
         return of(null);
       }
 
-      return this.personService.isValidAlias(this.person.id, name).pipe(map(valid => {
+      const name = this.editForm.get('name')!.value;
+      return this.personService.isValidAlias(this.person.id, alias, name).pipe(map(valid => {
         if (valid) {
           return null;
         }
 
-        return { 'invalidAlias': {'alias': name} } as ValidationErrors;
+        return { 'invalidAlias': {'alias': alias} } as ValidationErrors;
       }));
     }
   }
@@ -200,7 +211,7 @@ export class EditPersonModalComponent implements OnInit {
       if (!asin || asin.trim().length === 0) {
         return of(null);
       }
-      
+
       return this.personService.isValidAsin(asin).pipe(map(valid => {
         if (valid) {
           return null;

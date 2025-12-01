@@ -40,6 +40,9 @@ public sealed record UserPreferencesDto
     /// <inheritdoc cref="API.Entities.AppUserPreferences.DataSaver"/>
     [Required]
     public bool DataSaver { get; set; } = false;
+    /// <inheritdoc cref="API.Entities.AppUserPreferences.CustomKeyBinds"/>
+    [Required]
+    public Dictionary<KeyBindTarget, IList<KeyBind>> CustomKeyBinds { get; set; } = [];
 
     /// <inheritdoc cref="API.Entities.AppUserPreferences.AniListScrobblingEnabled"/>
     public bool AniListScrobblingEnabled { get; set; }
@@ -52,7 +55,12 @@ public sealed record UserPreferencesDto
     #region Social
 
     /// <inheritdoc cref="AppUserPreferences.SocialPreferences"/>
+    [Required]
     public AppUserSocialPreferences SocialPreferences { get; set; } = new();
 
     #endregion
+
+    /// <inheritdoc cref="AppUserPreferences.OpdsPreferences"/>
+    [Required]
+    public AppUserOpdsPreferences OpdsPreferences { get; set; } = new();
 }

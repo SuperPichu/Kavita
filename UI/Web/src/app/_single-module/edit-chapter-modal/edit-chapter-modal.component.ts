@@ -7,7 +7,7 @@ import {TranslocoDirective} from "@jsverse/transloco";
 import {AccountService} from "../../_services/account.service";
 import {Chapter} from "../../_models/chapter";
 import {LibraryType} from "../../_models/library/library";
-import {TypeaheadSettings} from "../../typeahead/_models/typeahead-settings";
+import {setupLanguageSettings, TypeaheadSettings} from "../../typeahead/_models/typeahead-settings";
 import {Tag} from "../../_models/tag";
 import {Language} from "../../_models/metadata/language";
 import {Person, PersonRole} from "../../_models/metadata/person";
@@ -21,7 +21,7 @@ import {ActionService} from "../../_services/action.service";
 import {DownloadService} from "../../shared/_services/download.service";
 import {SettingItemComponent} from "../../settings/_components/setting-item/setting-item.component";
 import {TypeaheadComponent} from "../../typeahead/_components/typeahead.component";
-import {forkJoin, Observable, of, tap} from "rxjs";
+import {concat, forkJoin, Observable, of, tap} from "rxjs";
 import {map, switchMap} from "rxjs/operators";
 import {EntityTitleComponent} from "../../cards/entity-title/entity-title.component";
 import {SettingButtonComponent} from "../../settings/_components/setting-button/setting-button.component";
@@ -125,14 +125,13 @@ export class EditChapterModalComponent implements OnInit {
   coverImageReset = false;
 
   tagsSettings: TypeaheadSettings<Tag> = new TypeaheadSettings();
-  languageSettings: TypeaheadSettings<Language> = new TypeaheadSettings();
+  languageSettings: TypeaheadSettings<Language> | null = null;
   peopleSettings: {[PersonRole: string]: TypeaheadSettings<Person>} = {};
   genreSettings: TypeaheadSettings<Genre> = new TypeaheadSettings();
 
   tags: Tag[] = [];
   genres: Genre[] = [];
   ageRatings: Array<AgeRatingDto> = [];
-  validLanguages: Array<Language> = [];
 
   tasks = this.actionFactoryService.getActionablesForSettingsPage(this.actionFactoryService.getChapterActions(this.runTask.bind(this)), blackList);
   /**
@@ -189,10 +188,9 @@ export class EditChapterModalComponent implements OnInit {
 
     this.metadataService.getAllValidLanguages().pipe(
       tap(validLanguages => {
-        this.validLanguages = validLanguages;
+        this.languageSettings = setupLanguageSettings(true, this.utilityService, validLanguages, this.chapter.language);
         this.cdRef.markForCheck();
       }),
-      switchMap(_ => this.setupLanguageTypeahead())
     ).subscribe();
 
     this.metadataService.getAllAgeRatings().subscribe(ratings => {
@@ -269,7 +267,7 @@ export class EditChapterModalComponent implements OnInit {
       apis.push(this.uploadService.updateChapterCoverImage(this.chapter.id, this.selectedCover, !this.coverImageReset));
     }
 
-    forkJoin(apis).subscribe(results => {
+    concat(...apis).subscribe(results => {
       this.modal.close({success: true, chapter: model, coverImageUpdate: selectedIndex > 0 || this.coverImageReset, needsReload: needsReload, isDeleted: false} as EditChapterModalCloseResult);
     });
   }
@@ -313,7 +311,6 @@ export class EditChapterModalComponent implements OnInit {
       this.setupTagSettings(),
       this.setupGenreTypeahead(),
       this.setupPersonTypeahead(),
-      this.setupLanguageTypeahead()
     ]).subscribe(results => {
       this.cdRef.markForCheck();
     });
@@ -379,34 +376,6 @@ export class EditChapterModalComponent implements OnInit {
 
     if (this.chapter.genres) {
       this.genreSettings.savedData = this.chapter.genres;
-    }
-    return of(true);
-  }
-
-  setupLanguageTypeahead() {
-    this.languageSettings.minCharacters = 0;
-    this.languageSettings.multiple = false;
-    this.languageSettings.id = 'language';
-    this.languageSettings.unique = true;
-    this.languageSettings.showLocked = true;
-    this.languageSettings.addIfNonExisting = false;
-    this.languageSettings.compareFn = (options: Language[], filter: string) => {
-      return options.filter(m => this.utilityService.filter(m.title, filter));
-    }
-    this.languageSettings.compareFnForAdd = (options: Language[], filter: string) => {
-      return options.filter(m => this.utilityService.filterMatches(m.title, filter));
-    }
-    this.languageSettings.fetchFn = (filter: string) => of(this.validLanguages)
-      .pipe(map(items => this.languageSettings.compareFn(items, filter)));
-
-    this.languageSettings.selectionCompareFn = (a: Language, b: Language) => {
-      return a.isoCode == b.isoCode;
-    }
-    this.languageSettings.trackByIdentityFn = (index, value) => value.isoCode;
-
-    const l = this.validLanguages.find(l => l.isoCode === this.chapter.language);
-    if (l !== undefined) {
-      this.languageSettings.savedData = l;
     }
     return of(true);
   }

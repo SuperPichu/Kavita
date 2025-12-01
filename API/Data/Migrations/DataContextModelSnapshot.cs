@@ -17,7 +17,7 @@ namespace API.Data.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "9.0.7");
+            modelBuilder.HasAnnotation("ProductVersion", "9.0.10");
 
             modelBuilder.Entity("API.Entities.AppRole", b =>
                 {
@@ -571,6 +571,11 @@ namespace API.Data.Migrations
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("CustomKeyBinds")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("{}");
+
                     b.Property<bool>("DataSaver")
                         .HasColumnType("INTEGER");
 
@@ -593,6 +598,11 @@ namespace API.Data.Migrations
 
                     b.Property<bool>("NoTransitions")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("OpdsPreferences")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("{\"EmbedProgressIndicator\":true,\"IncludeContinueFrom\":true}");
 
                     b.Property<int>("PageSplitOption")
                         .HasColumnType("INTEGER");
@@ -1466,6 +1476,11 @@ namespace API.Data.Migrations
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("DefaultLanguage")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("");
+
                     b.Property<bool>("EnableMetadata")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
@@ -1481,6 +1496,9 @@ namespace API.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IncludeInSearch")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("InheritWebLinksFromFirstChapter")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("LastModified")

@@ -20,6 +20,7 @@ using Hangfire;
 using Kavita.Common;
 using Kavita.Common.EnvironmentInfo;
 using Kavita.Common.Helpers;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -54,6 +55,7 @@ public class SettingsService : ISettingsService
     private readonly ITaskScheduler _taskScheduler;
     private readonly ILogger<SettingsService> _logger;
     private readonly IOidcService _oidcService;
+    private readonly bool _isDevelopment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") == Environments.Development;
 
     public SettingsService(IUnitOfWork unitOfWork, IDirectoryService directoryService,
         ILibraryWatcher libraryWatcher, ITaskScheduler taskScheduler,
@@ -532,6 +534,11 @@ public class SettingsService : ISettingsService
             return false;
         }
 
+        if (!_isDevelopment && !authority.StartsWith("https"))
+        {
+            return false;
+        }
+
         try
         {
             var hasTrailingSlash = authority.EndsWith('/');
@@ -611,7 +618,8 @@ public class SettingsService : ISettingsService
 
         if (currentConfig.Authority != updateSettingsDto.OidcConfig.Authority)
         {
-            if (!await IsValidAuthority(updateSettingsDto.OidcConfig.Authority + string.Empty))
+            // Only check validity if we're changing into a value that would be used
+            if (!string.IsNullOrEmpty(updateSettingsDto.OidcConfig.Authority) && !await IsValidAuthority(updateSettingsDto.OidcConfig.Authority + string.Empty))
             {
                 throw new KavitaException("oidc-invalid-authority");
             }
