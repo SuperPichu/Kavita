@@ -172,7 +172,8 @@ public class SeriesService : ISeriesService
 
             await _unitOfWork.CommitAsync();
             var series = await _unitOfWork.SeriesRepository.GetFullSeriesForSeriesIdAsync(chapter.Volume.SeriesId);
-            await _processSeries.UpdateSeriesMetadata(series, series.Library);
+            var settings = await _unitOfWork.SettingsRepository.GetMetadataSettingDto();
+            await _processSeries.UpdateSeriesMetadata(settings, series, series.Library);
             // Trigger code to cleanup tags, collections, people, etc
             try
             {

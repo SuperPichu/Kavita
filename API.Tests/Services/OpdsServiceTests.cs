@@ -25,6 +25,7 @@ using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 using Xunit.Abstractions;
+using API.Services.Tasks.Scanner;
 
 namespace API.Tests.Services;
 
@@ -48,7 +49,7 @@ public class OpdsServiceTests(ITestOutputHelper testOutputHelper) : AbstractDbTe
 
         var seriesService = new SeriesService(unitOfWork, Substitute.For<IEventHub>(), Substitute.For<ITaskScheduler>(),
             Substitute.For<ILogger<SeriesService>>(), Substitute.For<IScrobblingService>(),
-            localizationService, Substitute.For<IReadingListService>());
+            localizationService, Substitute.For<IReadingListService>(), Substitute.For<IProcessSeries>());
 
         var opdsService = new OpdsService(unitOfWork, localizationService,
             seriesService, Substitute.For<DownloadService>(),
