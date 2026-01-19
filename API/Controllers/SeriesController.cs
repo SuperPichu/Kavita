@@ -717,7 +717,8 @@ public class SeriesController : BaseApiController
         MangaFile mangaFile = await _unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
         _unitOfWork.DataContext.MangaFile.Remove(mangaFile);
         await _unitOfWork.DataContext.SaveChangesAsync();
-        await _metadataService.GenerateCoversForSeries(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
+        var serverSettings = await _unitOfWork.SettingsRepository.GetSettingsDtoAsync();
+        await _metadataService.GenerateCoversForSeries(serverSettings, mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
         await _eventHub.SendMessageAsync(MessageFactory.ScanSeries,
             MessageFactory.ScanSeriesEvent(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId, mangaFile.Chapter.Volume.Series.Name));
         return Ok();

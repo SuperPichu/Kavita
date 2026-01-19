@@ -32,6 +32,7 @@ namespace API.Services.Tasks.Scanner;
 public interface IProcessSeries
 {
     Task<int?> ProcessSeriesAsync(MetadataSettingsDto settings, IList<ParserInfo> parsedInfos, ProcessSeriesArgs args);
+    Task UpdateSeriesMetadata(Dictionary<string, Person> databasePeople, MetadataSettingsDto settings, Series series, Library library);
 }
 
 public sealed record ProcessSeriesArgs
@@ -298,7 +299,7 @@ public class ProcessSeries(
     }
 
 
-    private async Task UpdateSeriesMetadata(Dictionary<string, Person> databasePeople, MetadataSettingsDto settings, Series series, Library library)
+    public async Task UpdateSeriesMetadata(Dictionary<string, Person> databasePeople, MetadataSettingsDto settings, Series series, Library library)
     {
         series.Metadata ??= new SeriesMetadataBuilder().Build();
         var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
