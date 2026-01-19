@@ -9,12 +9,12 @@ import {
   ElementRef,
   EventEmitter,
   inject,
-  model,
   OnDestroy,
   OnInit,
   Renderer2,
   RendererStyleFlags2,
   resource,
+  signal,
   Signal,
   ViewChild,
   ViewContainerRef
@@ -30,7 +30,7 @@ import {CHAPTER_ID_DOESNT_EXIST, CHAPTER_ID_NOT_FETCHED, ReaderService} from 'sr
 import {SeriesService} from 'src/app/_services/series.service';
 import {DomSanitizer, SafeHtml, Title} from '@angular/platform-browser';
 import {BookService} from '../../_services/book.service';
-import {Breakpoint, UtilityService} from 'src/app/shared/_services/utility.service';
+import {UtilityService} from 'src/app/shared/_services/utility.service';
 import {BookChapterItem} from '../../_models/book-chapter-item';
 import {animate, state, style, transition, trigger} from '@angular/animations';
 import {Stack} from 'src/app/shared/data-structures/stack';
@@ -70,6 +70,7 @@ import {FontService} from "../../../_services/font.service";
 import afterFrame from "afterframe";
 import {KeyBindService} from "../../../_services/key-bind.service";
 import {KeyBindTarget} from "../../../_models/preferences/preferences";
+import {BreakpointService} from "../../../_services/breakpoint.service";
 
 
 interface HistoryPoint {
@@ -160,6 +161,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly colorscapeService = inject(ColorscapeService);
   private readonly fontService = inject(FontService);
   private readonly keyBindService = inject(KeyBindService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   libraryId!: number;
   seriesId!: number;
@@ -176,7 +178,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
    /**
     * If this is true, no progress will be saved.
     */
-  incognitoMode = model<boolean>(false);
+  incognitoMode = signal<boolean>(false);
 
    /**
     * If this is true, chapters will be fetched in the order of a reading list,
@@ -192,11 +194,11 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Current Page
    */
-  pageNum = model<number>(0);
+  pageNum = signal<number>(0);
   /**
    * Max Pages
    */
-  maxPages = model<number>(1);
+  maxPages = signal<number>(1);
   /**
    * This allows for exploration into different chapters
    */
@@ -214,23 +216,23 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * If the word/line overlay is open
    */
-  isLineOverlayOpen = model<boolean>(false);
+  isLineOverlayOpen = signal<boolean>(false);
   /**
    * If the action bar (menu bars) is visible
    */
-  actionBarVisible = model<boolean>(true);
+  actionBarVisible = signal<boolean>(true);
   /**
    * If we are loading from backend
    */
-  isLoading = model<boolean>(true);
+  isLoading = signal<boolean>(true);
   /**
    * Title of the book. Rendered in action bar
    */
-  bookTitle = model<string>('');
+  bookTitle = signal<string>('');
   /**
    * Authors of the book. Rendered in action bar
    */
-  authorText = model<string>('');
+  authorText = signal<string>('');
   /**
    * The boolean that decides if the clickToPaginate overlay is visible or not.
    */
@@ -241,7 +243,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * This is the html we get from the server
    */
-  page = model<SafeHtml | undefined>(undefined);
+  page = signal<SafeHtml | undefined>(undefined);
   /**
    * Next Chapter Id. This is not guaranteed to be a valid ChapterId. Prefetched on page load (non-blocking).
    */
@@ -284,12 +286,12 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
    * Will hide if all content in book is absolute positioned
    */
   horizontalScrollbarNeeded = false;
-  scrollbarNeeded = model<boolean>(false);
+  scrollbarNeeded = signal<boolean>(false);
 
   /**
    * Used solely for fullscreen to apply a hack
    */
-  darkMode = model<boolean>(true);
+  darkMode = signal<boolean>(true);
   readingTimeLeftResource =  resource({
     params: () => ({
       chapterId: this.chapterId,
@@ -301,8 +303,8 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   });
 
-  imageBookmarks = model<PageBookmark[]>([]);
-  annotationToLoad = model<number>(-1);
+  imageBookmarks = signal<PageBookmark[]>([]);
+  annotationToLoad = signal<number>(-1);
 
   /**
    * Anchors that map to the page number. When you click on one of these, we will load a given page up for the user.
@@ -326,8 +328,8 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Width of the document (in non-column layout), used for column layout virtual paging
    */
-  windowWidth = model<number>(0);
-  windowHeight = model<number>(0);
+  windowWidth = signal<number>(0);
+  windowHeight = signal<number>(0);
 
   /**
    * used to track if a click is a drag or not, for opening menu
@@ -345,7 +347,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * When the user is highlighting something, then we remove pagination
    */
-  hidePagination = model<boolean>(false);
+  hidePagination = signal<boolean>(false);
 
   /**
    * Used to refresh the Personal PoC
@@ -359,7 +361,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Injects information to help debug issues
    */
-  debugMode = model<boolean>(!environment.production && true);
+  debugMode = signal<boolean>(!environment.production && true);
 
   /**
    * Will be set to true if this.scroll(...) is called but the actual scroll is still delayed
@@ -767,7 +769,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   /**
    * Updates the TOC current page anchor, last scene path and saves progress
    */
-  handleScrollEvent() {
+  handleScrollEvent(bypassSave: boolean = false) {
 
     // TODO: See if we can move this to a service for ToC
     // Highlight the current chapter we are on
@@ -791,7 +793,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.lastSeenScrollPartPath = xpath; // Keep this scoped so we can appropriately handle before saving
     }
 
-    if (this.lastSeenScrollPartPath !== '') {
+    if (this.lastSeenScrollPartPath !== '' && !bypassSave) {
       this.saveProgress();
 
       if (this.debugMode()) {
@@ -889,7 +891,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         return;
       }
 
-      await this.init();
+      await this.init(true);
     });
 
 
@@ -905,7 +907,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       .subscribe();
   }
 
-  async init() {
+  async init(firstLoad: boolean) {
     this.nextChapterId = CHAPTER_ID_NOT_FETCHED;
     this.prevChapterId = CHAPTER_ID_NOT_FETCHED;
     this.nextChapterDisabled = false;
@@ -928,7 +930,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.titleService.setTitle('Kavita - ' + this.bookTitle());
       this.cdRef.markForCheck();
 
-      await this.readerSettingsService.initialize(this.seriesId, this.readingProfile);
+      await this.readerSettingsService.initialize(this.libraryId, this.seriesId, this.readingProfile);
 
       // Ensure any changes in the reader settings are applied to the reader
       this.readerSettingsService.settingUpdates$.pipe(
@@ -943,7 +945,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       }).subscribe({
         next: ({chapter, progress, chapters}) => {
           this.authorText.set(chapter.writers.map(p => p.name).join(', '));
-          this.setupBookReader(chapter, progress, chapters);
+          this.setupBookReader(chapter, progress, chapters, firstLoad);
         },
         error: () => {
           setTimeout(() => {
@@ -954,12 +956,11 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     });
   }
 
-  private setupBookReader(chapter: Chapter, progress: ProgressBookmark, chapters: BookChapterItem[]) {
+  private setupBookReader(chapter: Chapter, progress: ProgressBookmark, chapters: BookChapterItem[], firstLoad: boolean) {
     this.chapter = chapter;
     this.volumeId = chapter.volumeId;
     this.chapters = chapters;
     this.maxPages.set(chapter.pages);
-    //this.pageNum.set(progress.pageNum);
     this.setPageNum(progress.pageNum);
     this.cdRef.markForCheck();
 
@@ -975,7 +976,8 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     if (this.pageNum() >= this.maxPages()) {
-      this.pageNum.set(this.maxPages() - 1);
+      const newPageNum = firstLoad ? this.maxPages() - 1 : 0;
+      this.pageNum.set(newPageNum);
       this.saveProgress();
     }
 
@@ -1088,7 +1090,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.isLoading.set(true);
 
     if (this.nextChapterId === CHAPTER_ID_NOT_FETCHED || this.nextChapterId === this.chapterId) {
-      this.readerService.getNextChapter(this.seriesId, this.volumeId, this.chapterId, this.readingListId).pipe(take(1)).subscribe(chapterId => {
+      this.readerService.getNextChapter(this.seriesId, this.volumeId, this.chapterId, this.readingListId).subscribe(chapterId => {
         this.nextChapterId = chapterId;
         this.loadChapter(chapterId, 'Next');
       });
@@ -1108,7 +1110,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (prevChapter != this.chapterId) {
       if (prevChapter !== undefined) {
         this.chapterId = prevChapter;
-        this.init();
+        this.init(false);
         return;
       }
     }
@@ -1120,7 +1122,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     if (this.prevChapterId === CHAPTER_ID_NOT_FETCHED || this.prevChapterId === this.chapterId && !this.prevChapterPrefetched) {
-      this.readerService.getPrevChapter(this.seriesId, this.volumeId, this.chapterId, this.readingListId).pipe(take(1)).subscribe(chapterId => {
+      this.readerService.getPrevChapter(this.seriesId, this.volumeId, this.chapterId, this.readingListId).subscribe(chapterId => {
         this.prevChapterId = chapterId;
         this.loadChapter(chapterId, 'Prev');
       });
@@ -1142,7 +1144,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       const msg = translate(direction === 'Next' ? 'toasts.load-next-chapter' : 'toasts.load-prev-chapter', {entity: this.utilityService.formatChapterName(this.libraryType).toLowerCase()});
       this.toastr.info(msg, '', {timeOut: 3000});
       this.cdRef.markForCheck();
-      this.init();
+      this.init(false);
       return;
     }
 
@@ -1325,7 +1327,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       const offSetY = Math.min(32, imgRect.height * 0.05);
 
       icon.style.cssText = `
-          position: absolute;
+          ${imgRect.width < 5 ? '' : 'position:  absolute;'}
           left: ${imgRect.width + relativeX - offSetX}px;
           top: ${imgRect.height + relativeY - offSetY}px;
           margin: 0;
@@ -1451,7 +1453,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
     // we need to click the document before arrow keys will scroll down.
     this.reader.nativeElement.focus();
-    afterFrame(() => this.handleScrollEvent()); // Will set lastSeenXPath and save progress
+    afterFrame(() => this.handleScrollEvent()); // Will set lastSeenXPath
     this.isLoading.set(false);
     this.cdRef.markForCheck();
 
@@ -2083,7 +2085,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     if (drawerIsOpen) {
       this.epubMenuService.closeAll();
     } else {
-      this.epubMenuService.openSettingsDrawer(this.chapterId, this.seriesId, this.readingProfile, this.readerSettingsService);
+      this.epubMenuService.openSettingsDrawer(this.chapterId, this.seriesId, this.libraryId, this.readingProfile, this.readerSettingsService);
     }
 
     if (this.immersiveMode()) { // NOTE: Shouldn't this check if drawer is open?
@@ -2592,7 +2594,6 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
 
-  protected readonly Breakpoint = Breakpoint;
   protected readonly environment = environment;
   protected readonly ReadingDirection = ReadingDirection;
   protected readonly PAGING_DIRECTION = PAGING_DIRECTION;

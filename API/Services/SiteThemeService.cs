@@ -18,9 +18,10 @@ using Kavita.Common.EnvironmentInfo;
 using MarkdownDeep;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
 
-namespace API.Services.Tasks;
+namespace API.Services;
 #nullable enable
 
 internal class GitHubContent
@@ -200,8 +201,8 @@ public class ThemeService : IThemeService
     private static async Task<IList<GitHubContent>> GetDirectoryContent(string path)
     {
         var json = await $"{GithubBaseUrl}/repos/Kareadita/Themes/contents/{path}"
-            .WithHeader("Accept", "application/vnd.github+json")
-            .WithHeader("User-Agent", "Kavita")
+            .WithHeader(HeaderNames.Accept, "application/vnd.github+json")
+            .WithHeader(HeaderNames.UserAgent, "Kavita")
             .GetStringAsync();
 
         return string.IsNullOrEmpty(json) ? [] : JsonConvert.DeserializeObject<List<GitHubContent>>(json);
@@ -504,7 +505,13 @@ public class ThemeService : IThemeService
                 _directoryService.FileSystem.Path.Join(_directoryService.SiteThemeDirectory, theme.FileName);
             var newLocation =
                 _directoryService.FileSystem.Path.Join(_directoryService.TempDirectory, theme.FileName);
-            _directoryService.CopyFileToDirectory(existingLocation, newLocation);
+
+            if (!_directoryService.FileSystem.File.Exists(newLocation))
+            {
+                _logger.LogInformation("Copying Deleted theme file ({FileName}) to config/temp, it will be removed at midnight", theme.FileName);
+                _directoryService.CopyFileToDirectory(existingLocation, newLocation);
+            }
+
             _directoryService.DeleteFiles([existingLocation]);
         }
         catch (Exception) { /* Swallow */ }

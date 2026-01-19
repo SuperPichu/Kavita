@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
   HostListener,
   inject,
-  OnInit
+  OnInit,
+  TrackByFunction
 } from '@angular/core';
 import {NgbModal, NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
 import {ToastrService} from 'ngx-toastr';
@@ -26,18 +28,26 @@ import {LibraryTypePipe} from '../../_pipes/library-type.pipe';
 import {RouterLink} from '@angular/router';
 import {translate, TranslocoModule} from "@jsverse/transloco";
 import {DefaultDatePipe} from "../../_pipes/default-date.pipe";
-import {AsyncPipe, NgTemplateOutlet} from "@angular/common";
+import {NgTemplateOutlet} from "@angular/common";
 import {LoadingComponent} from "../../shared/loading/loading.component";
-import {Breakpoint, UtilityService} from "../../shared/_services/utility.service";
+import {UtilityService} from "../../shared/_services/utility.service";
 import {Action, ActionFactoryService, ActionItem} from "../../_services/action-factory.service";
 import {ActionService} from "../../_services/action.service";
 import {CardActionablesComponent} from "../../_single-module/card-actionables/card-actionables.component";
-import {BehaviorSubject, catchError, Observable} from "rxjs";
-import {SelectionModel} from "../../typeahead/_models/selection-model";
+import {catchError} from "rxjs";
 import {
   CopySettingsFromLibraryModalComponent
 } from "../_modals/copy-settings-from-library-modal/copy-settings-from-library-modal.component";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular/forms";
+import {SelectionModel} from "../../typeahead/_models/selection-model";
+import {ResponsiveTableComponent} from "../../shared/_components/responsive-table/responsive-table.component";
+import {
+  DataTableColumnCellDirective,
+  DataTableColumnDirective,
+  DataTableColumnHeaderDirective,
+  DatatableComponent
+} from "@siemens/ngx-datatable";
+import {BreakpointService} from "../../_services/breakpoint.service";
 
 @Component({
   selector: 'app-manage-library',
@@ -45,7 +55,7 @@ import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular
   styleUrls: ['./manage-library.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, NgbTooltip, LibraryTypePipe, TimeAgoPipe, SentenceCasePipe, TranslocoModule, DefaultDatePipe,
-    AsyncPipe, LoadingComponent, CardActionablesComponent, NgTemplateOutlet, ReactiveFormsModule, FormsModule]
+    LoadingComponent, CardActionablesComponent, NgTemplateOutlet, ReactiveFormsModule, FormsModule, ResponsiveTableComponent, DatatableComponent, DataTableColumnHeaderDirective, DataTableColumnDirective, DataTableColumnCellDirective]
 })
 export class ManageLibraryComponent implements OnInit {
 
@@ -59,8 +69,8 @@ export class ManageLibraryComponent implements OnInit {
   protected readonly utilityService = inject(UtilityService);
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly actionService = inject(ActionService);
+  protected readonly breakpointService = inject(BreakpointService);
 
-  protected readonly Breakpoint = Breakpoint;
   protected readonly Action = Action;
 
   actions = this.actionFactoryService.getLibraryActions(this.handleAction.bind(this));
@@ -71,8 +81,9 @@ export class ManageLibraryComponent implements OnInit {
    * If a deletion is in progress for a library
    */
   deletionInProgress: boolean = false;
-  useActionableSource = new BehaviorSubject<boolean>(this.utilityService.getActiveBreakpoint() <= Breakpoint.Tablet);
-  useActionables$: Observable<boolean> = this.useActionableSource.asObservable();
+  useActionables = computed(() => {
+    return this.breakpointService.isTabletOrBelow();
+  })
   selections!: SelectionModel<Library>;
   selectAll: boolean = false;
   bulkMode = false;
@@ -82,21 +93,17 @@ export class ManageLibraryComponent implements OnInit {
   isShiftDown: boolean = false;
   lastSelectedIndex: number | null = null;
 
+  trackByLibrary: TrackByFunction<Library> = (_, lib) =>
+    `${lib.name}_${lib.type}_${lib.folders.length}_${lib.lastScanned}`;
+
   @HostListener('document:keydown.shift', ['$event'])
-  handleKeypress(_: KeyboardEvent) {
+  handleKeypress(_: Event) {
     this.isShiftDown = true;
   }
 
   @HostListener('document:keyup.shift', ['$event'])
-  handleKeyUp(_: KeyboardEvent) {
+  handleKeyUp(_: Event) {
     this.isShiftDown = false;
-  }
-
-
-  @HostListener('window:resize', ['$event'])
-  @HostListener('window:orientationchange', ['$event'])
-  onResize(){
-    this.useActionableSource.next(this.utilityService.getActiveBreakpoint() <= Breakpoint.Tablet);
   }
 
   get hasSomeSelected() {
@@ -121,7 +128,7 @@ export class ManageLibraryComponent implements OnInit {
           }
         }
 
-        this.libraryService.getLibraries().pipe(take(1)).subscribe(libraries => {
+        this.libraryService.getLibraries().subscribe(libraries => {
           const newLibrary = libraries.find(lib => lib.id === libId);
           const existingLibrary = this.libraries.find(lib => lib.id === libId);
           if (existingLibrary !== undefined) {
@@ -177,7 +184,7 @@ export class ManageLibraryComponent implements OnInit {
   async deleteLibrary(library: Library) {
     if (await this.confirmService.confirm(translate('toasts.confirm-library-delete', {name: library.name}))) {
       this.deletionInProgress = true;
-      this.libraryService.delete(library.id).pipe(take(1)).subscribe(() => {
+      this.libraryService.delete(library.id).subscribe(() => {
         this.deletionInProgress = false;
         this.cdRef.markForCheck();
         this.getLibraries();

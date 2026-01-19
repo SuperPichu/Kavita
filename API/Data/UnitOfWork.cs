@@ -36,6 +36,7 @@ public interface IUnitOfWork
     IAppUserReadingProfileRepository AppUserReadingProfileRepository { get; }
     IAnnotationRepository AnnotationRepository { get; }
     IEpubFontRepository EpubFontRepository { get; }
+    IReadingSessionRepository ReadingSessionRepository { get; }
     bool Commit();
     Task<bool> CommitAsync();
     bool HasChanges();
@@ -54,7 +55,7 @@ public class UnitOfWork : IUnitOfWork
         _mapper = mapper;
         _userManager = userManager;
 
-        SeriesRepository = new SeriesRepository(_context, _mapper, _userManager);
+        SeriesRepository = new SeriesRepository(_context, _mapper);
         UserRepository = new UserRepository(_context, _userManager, _mapper);
         LibraryRepository = new LibraryRepository(_context, _mapper);
         VolumeRepository = new VolumeRepository(_context, _mapper);
@@ -80,6 +81,7 @@ public class UnitOfWork : IUnitOfWork
         AppUserReadingProfileRepository = new AppUserReadingProfileRepository(_context, _mapper);
         AnnotationRepository = new AnnotationRepository(_context, _mapper);
         EpubFontRepository = new EpubFontRepository(_context, _mapper);
+        ReadingSessionRepository = new ReadingSessionRepository(_context, _mapper);
     }
 
     /// <summary>
@@ -112,6 +114,7 @@ public class UnitOfWork : IUnitOfWork
     public IAppUserReadingProfileRepository AppUserReadingProfileRepository { get; }
     public IAnnotationRepository AnnotationRepository { get; }
     public IEpubFontRepository EpubFontRepository { get;  }
+    public IReadingSessionRepository ReadingSessionRepository { get;  }
 
     public DataContext Context => _context;
 

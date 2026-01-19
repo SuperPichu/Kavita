@@ -5,32 +5,32 @@ import {
   DestroyRef,
   effect,
   inject,
-  model,
   OnInit,
+  signal,
   Signal,
   ViewChild,
   ViewContainerRef
 } from '@angular/core';
-import {NgbActiveModal, NgbActiveOffcanvas, NgbOffcanvas} from "@ng-bootstrap/ng-bootstrap";
+import {NgbActiveOffcanvas, NgbOffcanvas} from "@ng-bootstrap/ng-bootstrap";
 import {AnnotationService} from "../../../../_services/annotation.service";
 import {FormControl, FormGroup, NonNullableFormBuilder, ReactiveFormsModule} from "@angular/forms";
 import {Annotation} from "../../../_models/annotations/annotation";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {debounceTime, switchMap, tap} from "rxjs/operators";
+import {debounceTime, switchMap} from "rxjs/operators";
 import {of} from "rxjs";
 import {HighlightBarComponent} from "../../_annotations/highlight-bar/highlight-bar.component";
 import {SlotColorPipe} from "../../../../_pipes/slot-color.pipe";
-import {User} from "../../../../_models/user";
+import {User} from "../../../../_models/user/user";
 import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
 import {DatePipe, DOCUMENT, NgStyle} from "@angular/common";
 import {SafeHtmlPipe} from "../../../../_pipes/safe-html.pipe";
 import {EpubHighlightService} from "../../../../_services/epub-highlight.service";
 import {PageChapterLabelPipe} from "../../../../_pipes/page-chapter-label.pipe";
-import {UserBreakpoint, UtilityService} from "../../../../shared/_services/utility.service";
+import {UtilityService} from "../../../../shared/_services/utility.service";
 import {QuillTheme, QuillWrapperComponent} from "../../quill-wrapper/quill-wrapper.component";
 import {ContentChange, QuillViewComponent} from "ngx-quill";
-import {UtcToLocaleDatePipe} from "../../../../_pipes/utc-to-locale-date.pipe";
+import {UtcToLocalDatePipe} from "../../../../_pipes/utc-to-locale-date.pipe";
 import {AccountService} from "../../../../_services/account.service";
 import {
   OffCanvasResizeComponent,
@@ -38,6 +38,9 @@ import {
 } from "../../../../shared/_components/off-canvas-resize/off-canvas-resize.component";
 import {ConfirmService} from "../../../../shared/confirm.service";
 import {AnnotationLikesComponent} from "../../_annotations/annotation-likes/annotation-likes.component";
+import {ProfileIconComponent} from "../../../../_single-module/profile-icon/profile-icon.component";
+import {RouterLink} from "@angular/router";
+import {BreakpointService} from "../../../../_services/breakpoint.service";
 
 export enum AnnotationMode {
   View = 0,
@@ -59,9 +62,11 @@ const INIT_HIGHLIGHT_DELAY = 200;
     QuillWrapperComponent,
     QuillViewComponent,
     DatePipe,
-    UtcToLocaleDatePipe,
+    UtcToLocalDatePipe,
     OffCanvasResizeComponent,
-    AnnotationLikesComponent
+    AnnotationLikesComponent,
+    ProfileIconComponent,
+    RouterLink
   ],
   templateUrl: './view-edit-annotation-drawer.component.html',
   styleUrl: './view-edit-annotation-drawer.component.scss',
@@ -82,12 +87,13 @@ export class ViewEditAnnotationDrawerComponent implements OnInit {
   protected readonly accountService = inject(AccountService);
   private readonly confirmService = inject(ConfirmService);
   private readonly offcanvasService = inject(NgbOffcanvas);
+  protected readonly breakpointService = inject(BreakpointService);
 
   @ViewChild('renderTarget', {read: ViewContainerRef}) renderTarget!: ViewContainerRef;
 
-  annotation = model<Annotation | null>(null);
-  mode = model<AnnotationMode>(AnnotationMode.View);
-  user = model<User | null>(null);
+  annotation = signal<Annotation | null>(null);
+  mode = signal<AnnotationMode>(AnnotationMode.View);
+  user = signal<User | null>(null);
   isEditMode: Signal<boolean>
   isEditOrCreateMode: Signal<boolean>
   titleColor: Signal<string>;
@@ -348,12 +354,6 @@ export class ViewEditAnnotationDrawerComponent implements OnInit {
     return Math.floor(availableWidth / avgCharWidth);
   }
 
-  protected readonly AnnotationMode = AnnotationMode;
-  protected readonly UserBreakpoint = UserBreakpoint;
-  protected readonly QuillTheme = QuillTheme;
-  protected readonly ResizeMode = ResizeMode;
-  protected readonly window = window;
-
   async delete() {
     const annotation = this.annotation();
     if (!annotation) return;
@@ -364,4 +364,9 @@ export class ViewEditAnnotationDrawerComponent implements OnInit {
       this.offcanvasService.dismiss();
     });
   }
+
+  protected readonly AnnotationMode = AnnotationMode;
+  protected readonly QuillTheme = QuillTheme;
+  protected readonly ResizeMode = ResizeMode;
+  protected readonly window = window;
 }

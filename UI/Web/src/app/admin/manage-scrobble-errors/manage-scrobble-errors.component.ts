@@ -7,15 +7,12 @@ import {
   inject,
   OnInit,
   Output,
-  QueryList,
-  ViewChildren
+  signal
 } from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
-import {compare, SortableHeader, SortEvent} from "../../_single-module/table/_directives/sortable-header.directive";
-import {KavitaMediaError} from "../_models/media-error";
 import {EVENTS, MessageHubService} from "../../_services/message-hub.service";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {BehaviorSubject, filter, Observable, shareReplay} from "rxjs";
+import {filter, shareReplay} from "rxjs";
 import {ScrobblingService} from "../../_services/scrobbling.service";
 import {ScrobbleError} from "../../_models/scrobbling/scrobble-error";
 
@@ -27,10 +24,11 @@ import {TranslocoLocaleModule} from "@jsverse/transloco-locale";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
 import {ColumnMode, NgxDatatableModule} from "@siemens/ngx-datatable";
 import {ActionService} from "../../_services/action.service";
+import {ResponsiveTableComponent} from "../../shared/_components/responsive-table/responsive-table.component";
 
 @Component({
     selector: 'app-manage-scrobble-errors',
-  imports: [ReactiveFormsModule, FilterPipe, TranslocoModule, DefaultValuePipe, TranslocoLocaleModule, UtcToLocalTimePipe, NgxDatatableModule],
+  imports: [ReactiveFormsModule, FilterPipe, TranslocoModule, DefaultValuePipe, TranslocoLocaleModule, UtcToLocalTimePipe, NgxDatatableModule, ResponsiveTableComponent],
     templateUrl: './manage-scrobble-errors.component.html',
     styleUrls: ['./manage-scrobble-errors.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush
@@ -46,56 +44,31 @@ export class ManageScrobbleErrorsComponent implements OnInit {
   private readonly seriesService = inject(SeriesService);
   private readonly actionService = inject(ActionService);
 
-
   @Output() scrobbleCount = new EventEmitter<number>();
-  @ViewChildren(SortableHeader<KavitaMediaError>) headers!: QueryList<SortableHeader<KavitaMediaError>>;
 
 
-  messageHubUpdate$ = this.messageHub.messages$.pipe(takeUntilDestroyed(this.destroyRef), filter(m => m.event === EVENTS.ScanSeries), shareReplay());
-  currentSort = new BehaviorSubject<SortEvent<ScrobbleError>>({column: 'created', direction: 'asc'});
-  currentSort$: Observable<SortEvent<ScrobbleError>> = this.currentSort.asObservable();
+  messageHubUpdate$ = this.messageHub.messages$.pipe(takeUntilDestroyed(this.destroyRef),
+    filter(m => m.event === EVENTS.ScanSeries), shareReplay());
 
   data: Array<ScrobbleError> = [];
-  isLoading = true;
+  isLoading = signal<boolean>(true);
   formGroup = new FormGroup({
     filter: new FormControl('', [])
   });
+  trackBy = (index: number, item: ScrobbleError) => `${item.seriesId}`;
 
 
   ngOnInit() {
-
     this.loadData();
-
     this.messageHubUpdate$.subscribe(_ => this.loadData());
-
-    this.currentSort$.subscribe(sortConfig => {
-      this.data = (sortConfig.column) ? this.data.sort((a: ScrobbleError, b: ScrobbleError) => {
-        if (sortConfig.column === '') return 0;
-        const res = compare(a[sortConfig.column], b[sortConfig.column]);
-        return sortConfig.direction === 'asc' ? res : -res;
-      }) : this.data;
-      this.cdRef.markForCheck();
-    });
-  }
-
-  onSort(evt: any) {
-    //SortEvent<KavitaMediaError>
-    this.currentSort.next(evt);
-
-    // Must clear out headers here
-    this.headers.forEach((header) => {
-      if (header.sortable !== evt.column) {
-        header.direction = '';
-      }
-    });
   }
 
   loadData() {
-    this.isLoading = true;
+    this.isLoading.set(true);
     this.cdRef.markForCheck();
     this.scrobbleService.getScrobbleErrors().subscribe(d => {
       this.data = d;
-      this.isLoading = false;
+      this.isLoading.set(false);
       this.scrobbleCount.emit(d.length);
       this.cdRef.detectChanges();
     });

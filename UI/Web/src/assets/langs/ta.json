@@ -1,10 +1,8 @@
 {
     "change-email": {
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
         "valid-email": "{{சரிபார்ப்பு. வாலிட்-எமெயில்}}",
         "reset": "{{common.reset}}}",
-        "edit": "{{common.edit}}}",
         "email-title": "மின்னஞ்சல்",
         "email-label": "புதிய மின்னஞ்சல்",
         "current-password-label": "தற்போதைய கடவுச்சொல்",
@@ -16,25 +14,16 @@
         "invite-url-label": "முகவரி ஐ அழைக்கவும்",
         "invite-url-tooltip": "இதை நகலெடுத்து புதிய தாவலில் ஒட்டவும்",
         "has-invalid-email": "உங்களிடம் சரியான மின்னஞ்சல் தொகுப்பு இல்லை என்று தெரிகிறது. இந்த செயலை முடிக்க நிர்வாகி உங்களுக்கு ஒரு இணைப்பை அனுப்ப நிர்வாகம் தேவைப்படும்.",
-        "permission-error": "உங்கள் மின்னஞ்சலை மாற்ற உங்களுக்கு இசைவு இல்லை. சேவையகத்தின் நிர்வாகியை அணுகவும்.",
         "required-field": "{{validation.required-field}}"
     },
     "change-age-restriction": {
         "age-restriction-label": "அகவை கட்டுப்பாடு",
         "unknowns": "தெரியாதவர்கள்",
         "reset": "{{common.reset}}}",
-        "edit": "{{common.edit}}}",
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}"
     },
     "api-key": {
-        "copy": "நகலெடு",
-        "show": "காட்டு",
-        "hide": "மறை",
-        "regen-warning": "உங்கள் பநிஇ விசையை மீண்டும் உருவாக்குவது ஏற்கனவே இருக்கும் எந்த வாடிக்கையாளர்களையும் செல்லாது.",
-        "no-key": "பிழை - விசை அமைக்கப்படவில்லை",
-        "confirm-reset": "நீங்கள் அமைக்கும் எந்த OPDS உள்ளமைவுகளையும் இது செல்லாது. நீங்கள் தொடர விரும்புகிறீர்களா?",
-        "key-reset": "பநிஇ விசை மீட்டமைப்பு"
+        "copy": "நகலெடு"
     },
     "login": {
         "title": "உங்கள் கணக்கில் உள்நுழைக",
@@ -84,11 +73,8 @@
         "apply": "{{common.apply}}}",
         "applied": "பயன்படுத்தப்பட்டது",
         "active-theme": "செயலில்",
-        "site-themes": "தள கருப்பொருள்கள்",
-        "title": "கருப்பொருள் மேலாளர்",
         "description": "கவிதா எனது வண்ணங்களில் வருகிறார், உங்கள் தேவைகளைப் நிறைவு செய்யும் வண்ணத் திட்டத்தைக் கண்டுபிடி அல்லது ஒன்றை நீங்களே உருவாக்கி பகிர்ந்து கொள்ளுங்கள். உங்கள் கணக்கிற்கு கருப்பொருள்கள் பயன்படுத்தப்படலாம் அல்லது எல்லா கணக்குகளுக்கும் பயன்படுத்தப்படலாம்.",
         "updated-toastr": "தள இயல்புநிலை {{name}} க்கு புதுப்பிக்கப்பட்டுள்ளது",
-        "scan-queued": "ஒரு தள கருப்பொருள் ச்கேன் வரிசையில் உள்ளது",
         "delete": "{{common.delete}}",
         "drag-n-drop": "{{கவர்-இமேச்-சாய்சர்.ராக்-அண்ட்-டிராப்}}",
         "upload": "{{கவர்-இமேச்-சாய்சர்.ப்லோட்}}}",
@@ -97,23 +83,6 @@
         "preview-default-admin": "முதலில் ஒரு கருப்பொருளைத் தேர்ந்தெடுக்கவும் அல்லது கைமுறையாக பதிவேற்றவும்",
         "preview-title": "முன்னோட்டம்",
         "add": "{{common.add}}}"
-    },
-    "user-stats": {
-        "library-read-progress-title": "நூலகம் முன்னேற்றத்தைப் படியுங்கள்",
-        "read-percentage": "% படிக்க"
-    },
-    "top-readers": {
-        "title": "சிறந்த வாசகர்கள்",
-        "time-selection-label": "காலக்கெடு",
-        "comics-label": "காமிக்ச்: {{value}} hrs",
-        "manga-label": "மங்கா: {{value}} மணி",
-        "books-label": "புத்தகங்கள்: {{value}} hrs",
-        "this-week": "{{நேர-காலங்கள். இந்த வார}}",
-        "last-7-days": "{{நேர-காலங்கள். லாச்ட் -7 நாட்கள்}}",
-        "last-30-days": "{{நேர-காலங்கள். லாச்ட் -30 நாட்கள்}}",
-        "last-90-days": "{{நேர-காலங்கள். லாச்ட் -90 நாட்கள்}}",
-        "last-year": "{{நேர-காலங்கள். லாச்ட் ஆண்டு}}",
-        "all-time": "{{time-phetiods.all-time}}"
     },
     "role-selector": {
         "title": "பாத்திரங்கள்",
@@ -143,7 +112,6 @@
         "artist": "கலைஞர்",
         "character": "எழுத்து",
         "colorist": "வண்ணமயமான",
-        "cover-artist": "{{artist}}",
         "editor": "திருத்தி",
         "inker": "ஈட்டி",
         "letterer": "லெட்டர்",
@@ -230,29 +198,16 @@
     "series-detail": {
         "writers-title": "{{metadata-fields.writers-title}}}",
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}}",
-        "characters-title": "{{metadata-fields.Characters-title}}}",
-        "colorists-title": "{{metadata-fields.colorists-title}}}",
-        "editors-title": "{{metadata-fields.editors-title}}",
-        "inkers-title": "{{metadata-fields.inkers-title}}}",
-        "letterers-title": "{{metadata-fields.letterers-title}}",
         "no-pages": "{{doasts.no-பக்கங்கள்}}",
-        "locations-title": "{{metadata-fields.locations-title}}}",
         "genres-title": "{{metadata-fields.genres-title}}",
         "tags-title": "{{metadata-fields.tags-title}}}",
         "ongoing": "{{வெளியீட்டு-நிலை-பைப்.ங்கோயிங்}}",
         "release-date-title": "வெளியீடு",
         "page-settings-title": "பக்க அமைப்புகள்",
         "close": "{{common.close}}",
-        "layout-mode-label": "{{பயனர்-முன்னுரிமைகள்.லேவுட்-மோட்-புக்-லேபிள்}}}",
-        "layout-mode-option-card": "அட்டை",
-        "layout-mode-option-list": "பட்டியல்",
         "continue-from": "{{title}} தொடரவும்",
         "read": "{{common.read}}}",
-        "continue": "தொடரவும்",
-        "read-incognito": "மறைமுகத்தைப் படியுங்கள்",
-        "continue-incognito": "மறைமுகத்தைத் தொடரவும்",
         "read-options-alt": "விருப்பங்களைப் படியுங்கள்",
-        "incognito": "மறைநிலை",
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
         "edit-series-alt": "தகவலைத் திருத்தவும்",
@@ -268,11 +223,6 @@
         "send-to": "கோப்பு {{deviceName}} க்கு மின்னஞ்சல் செய்யப்பட்டது",
         "no-chapters": "இந்த தொகுதிக்கு அத்தியாயங்கள் எதுவும் இல்லை. படிக்க முடியாது.",
         "cover-change": "உங்கள் உலாவி படத்தைப் புதுப்பிக்க ஒரு மணித்துளி வரை ஆகலாம். அதுவரை, பழைய படம் சில பக்கங்களில் காட்டப்படலாம்.",
-        "translators-title": "{{மெட்டாடேட்டா-ஃபீல்ட்ச். டிரான்ச்லேட்டர்கள்-தலைப்பு}}",
-        "pencillers-title": "{{மெட்டாடேட்டா-ஃபீல்ட்ச்.பென்சில்லர்ச்-தலைப்பு}}}",
-        "publishers-title": "{{metadata-fields.publishers-title}}",
-        "imprints-title": "{{metadata-fields.imprints-title}}}",
-        "teams-title": "{{metadata-fields.Teams-title}}",
         "volume-num": "{{comman.volume-number}}",
         "reading-lists-title": "{{side-nav.reading-lists}}",
         "pages-count": "{{num}} பக்கங்கள்",
@@ -526,24 +476,19 @@
         "loading": "{{common.loading}}}",
         "added-title": "சேர்க்கப்பட்டது",
         "last-modified-title": "கடைசியாக மாற்றப்பட்டது",
-        "words-title": "சொற்கள்",
         "chapter-title": "பாடங்கள்",
         "highest-count-tooltip": "தொடரில் அனைத்து காமிசின்ஃபோவிலும் மிக உயர்ந்த எண்ணிக்கை காணப்படுகிறது",
         "max-issue-tooltip": "தொடரின் அனைத்து காமிசின்ஃபோவிலிருந்தும் அதிகபட்ச வெளியீடு அல்லது தொகுதி புலம்",
-        "force-refresh": "கட்டாய புதுப்பிப்பு",
-        "force-refresh-tooltip": "கவிதா+ இலிருந்து வெளிப்புற மெட்டாடேட்டாவை புதுப்பிக்கவும்",
         "loose-leaf-volume": "தளர்வான இலை அத்தியாயங்கள்",
         "specials-volume": "சிறப்பு",
         "release-year-validation": "{{சரிபார்ப்பு.இயர்-சரிபார்ப்பு}}"
     },
     "manage-users": {
         "pending-tooltip": "இந்த பயனர் தங்கள் மின்னஞ்சலை சரிபார்க்கவில்லை",
-        "title": "செயலில் உள்ள பயனர்கள்",
         "pending-title": "நிலுவையில் உள்ளது",
         "delete-user-tooltip": "பயனரை நீக்கு",
         "edit-user-tooltip": "தொகு",
         "edit-user-alt": "பயனரைத் திருத்து {{user}}",
-        "username-pattern": "பயனர்பெயர் பின்வரும் எழுத்துக்களையும் இடைவெளிகளையும் மட்டுமே கொண்டிருக்க முடியும்: {{characters}}",
         "delete-user-alt": "பயனரை நீக்கு {{user}}",
         "resend-invite-tooltip": "அழைப்பிதழ் மீண்டும்",
         "resend-invite-alt": "{{user}} ஐ அழைக்கவும்",
@@ -551,21 +496,15 @@
         "setup-user-alt": "பயனர் {{user}} அமைக்கவும்",
         "change-password-tooltip": "கடவுச்சொல்லை மாற்றவும்",
         "change-password-alt": "கடவுச்சொல்லை மாற்றவும் {{user}}",
-        "resend": "மீண்டும்",
-        "setup": "அமைவு",
         "last-active-header": "கடைசியாக செயலில்",
         "roles-header": "பாத்திரங்கள்",
         "name-header": "பெயர்",
-        "none": "எதுவுமில்லை",
-        "never": "ஒருபோதும்",
         "online-now-tooltip": "இப்போது ஆன்லைனில்",
         "too-many-libraries": "நிறைய",
         "sharing-header": "பகிர்வு",
         "no-data": "வேறு பயனர்கள் இல்லை.",
-        "loading": "{{common.loading}}}",
         "actions-header": "செயல்கள்",
-        "invite": "அழைக்கவும்",
-        "you-alt": "(நீங்கள்)"
+        "invite": "அழைக்கவும்"
     },
     "edit-collection-tags": {
         "title": "திருத்து {{collectionName}} சேகரிப்பு",
@@ -607,7 +546,6 @@
         "save": "{{common.save}}",
         "title-label": "தலைப்பு",
         "sort-order-label": "வரிசைப்படுத்தும் முறை",
-        "sort-order-tooltip": "இந்த அத்தியாயம் தொகுதிக்குள் ஆர்டர் செய்யப்பட்ட வாசிப்பு வரிசை",
         "isbn-label": "ISBN",
         "release-date-label": "வெளியீடு",
         "tags-label": "{{edit-series-modal.tags-label}}}",
@@ -632,7 +570,6 @@
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}}",
         "cover-image-tab": "{{tabs.cover-tab}}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
-        "progress-tab": "{{tabs.progress-tab}}}",
         "info-tab": "{{tabs.info தாவல்}}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "tags-tab": "{{tabs.tags-tab}}}",
@@ -656,24 +593,18 @@
     },
     "edit-volume-modal": {
         "save": "{{common.save}}",
-        "progress-tab": "{{tabs.progress-tab}}}",
         "cover-image-tab": "{{tabs.cover-tab}}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
         "words-label": "{{திருத்து-அத்தியாயம்-மோடல். நீட்சி-தலைப்பு}}",
         "pages-count": "{{திருத்து-அத்தியாயம்-மோடல்.பேச்கள்-கவுண்ட்}}",
         "words-count": "{{திருத்து-அத்தியாயம்-modal.words-count}}",
-        "reading-time-label": "{{திருத்து-அத்தியாயம்-மோடல். ரீடிங்-டைம்-லேபிள்}}",
         "date-added-label": "{{திருத்து-அத்தியாயம்-மோடல்.டேட்-சேர்க்கப்பட்ட-லேபிள்}}",
         "info-tab": "{{tabs.info தாவல்}}}",
         "pages-label": "{{திருத்து-அத்தியாயம்-மாடல்.பேச்-கவுண்ட்}}",
         "size-label": "{{திருத்து-அத்தியாயம்-மோடல்.சைச்-லேபிள்}}",
         "id-label": "{{திருத்து-அத்தியாயம்-modal.id-label}}",
-        "links-label": "{{தொடர்-மெட்டாடேட்டா-டிடெயில்.லின்க்ச்-லேபல்}}",
         "title": "தொகு",
         "close": "{{common.close}}",
-        "last-read-label": "{{திருத்து-அத்தியாயம்-மோடல்.லச்ட்-ரீட்-லேபல்}}",
-        "range-hours": "{{value}} {{hourWord}}}",
-        "read-time-label": "{{திருத்து-அத்தியாயம்-மோடல்.ரெட்-டைம்-லேபிள்}}",
         "files-label": "{{திருத்து-அத்தியாயம்-மோடல்.ஃபைல்கள்-லேபல்}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}"
     },
@@ -683,7 +614,6 @@
         "no-data": "உருப்படிகள் இல்லை. ஒரு தொடரைச் சேர்க்க முயற்சிக்கவும்.",
         "no-data-filtered": "எந்த உருப்படிகளும் உங்கள் தற்போதைய வடிப்பானுடன் பொருந்தவில்லை.",
         "title-alt": "கவிதா - {{collectionName}} சேகரிப்பு",
-        "series-header": "தொடர்",
         "sync-progress": "சேகரிக்கப்பட்ட தொடர்: {{title}}"
     },
     "all-collections": {
@@ -814,7 +744,6 @@
         "original": "அசல்",
         "auto-close-menu-label": "{{பயனர்-முன்னுரிமைகள்.ஆட்டோ-க்ளோச்-மெனு-லேபல்}}",
         "swipe-enabled-label": "ச்வைப் இயக்கப்பட்டது",
-        "enable-comic-book-label": "காமிக் புத்தகத்தைப் பின்பற்றுங்கள்",
         "brightness-label": "ஒளி",
         "bookmark-page-tooltip": "புக்மார்க்கு பக்கம்",
         "unbookmark-page-tooltip": "புத்தகமன் பக்கம்",
@@ -846,14 +775,6 @@
         "read-progress": "கடைசியாக படியுங்கள்",
         "average-rating": "சராசரி மதிப்பீடு",
         "random": "சீரற்ற"
-    },
-    "kavitaplus-metadata-breakdown-stats": {
-        "errored-series-label": "பிழை தொடர்",
-        "completed-series-label": "முடிக்கப்பட்ட தொடர்",
-        "complete": "அனைத்து தொடர்களிலும் மேனிலை தரவு உள்ளது",
-        "title": "கவிதா+ மேனிலை தரவு முறிவு",
-        "description": "காவிதா மெட்டாடேட்டாவைப் பெறுகிறார் (மதிப்பீடுகள், மதிப்புரைகள், பரிந்துரைகள் போன்றவை) தகுதியான தொடர்களுக்கு மெதுவாக.",
-        "no-data": "தரவு இல்லை"
     },
     "file-breakdown-stats": {
         "format-title": "வடிவம்",
@@ -893,13 +814,10 @@
         "confirm": "உறுதிப்படுத்தவும்"
     },
     "toasts": {
-        "regen-cover": "கவர் படத்தை மீண்டும் உருவாக்க ஒரு வேலை சூழப்பட்டுள்ளது",
         "reading-list-imported": "படித்தல் பட்டியல் இறக்குமதி செய்யப்பட்டது",
         "reset-base-url": "அடிப்படை முகவரி மீட்டமைப்பு",
-        "unauthorized-2": "அங்கீகரிக்கப்படாதது",
         "volume-deleted": "தொகுதி நீக்கப்பட்டது",
         "no-pages": "பக்கங்கள் இல்லை. கவிதாவால் இந்த காப்பகத்தைப் படிக்க முடியவில்லை.",
-        "download-in-progress": "பதிவிறக்கம் ஏற்கனவே நடந்து வருகிறது. தயவுசெய்து காத்திருங்கள்.",
         "scan-queued": "{{name} க்கு க்கு வரிசைப்படுத்தப்பட்ட ச்கேன்",
         "server-settings-updated": "சேவையக அமைப்புகள் புதுப்பிக்கப்பட்டன",
         "reset-ip-address": "ஐபி முகவரிகள் மீட்டமைக்கின்றன",
@@ -915,7 +833,6 @@
         "reading-lists-deleted": "வாசிப்பு பட்டியல்கள் நீக்கப்பட்டன",
         "reading-list-updated": "படித்தல் பட்டியல் புதுப்பிக்கப்பட்டது",
         "confirm-delete-reading-list": "வாசிப்பு பட்டியலை நீக்க விரும்புகிறீர்களா? இதை செயல்தவிர்க்க முடியாது.",
-        "confirm-delete-reading-lists": "வாசிப்பு பட்டியல்களை நீக்க விரும்புகிறீர்களா? இதை செயல்தவிர்க்க முடியாது.",
         "item-removed": "உருப்படி அகற்றப்பட்டது",
         "nothing-to-remove": "அகற்ற எதுவும் இல்லை",
         "series-added-to-reading-list": "வாசிப்பு பட்டியலில் தொடர் சேர்க்கப்பட்டது",
@@ -924,12 +841,8 @@
         "multiple-added-to-reading-list": "வாசிப்பு பட்டியலில் அத்தியாயங்கள் மற்றும் தொகுதிகள் சேர்க்கப்பட்டன",
         "select-files-warning": "முன்னேற நீங்கள் கோப்புகளைத் தேர்ந்தெடுக்க வேண்டும்",
         "incognito-off": "மறைநிலை பயன்முறை முடக்கப்பட்டுள்ளது. முன்னேற்றம் இப்போது கண்காணிக்கப்படத் தொடங்கும்.",
-        "email-service-reset": "மின்னஞ்சல் பணி மீட்டமைப்பு",
-        "email-service-reachable": "கவிதா மின்னஞ்சல் இணைப்பு வெற்றிகரமாக",
-        "email-service-unresponsive": "மின்னஞ்சல் பணி முகவரி பதிலளிக்கவில்லை.",
         "refresh-covers-queued": "{{name} க்கு க்கு வரிசையில் நிற்கும் கவர்கள் புதுப்பிக்கவும்",
         "generate-colorscape-queued": "{{name} க்கு க்கு வரிசையில் நிற்கும் வண்ணங்களை உருவாக்குங்கள்",
-        "library-file-analysis-queued": "நூலக கோப்பு பகுப்பாய்வு {{name}} க்கு வரிசையில் உள்ளது",
         "entity-read": "{{name}} இப்போது படிக்கப்படுகிறது",
         "entity-unread": "{{name}} இப்போது படிக்கவில்லை",
         "mark-read": "வாசிப்பு என குறிக்கப்பட்டுள்ளது",
@@ -951,7 +864,6 @@
         "k+-reset-key-success": "உங்கள் உரிமம் பதிவு செய்யப்படவில்லை. உங்கள் நிகழ்வை மீண்டும் பதிவு செய்ய திருத்து பொத்தானைப் பயன்படுத்தவும் மற்றும் கவிதாவை மீண்டும் செயல்படுத்தவும்+",
         "library-deleted": "நூலகம் {{name}} அகற்றப்பட்டது",
         "copied-to-clipboard": "இடைநிலைப்பலகைக்கு நகலெடுக்கப்பட்டது",
-        "book-settings-info": "நீங்கள் புத்தக அமைப்புகளை மாற்றியமைக்கலாம், எல்லா புத்தகங்களுக்கும் அந்த அமைப்புகளைச் சேமிக்கலாம் மற்றும் டிராயரில் இருந்து உள்ளடக்க அட்டவணையைக் காணலாம்.",
         "no-next-chapter": "அடுத்து {{entity}} கண்டுபிடிக்க முடியவில்லை",
         "no-prev-chapter": "முந்தைய {{entity}} ஐக் கண்டுபிடிக்க முடியவில்லை",
         "load-next-chapter": "அடுத்து {{entity}} ஏற்றப்பட்டது",
@@ -969,7 +881,6 @@
         "change-email-no-email": "மின்னஞ்சல் புதுப்பிக்கப்பட்டுள்ளது",
         "device-updated": "சாதனம் புதுப்பிக்கப்பட்டது",
         "confirm-regen-covers": "புதுப்பிப்பு கவர்கள் அனைத்து கவர் படங்களையும் மீண்டும் கணக்கிட கட்டாயப்படுத்தும். இது ஒரு கனமான அறுவை மருத்தீடு. அதற்கு பதிலாக நீங்கள் ச்கேன் செய்ய விரும்பவில்லை என்பதில் உறுதியாக இருக்கிறீர்களா?",
-        "alert-long-running": "இது நீண்டகால செயல்முறை. மீண்டும் செயல்படுத்துவதற்கு முன் முடிக்க நேரம் கொடுங்கள்.",
         "confirm-delete-multiple-series": "{{count}} தொடரை நீக்க விரும்புகிறீர்களா? இது வட்டில் கோப்புகளை மாற்றாது.",
         "confirm-delete-multiple-chapters": "நீங்கள் {{count}} அத்தியாயம்/தொகுதிகளை நீக்க விரும்புகிறீர்களா? இது வட்டில் கோப்புகளை மாற்றாது.",
         "confirm-delete-series": "இந்தத் தொடரை நீக்க விரும்புகிறீர்களா? இது வட்டில் கோப்புகளை மாற்றாது.",
@@ -991,8 +902,6 @@
         "collection-not-owned": "இந்தத் தொகுப்பை நீங்கள் சொந்தமாக்கவில்லை",
         "collections-promoted": "வசூல் ஊக்குவிக்கப்பட்டது",
         "collections-unpromoted": "வசூல் ஆதரிக்கப்படாதது",
-        "reading-lists-promoted": "படித்தல் பட்டியல்கள் விளம்பரப்படுத்தப்பட்டவை",
-        "reading-lists-unpromoted": "வாசிப்பு பட்டியலிடப்படாத பட்டியல்கள்",
         "reading-list-promoted": "படித்தல் பட்டியல் விளம்பரப்படுத்தப்பட்டது",
         "reading-list-unpromoted": "படித்தல் பட்டியல் un- முன்மாதிரியானது",
         "confirm-delete-collections": "பல சேகரிப்புகளை நீக்க விரும்புகிறீர்களா?",
@@ -1147,8 +1056,7 @@
         "devices-tab": "சாதனங்கள்",
         "stats-tab": "புள்ளிவிவரங்கள்",
         "scrobbling-tab": "ச்க்ராப்லிங்",
-        "smart-filters-tab": "அறிவுள்ள வடிப்பான்கள்",
-        "progress-tab": "முன்னேற்றம்"
+        "smart-filters-tab": "அறிவுள்ள வடிப்பான்கள்"
     },
     "common": {
         "reset-to-default": "இயல்புநிலைக்கு மீட்டமைக்கவும்",
@@ -1175,7 +1083,6 @@
         "select-all": "அனைத்தையும் தெரிவுசெய்",
         "deselect-all": "அனைத்தையும் தேர்வு செய்யுங்கள்",
         "series-count": "{{num}} தொடர்",
-        "author-count": "{{num}} ஆசிரியர்கள்",
         "item-count": "{{num}} உருப்படிகள்",
         "book-num": "நூல்",
         "issue-hash-num": "வெளியீடு #",
@@ -1240,9 +1147,7 @@
         "share-series-reviews-tooltip": "கவிதா மற்ற பயனர்களுக்கான தொடரின் உங்கள் மதிப்புரைகளை சேர்க்க வேண்டுமா",
         "clients-opds-alert": "இந்த சேவையகத்தில் OPDS இயக்கப்படவில்லை. இது டச்சியோமி பயனர்களை பாதிக்காது.",
         "clients-opds-description": "அனைத்து 3 வது தரப்பு வாடிக்கையாளர்களும் பநிஇ விசை அல்லது கீழே உள்ள இணைப்பு முகவரி ஐப் பயன்படுத்துவார்கள். இவை கடவுச்சொற்கள் போன்றவை, அதை தனிப்பட்டதாக வைத்திருங்கள்.",
-        "clients-api-key-tooltip": "பநிஇ விசை கடவுச்சொல் போன்றது. அதை மீட்டமைப்பது தற்போதுள்ள எந்த வாடிக்கையாளர்களையும் செல்லாது.",
         "clients-opds-url-label": "OPDS முகவரி",
-        "clients-api-key-label": "பநிஇ விசை",
         "clients-opds-url-tooltip": "ஆதரிக்கப்பட்ட OPDS வாடிக்கையாளர்களின் பட்டியலைக் காண்க: ",
         "reset": "{{common.reset}}}",
         "save": "{{common.save}}"
@@ -1281,24 +1186,11 @@
         "save": "{{common.save}}"
     },
     "book-reader": {
-        "prev-page": "முந்தைய பக்கம்",
-        "prev-chapter": "முந்தைய அத்தியாயம்/தொகுதி",
-        "next-page": "அடுத்த பக்கம்",
-        "next-chapter": "அடுத்த அத்தியாயம்/தொகுதி",
         "skip-header": "முக்கிய உள்ளடக்கத்திற்கு செல்லவும்",
-        "settings-header": "அமைப்புகள்",
-        "bookmarks-header": "{{side-nav.bookmarks}}",
-        "toc-header": "TOC",
-        "title": "புத்தக அமைப்புகள்",
         "page-label": "பக்கம்",
-        "pagination-header": "பிரிவு",
         "go-to-page": "பக்கத்திற்குச் செல்லுங்கள்",
-        "go-to-last-page": "கடைசி பக்கத்திற்குச் செல்லுங்கள்",
-        "virtual-pages": "மெய்நிகர் பக்கங்கள்",
-        "table-of-contents-header": "உள்ளடக்க அட்டவணை",
         "loading-book": "புத்தகத்தை ஏற்றுகிறது…",
         "go-back": "திரும்பிச் செல்லுங்கள்",
-        "close-reader": "மூடு வாசகர்",
         "incognito-mode-alt": "மறைநிலை பயன்முறை இயக்கத்தில் உள்ளது. அணைக்க மாற்று.",
         "incognito-mode-label": "மறைநிலை பயன்முறை",
         "next": "அடுத்தது",
@@ -1434,8 +1326,7 @@
         "count-header": "எண்ணுங்கள்",
         "title": "வெளியீட்டு நிலை",
         "visualisation-label": "காட்சிப்படுத்தல்",
-        "data-table-label": "தரவு அட்டவணை",
-        "year-header": "ஆண்டு"
+        "data-table-label": "தரவு அட்டவணை"
     },
     "settings": {
         "admin-users": "பயனர்கள்",
@@ -1458,7 +1349,6 @@
         "preferences": "விருப்பத்தேர்வுகள்",
         "clients": "பநிஇ விசை / OPDS",
         "devices": "சாதனங்கள்",
-        "user-stats": "புள்ளிவிவரங்கள்",
         "scrobbling": "ச்க்ராப்லிங்",
         "theme": "கருப்பொருள்",
         "customize": "தனிப்பயனாக்கு",
@@ -1517,8 +1407,6 @@
         "name-label": "பெயர்",
         "title": "சாதன மேலாளர்",
         "description": "இந்த பிரிவு நீங்கள் ஒரு வலை உலாவி வழியாக கவிதாவுடன் இணைக்க முடியாத சாதனங்களை அமைப்பதற்கும் அதற்கு பதிலாக கோப்புகளை ஏற்றுக்கொள்ளும் மின்னஞ்சல் முகவரியைக் கொண்டிருப்பதற்கும் ஆகும்.",
-        "devices-title": "சாதனங்கள்",
-        "no-devices": "இதுவரை சாதனங்கள் அமைப்பு இல்லை",
         "platform-label": "இயங்குதளம்",
         "email-setup-alert": "உங்கள் சாதனங்களுக்கு கோப்புகளை அனுப்ப விரும்புகிறீர்களா? உங்கள் நிர்வாக அமைவு மின்னஞ்சல் அமைப்புகளை முதலில் வைத்திருங்கள்!",
         "add": "{{common.add}}}",
@@ -1592,7 +1480,6 @@
     "edit-device-modal": {
         "title": "சாதனத்தைத் திருத்து",
         "device-name-label": "{{நிர்வகி-DEVICES.NAME-LABEL}}",
-        "platform-label": "{{நிர்வகி-devices.platform-label}}",
         "email-label": "{{common.email}}}",
         "email-tooltip": "இந்த மின்னஞ்சல் அனுப்புதல் வழியாக கோப்பை ஏற்க பயன்படுத்தப்படும்",
         "device-platform-label": "சாதன தளம்",
@@ -1608,29 +1495,10 @@
         "new-password-label": "புதிய கடவுச்சொல்",
         "confirm-password-label": "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
         "reset": "{{common.reset}}}",
-        "edit": "{{common.edit}}}",
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
         "required-field": "{{validation.required-field}}",
         "passwords-must-match": "கடவுச்சொற்கள் பொருந்த வேண்டும்",
         "permission-error": "உங்கள் கடவுச்சொல்லை மாற்ற உங்களுக்கு இசைவு இல்லை. சேவையகத்தின் நிர்வாகியை அணுகவும்."
-    },
-    "user-stats-info-cards": {
-        "chapters": "{{value}} அத்தியாயங்கள்",
-        "total-pages-read-label": "மொத்த பக்கங்கள் படித்தன",
-        "total-pages-read-tooltip": "{{user-stats-info-cards.total-pages-read-label}}: {{value}}",
-        "total-words-read-label": "மொத்த சொற்கள் படித்தன",
-        "total-words-read-tooltip": "{{user-stats-info-cards.total-words-read-label}}: {{value}}",
-        "time-spent-reading-label": "படிக்க செலவழித்த நேரம்",
-        "pages-read-by-year-title": "ஆண்டுக்குள் படித்த பக்கங்கள்",
-        "time-spent-reading-tooltip": "{{பயனர்-ச்டாட்ச்-இன்ஃபோ-கார்டுகள். நேர-ச்பென்ட்-ரீடிங்-லேபிள்}}: {{value}}",
-        "chapters-read-label": "அத்தியாயங்கள் படித்தன",
-        "words-read-by-year-title": "ஆண்டுக்குள் படித்த சொற்கள்",
-        "words-count": "{{num}} சொற்கள்",
-        "pages-count": "{{num}} பக்கங்கள்",
-        "chapters-read-tooltip": "{{{பயனர்-ச்டாட்ச்-இன்ஃபோ-கார்டுகள்.சாப்டர்ச்-ரீட்-லேபல்}}: {{value}}",
-        "avg-reading-per-week-label": "சராசரி வாசிப்பு / வாரம்",
-        "last-active-label": "கடைசியாக செயலில்"
     },
     "typeahead": {
         "no-data": "தரவு இல்லை",
@@ -1940,8 +1808,7 @@
         "deselect-all": "{{பொதுவான."
     },
     "card-detail-layout": {
-        "total-items": "{{count}} மொத்த உருப்படிகள்",
-        "jumpkey-count": "{{count}} தொடர்"
+        "total-items": "{{count}} மொத்த உருப்படிகள்"
     },
     "card-item": {
         "cannot-read": "படிக்க முடியாது"
@@ -2102,9 +1969,6 @@
         "reading-list-label": "படித்தல் பட்டியல்",
         "create": "{{common.create}}"
     },
-    "browse-themes-modal": {
-        "title": "கருப்பொருள்களை உலாவுக"
-    },
     "import-mal-collection-modal": {
         "close": "{{common.close}}",
         "title": "மால் வட்டி அடுக்கு இறக்குமதி",
@@ -2113,15 +1977,6 @@
         "restack-count": "{{num}} Restacks",
         "nothing-found": "எதுவும் கிடைக்கவில்லை",
         "track": "மின்தடம்"
-    },
-    "edit-chapter-progress": {
-        "user-header": "பயனர்",
-        "page-read-header": "பக்கங்கள் படித்தன",
-        "date-created-header": "உருவாக்கப்பட்டது (UTC)",
-        "date-updated-header": "கடைசியாக புதுப்பிக்கப்பட்டது (UTC)",
-        "action-header": "{{common.edit}}}",
-        "edit-alt": "{{common.edit}}}",
-        "no-data": "{{பயனர்-ச்க்ரொப்-இச்டரி.னோ-டேட்டா}}"
     },
     "import-cbl-modal": {
         "close": "{{common.close}}",
@@ -2178,10 +2033,8 @@
         "title": "{{personName}} விவரங்கள்",
         "general-tab": "{{edit-series-modal.general-tab}}}",
         "cover-image-tab": "{{edit-series-modal.cover-image-tab}}}",
-        "loading": "{{common.loading}}}",
         "close": "{{common.close}}",
         "name-label": "{{edit-series-modal.name-label}}",
-        "role-label": "பங்கு",
         "mal-id-label": "ஐடியுடன்",
         "mal-tooltip": "https://myanimelist.net/people/{MalId}/",
         "anilist-id-label": "ஒரு அனானிக் ஐடி",
@@ -2199,16 +2052,7 @@
     },
     "day-breakdown": {
         "title": "நாள் முறிவு",
-        "no-data": "முன்னேற்றம் இல்லை, படிக்க",
-        "x-axis-label": "வாரத்தின் நாள்",
-        "y-axis-label": "நிகழ்வுகள் படித்தல்"
-    },
-    "manga-format-stats": {
-        "title": "வடிவம்",
-        "visualisation-label": "காட்சிப்படுத்தல்",
-        "data-table-label": "தரவு அட்டவணை",
-        "format-header": "வடிவம்",
-        "count-header": "எண்ணுங்கள்"
+        "no-data": "முன்னேற்றம் இல்லை, படிக்க"
     },
     "next-expected-card": {
         "title": "~ {{date}}",
@@ -2232,11 +2076,9 @@
         "total-read-time-tooltip": "மொத்த வாசிப்பு நேரம்: {{count}}",
         "series": "தொடர்",
         "reads": "படிக்கிறது",
-        "release-years-title": "வெளியீட்டு ஆண்டுகள்",
         "most-active-users-title": "மிகவும் செயலில் உள்ள பயனர்கள்",
         "popular-libraries-title": "பிரபலமான நூலகங்கள்",
         "popular-series-title": "பிரபலமான தொடர்",
-        "recently-read-title": "அண்மைக் காலத்தில் படியுங்கள்",
         "series-count": "{{num}} தொடர்",
         "volume-count": "{{num}} தொகுதிகள்",
         "file-count": "{{num}} கோப்புகள்",
@@ -2271,20 +2113,14 @@
         "remove-rule": "வரிசையை அகற்று"
     },
     "customize-dashboard-modal": {
-        "title-dashboard": "டாச்போர்டைத் தனிப்பயனாக்குங்கள்",
-        "title-sidenav": "பக்க நாவ் தனிப்பயனாக்கவும்",
-        "title-external-sources": "வெளிப்புற ஆதாரங்கள்",
         "title-smart-filters": "அறிவுள்ள வடிப்பான்கள்",
-        "close": "{{common.close}}",
         "dashboard": "முகப்புப்பெட்டி",
         "sidenav": "பக்க நடுவண்",
         "external-sources": "வெளிப்புற ஆதாரங்கள்",
-        "smart-filters": "அறிவுள்ள வடிப்பான்கள்",
-        "help": "{{common.help}}}"
+        "smart-filters": "அறிவுள்ள வடிப்பான்கள்"
     },
     "customize-dashboard-streams": {
         "no-data": "அனைத்து அறிவுள்ள வடிப்பான்களும் டாச்போர்டில் சேர்க்கப்பட்டுள்ளன அல்லது எதுவும் இதுவரை உருவாக்கப்படவில்லை.",
-        "save": "{{common.save}}",
         "add": "{{common.add}}}",
         "filter": "{{common.filter}}}",
         "clear": "{{common.clear}}}"
@@ -2292,7 +2128,6 @@
     "customize-sidenav-streams": {
         "no-data": "அனைத்து அறிவுள்ள வடிப்பான்களும் பக்க NAV இல் சேர்க்கப்பட்டுள்ளன அல்லது இதுவரை உருவாக்கப்படவில்லை.",
         "no-data-external-source": "அனைத்து வெளிப்புற ஆதாரங்களும் பக்க NAV இல் சேர்க்கப்பட்டுள்ளன அல்லது இதுவரை உருவாக்கப்படவில்லை.",
-        "save": "{{common.save}}",
         "add": "{{common.add}}}",
         "filter": "{{common.filter}}}",
         "clear": "{{common.clear}}}",

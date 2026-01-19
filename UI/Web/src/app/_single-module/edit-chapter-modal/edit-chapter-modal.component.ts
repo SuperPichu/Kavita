@@ -1,5 +1,5 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, inject, Input, OnInit} from '@angular/core';
-import {Breakpoint, UtilityService} from "../../shared/_services/utility.service";
+import {UtilityService} from "../../shared/_services/utility.service";
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from "@angular/forms";
 import {AsyncPipe, NgClass, NgTemplateOutlet, TitleCasePipe} from "@angular/common";
 import {NgbActiveModal, NgbNav, NgbNavContent, NgbNavItem, NgbNavLink, NgbNavOutlet} from "@ng-bootstrap/ng-bootstrap";
@@ -22,11 +22,10 @@ import {DownloadService} from "../../shared/_services/download.service";
 import {SettingItemComponent} from "../../settings/_components/setting-item/setting-item.component";
 import {TypeaheadComponent} from "../../typeahead/_components/typeahead.component";
 import {concat, forkJoin, Observable, of, tap} from "rxjs";
-import {map, switchMap} from "rxjs/operators";
+import {map} from "rxjs/operators";
 import {EntityTitleComponent} from "../../cards/entity-title/entity-title.component";
 import {SettingButtonComponent} from "../../settings/_components/setting-button/setting-button.component";
 import {CoverImageChooserComponent} from "../../cards/cover-image-chooser/cover-image-chooser.component";
-import {EditChapterProgressComponent} from "../../cards/edit-chapter-progress/edit-chapter-progress.component";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {CompactNumberPipe} from "../../_pipes/compact-number.pipe";
 import {MangaFormat} from "../../_models/manga-format";
@@ -38,7 +37,8 @@ import {SafeHtmlPipe} from "../../_pipes/safe-html.pipe";
 import {ReadTimePipe} from "../../_pipes/read-time.pipe";
 import {ChapterService} from "../../_services/chapter.service";
 import {AgeRating} from "../../_models/metadata/age-rating";
-import {User} from "../../_models/user";
+import {User} from "../../_models/user/user";
+import {BreakpointService} from "../../_services/breakpoint.service";
 
 enum TabID {
   General = 'general-tab',
@@ -46,8 +46,8 @@ enum TabID {
   Info = 'info-tab',
   People = 'people-tab',
   Tasks = 'tasks-tab',
-  Progress = 'progress-tab',
-  Tags = 'tags-tab'
+  Tags = 'tags-tab',
+  Weblinks = 'weblinks-tab', // TODO: Weblinks are not implemented
 }
 
 export interface EditChapterModalCloseResult {
@@ -61,37 +61,36 @@ export interface EditChapterModalCloseResult {
 const blackList = [Action.Edit, Action.IncognitoRead, Action.AddToReadingList];
 
 @Component({
-    selector: 'app-edit-chapter-modal',
-    imports: [
-        FormsModule,
-        NgbNav,
-        NgbNavContent,
-        NgbNavLink,
-        TranslocoDirective,
-        AsyncPipe,
-        NgbNavOutlet,
-        ReactiveFormsModule,
-        NgbNavItem,
-        SettingItemComponent,
-        NgTemplateOutlet,
-        NgClass,
-        TypeaheadComponent,
-        EntityTitleComponent,
-        TitleCasePipe,
-        SettingButtonComponent,
-        CoverImageChooserComponent,
-        EditChapterProgressComponent,
-        CompactNumberPipe,
-        DefaultDatePipe,
-        UtcToLocalTimePipe,
-        BytesPipe,
-        ImageComponent,
-        SafeHtmlPipe,
-        ReadTimePipe,
-    ],
-    templateUrl: './edit-chapter-modal.component.html',
-    styleUrl: './edit-chapter-modal.component.scss',
-    changeDetection: ChangeDetectionStrategy.OnPush
+  selector: 'app-edit-chapter-modal',
+  imports: [
+    FormsModule,
+    NgbNav,
+    NgbNavContent,
+    NgbNavLink,
+    TranslocoDirective,
+    AsyncPipe,
+    NgbNavOutlet,
+    ReactiveFormsModule,
+    NgbNavItem,
+    SettingItemComponent,
+    NgTemplateOutlet,
+    NgClass,
+    TypeaheadComponent,
+    EntityTitleComponent,
+    TitleCasePipe,
+    SettingButtonComponent,
+    CoverImageChooserComponent,
+    CompactNumberPipe,
+    DefaultDatePipe,
+    UtcToLocalTimePipe,
+    BytesPipe,
+    ImageComponent,
+    SafeHtmlPipe,
+    ReadTimePipe,
+  ],
+  templateUrl: './edit-chapter-modal.component.html',
+  styleUrl: './edit-chapter-modal.component.scss',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class EditChapterModalComponent implements OnInit {
 
@@ -107,12 +106,7 @@ export class EditChapterModalComponent implements OnInit {
   private readonly actionService = inject(ActionService);
   private readonly downloadService = inject(DownloadService);
   private readonly chapterService = inject(ChapterService);
-
-  protected readonly Breakpoint = Breakpoint;
-  protected readonly TabID = TabID;
-  protected readonly Action = Action;
-  protected readonly PersonRole = PersonRole;
-  protected readonly MangaFormat = MangaFormat;
+  protected readonly breakpointService = inject(BreakpointService);
 
   @Input({required: true}) chapter!: Chapter;
   @Input({required: true}) libraryType!: LibraryType;
@@ -511,4 +505,9 @@ export class EditChapterModalComponent implements OnInit {
   getPersonsSettings(role: PersonRole) {
     return this.peopleSettings[role];
   }
+
+  protected readonly TabID = TabID;
+  protected readonly Action = Action;
+  protected readonly PersonRole = PersonRole;
+  protected readonly MangaFormat = MangaFormat;
 }

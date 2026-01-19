@@ -207,9 +207,9 @@ export class AllSeriesComponent implements OnInit {
 
     this.title = this.route.snapshot.queryParamMap.get('title') || filterName || this.filter?.name || translate('all-series.title');
     this.cdRef.markForCheck();
-    this.seriesService.getAllSeriesV2(undefined, undefined, this.filter!).pipe(take(1)).subscribe(series => {
+    this.seriesService.getAllSeriesV2(undefined, undefined, this.filter!).subscribe(series => {
       this.series = series.result;
-      this.jumpbarKeys = this.jumpbarService.getJumpKeys(this.series, (s: Series) => s.name);
+      this.jumpbarKeys = this.jumpbarService.getJumpKeys(this.series, (s: Series) => s.sortName ?? s.name);
       this.pagination = series.pagination;
       this.loadingSeries = false;
       this.cdRef.markForCheck();

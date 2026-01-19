@@ -1,6 +1,15 @@
 import {DOCUMENT} from '@angular/common';
 import {HttpClient} from '@angular/common/http';
-import {DestroyRef, effect, inject, Injectable, Renderer2, RendererFactory2, SecurityContext} from '@angular/core';
+import {
+  computed,
+  DestroyRef,
+  effect,
+  inject,
+  Injectable,
+  Renderer2,
+  RendererFactory2,
+  SecurityContext
+} from '@angular/core';
 import {DomSanitizer} from '@angular/platform-browser';
 import {ToastrService} from 'ngx-toastr';
 import {map, ReplaySubject, take, tap} from 'rxjs';
@@ -10,7 +19,7 @@ import {NotificationProgressEvent} from '../_models/events/notification-progress
 import {SiteTheme, ThemeProvider} from '../_models/preferences/site-theme';
 import {TextResonse} from '../_types/text-response';
 import {EVENTS, MessageHubService} from './message-hub.service';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {takeUntilDestroyed, toSignal} from "@angular/core/rxjs-interop";
 import {translate} from "@jsverse/transloco";
 import {DownloadableSiteTheme} from "../_models/theme/downloadable-site-theme";
 import {NgxFileDropEntry} from "ngx-file-drop";
@@ -39,6 +48,8 @@ export class ThemeService {
 
   private currentThemeSource = new ReplaySubject<SiteTheme>(1);
   public currentTheme$ = this.currentThemeSource.asObservable();
+  public currentTheme = toSignal(this.currentTheme$);
+  public chartsColourPalette = computed(() => this.loadChartColours(this.currentTheme()));
 
   private themesSource = new ReplaySubject<SiteTheme[]>(1);
   public themes$ = this.themesSource.asObservable();
@@ -77,9 +88,9 @@ export class ThemeService {
         const evt = (message.payload as SiteThemeUpdatedEvent);
         this.currentTheme$.pipe(take(1)).subscribe(currentTheme => {
           if (currentTheme && currentTheme.name !== EVENTS.SiteThemeProgress) return;
+
           console.log('Active theme has been updated, refreshing theme');
           this.setTheme(currentTheme.name);
-
         });
       }
     });
@@ -223,10 +234,7 @@ export class ThemeService {
             this.setTheme('dark');
             return;
           }
-          const styleElem = this.document.createElement('style');
-          styleElem.id = 'theme-' + theme.name;
-          styleElem.appendChild(this.document.createTextNode(content));
-          this.renderer.appendChild(this.document.head, styleElem);
+          this.injectStyleNode(theme, content);
 
           // Check if the theme has --theme-color and apply it to meta tag
           const themeColor = this.getThemeColor();
@@ -272,10 +280,41 @@ export class ThemeService {
   }
 
   private unsetThemes() {
-    this.themeCache.forEach(theme => this.document.body.classList.remove(theme.selector));
+    this.themeCache.forEach(theme => {
+      this.document.body.classList.remove(theme.selector);
+
+
+      // TODO: BUG: We aren't removing the old style tags, thus some style conflict can occur (switch theme, delete button might be green).
+      // We need to remove the old style tags, however this brought instability in v0.8.9. I removed this for hotfix, let's revisit it later.
+      // Remove the injected style (unless it's Dark)
+      // if (theme.provider === ThemeProvider.System) return;
+      // const styleElem = this.document.querySelector('style#theme-' + theme.name);
+      // if (styleElem) {
+      //   this.renderer.removeChild(this.document.head, styleElem);
+      // }
+    });
+  }
+
+  private injectStyleNode(theme: SiteTheme, content: string) {
+    const styleElem = this.document.createElement('style');
+    styleElem.id = 'theme-' + theme.name;
+    styleElem.appendChild(this.document.createTextNode(content));
+    this.renderer.appendChild(this.document.head, styleElem);
   }
 
   private unsetBookThemes() {
     Array.from(this.document.body.classList).filter(cls => cls.startsWith('brtheme-')).forEach(c => this.document.body.classList.remove(c));
+  }
+
+  private loadChartColours(_: SiteTheme | undefined) {
+     return [
+       '--charts-palette1',
+       '--charts-palette2',
+       '--charts-palette3',
+       '--charts-palette4',
+       '--charts-palette5',
+       '--charts-palette6',
+       '--charts-palette7',
+     ].map(ccsVarName => this.getCssVariable(ccsVarName))
   }
 }

@@ -4,12 +4,12 @@
       <h4 class="modal-title">{{t('title')}} <app-entity-title [libraryType]="libraryType" [entity]="chapter" [prioritizeTitleName]="false" /></h4>
       <button type="button" class="btn-close" [attr.aria-label]="t('close')" (click)="close()"></button>
     </div>
-    <div class="modal-body scrollable-modal" [ngClass]="{'d-flex': utilityService.getActiveBreakpoint() !== Breakpoint.Mobile}">
+    <div class="modal-body scrollable-modal" [ngClass]="{'d-flex': breakpointService.isAboveMobile()}">
 
       <form [formGroup]="editForm">
         <ul ngbNav #nav="ngbNav" [(activeId)]="activeId" class="nav-pills"
             [destroyOnHide]="false"
-            orientation="{{utilityService.getActiveBreakpoint() === Breakpoint.Mobile ? 'horizontal' : 'vertical'}}" style="min-width: 135px;">
+            orientation="{{breakpointService.isMobile() ? 'horizontal' : 'vertical'}}" style="min-width: 135px;">
 
           <!-- General Tab -->
           @if (user && accountService.hasAdminRole(user))
@@ -472,9 +472,30 @@
                   </div>
                 </div>
 
-                <!-- translator -->
+                <!-- editor & translator -->
                 <div class="row">
-                  <div class="col-lg-12 col-md-12 pe-2">
+                  <div class="col-lg-6 col-md-12 pe-2">
+                    <div class="mb-3">
+                      @if(getPersonsSettings(PersonRole.Editor); as settings) {
+                        <app-setting-item [title]="t('editor-label')" [toggleOnViewClick]="false" [showEdit]="false">
+                          <ng-template #view>
+                            <app-typeahead (selectedData)="updatePerson($event, PersonRole.Editor);chapter.editorLocked = true" [settings]="settings"
+                                           [(locked)]="chapter.editorLocked" (onUnlock)="chapter.editorLocked = false"
+                                           (newItemAdded)="chapter.editorLocked = true">
+                              <ng-template #badgeItem let-item let-position="idx">
+                                {{item.name}}
+                              </ng-template>
+                              <ng-template #optionItem let-item let-position="idx">
+                                {{item.name}}
+                              </ng-template>
+                            </app-typeahead>
+                          </ng-template>
+                        </app-setting-item>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="col-lg-6 col-md-12 pe-2">
                     <div class="mb-3">
                       @if(getPersonsSettings(PersonRole.Translator); as settings) {
                         <app-setting-item [title]="t('translator-label')" [toggleOnViewClick]="false" [showEdit]="false">
@@ -620,13 +641,6 @@
             </ng-template>
           </li>
 
-          <!-- Progress Tab -->
-          <li [ngbNavItem]="TabID.Progress">
-            <a ngbNavLink>{{t(TabID.Progress)}}</a>
-            <ng-template ngbNavContent>
-              <app-edit-chapter-progress [chapter]="chapter" />
-            </ng-template>
-          </li>
 
           <!-- Tasks Tab -->
           <li [ngbNavItem]="TabID.Tasks">
@@ -646,7 +660,7 @@
         </ul>
       </form>
 
-      <div [ngbNavOutlet]="nav" class="tab-content {{utilityService.getActiveBreakpoint() === Breakpoint.Mobile ? 'mt-3' : 'ms-4 flex-fill'}}"></div>
+      <div [ngbNavOutlet]="nav" class="tab-content {{breakpointService.isMobile() ? 'mt-3' : 'ms-4 flex-fill'}}"></div>
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" (click)="close()">{{t('close')}}</button>

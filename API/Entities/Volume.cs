@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Globalization;
 using API.Entities.Interfaces;
-using API.Extensions;
-using API.Services.Tasks.Scanner.Parser;
 
 namespace API.Entities;
 
@@ -20,7 +18,7 @@ public class Volume : IEntityDate, IHasReadTimeEstimate, IHasCoverImage
     /// </summary>
     public string LookupName { get; set; }
     /// <summary>
-    /// The minimum number in the Name field in Int form
+    /// The minimum number in the Name field in Int form. NOTE: For books, this is always 0 which will break logic. Do not use.
     /// </summary>
     /// <remarks>Removed in v0.7.13.8, this was an int and we need the ability to have 0.5 volumes render on the UI</remarks>
     [Obsolete("Use MinNumber and MaxNumber instead")]
@@ -72,7 +70,7 @@ public class Volume : IEntityDate, IHasReadTimeEstimate, IHasCoverImage
         {
             return MinNumber.ToString(CultureInfo.InvariantCulture);
         }
-        
+
         return $"{MinNumber.ToString(CultureInfo.InvariantCulture)}-{MaxNumber.ToString(CultureInfo.InvariantCulture)}";
     }
 

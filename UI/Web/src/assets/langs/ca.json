@@ -33,13 +33,9 @@
         "locale-label": "Configuració local",
         "locale-tooltip": "La llengua que ha d'usar el Kavita",
         "prompt-on-download-label": "Pregunta en baixar",
-        "disable-animations-label": "Desactiva les animacions",
-        "clients-api-key-label": "Clau de l'API",
-        "clients-api-key-tooltip": "La clau de l'API és com una contrasenya. Reinicialitzar-la invalidarà tots els clients existents."
+        "disable-animations-label": "Desactiva les animacions"
     },
     "theme-manager": {
-        "title": "Gestor de temes",
-        "site-themes": "Temes del lloc",
         "default-theme": "Per defecte",
         "upload-continued": "un fitxer CSS",
         "active-theme": "Actiu",
@@ -59,8 +55,6 @@
         "email-label": "Adreça electrònica",
         "title": "Gestor de dispositius",
         "platform-label": "Plataforma",
-        "devices-title": "Dispositius",
-        "no-devices": "Encara no s'ha configurat cap dispositiu",
         "name-label": "Nom"
     },
     "changelog-update-item": {
@@ -83,8 +77,6 @@
         "email-label": "Adreça electrònica nova"
     },
     "api-key": {
-        "show": "Mostra",
-        "hide": "Amaga",
         "copy": "Copia"
     },
     "scrobbling-providers": {
@@ -160,23 +152,14 @@
         "comicVine": "Comic Vine"
     },
     "book-reader": {
-        "settings-header": "Paràmetres",
-        "virtual-pages": "pàgines virtuals",
-        "toc-header": "Sumari",
         "loading-book": "S'està carregant el llibre…",
         "go-back": "Ves enrere",
         "previous": "Anterior",
         "go-to-page-prompt": "Hi ha {{totalPages}} pàgines. A quina pàgina voleu anar?",
         "incognito-mode-label": "Mode incògnit",
         "go-to-page": "Ves a la pàgina",
-        "pagination-header": "Secció",
-        "go-to-last-page": "Ves a l'última pàgina",
         "next": "Següent",
-        "table-of-contents-header": "Sumari",
-        "prev-chapter": "Capítol/volum anterior",
-        "next-chapter": "Capítol/volum següent",
-        "page-label": "Pàgina",
-        "title": "Paràmetres del llibre"
+        "page-label": "Pàgina"
     },
     "personal-table-of-contents": {
         "delete": "Suprimeix {{bookmarkName}}"
@@ -186,15 +169,9 @@
     },
     "series-detail": {
         "page-settings-title": "Paràmetres de pàgina",
-        "layout-mode-option-card": "Targeta",
-        "incognito": "Incògnit",
-        "continue-incognito": "Continua en incògnit",
         "send-to": "S'ha enviat el fitxer a {{deviceName}}",
         "no-chapters": "No hi ha capítols en aquest volum. No es pot llegir.",
         "edit-series-alt": "Edita la informació",
-        "continue": "Continua",
-        "read-incognito": "Llegeix en incògnit",
-        "layout-mode-option-list": "Llista",
         "weblinks-title": "Enllaços",
         "more-alt": "Més",
         "pages-count": "{{num}} pàgines",
@@ -279,17 +256,9 @@
         "format-header": "Format",
         "total-files-header": "Fitxers totals"
     },
-    "manga-format-stats": {
-        "data-table-label": "Taula de dades",
-        "count-header": "Recompte",
-        "title": "Format",
-        "visualisation-label": "Visualització",
-        "format-header": "Format"
-    },
     "publication-status-stats": {
         "visualisation-label": "Visualització",
         "data-table-label": "Taula de dades",
-        "year-header": "Any",
         "count-header": "Recompte",
         "title": "Estat de publicació"
     },
@@ -369,7 +338,6 @@
         "related-tab": "Relacionats",
         "specials-tab": "Especials",
         "details-tab": "Detalls",
-        "progress-tab": "Progrés",
         "info-tab": "Informació",
         "recommendations-tab": "Recomanacions",
         "tasks-tab": "Tasques",
@@ -412,7 +380,6 @@
         "issue-num": "Número",
         "issue-hash-num": "Número",
         "series-count": "{{num}} sèries",
-        "author-count": "{{num}} autors",
         "item-count": "{{num}} elements",
         "book-num": "Llibre",
         "chapter-num": "Capítol",
@@ -431,10 +398,6 @@
     },
     "typeahead": {
         "add-item": "Afegeix {{item}}…"
-    },
-    "user-stats-info-cards": {
-        "words-count": "{{num}} mots",
-        "pages-count": "{{num}} pàgines"
     },
     "confirm": {
         "ok": "D'acord",

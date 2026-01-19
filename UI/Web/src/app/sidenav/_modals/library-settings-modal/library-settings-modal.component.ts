@@ -5,8 +5,8 @@ import {
   DestroyRef,
   inject,
   Input,
-  model,
-  OnInit
+  OnInit,
+  signal
 } from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {
@@ -27,7 +27,7 @@ import {
   DirectoryPickerResult
 } from 'src/app/admin/_modals/directory-picker/directory-picker.component';
 import {ConfirmService} from 'src/app/shared/confirm.service';
-import {Breakpoint, UtilityService} from 'src/app/shared/_services/utility.service';
+import {UtilityService} from 'src/app/shared/_services/utility.service';
 import {
   allKavitaPlusMetadataApplicableTypes,
   allLibraryTypes,
@@ -57,8 +57,8 @@ import {LibraryTypeSubtitlePipe} from "../../../_pipes/library-type-subtitle.pip
 import {TypeaheadComponent} from "../../../typeahead/_components/typeahead.component";
 import {setupLanguageSettings, TypeaheadSettings} from "../../../typeahead/_models/typeahead-settings";
 import {Language} from "../../../_models/metadata/language";
-import {map} from "rxjs/operators";
 import {MetadataService} from "../../../_services/metadata.service";
+import {BreakpointService} from "../../../_services/breakpoint.service";
 
 enum TabID {
   General = 'general-tab',
@@ -76,13 +76,13 @@ enum StepID {
 }
 
 @Component({
-    selector: 'app-library-settings-modal',
+  selector: 'app-library-settings-modal',
   imports: [NgbModalModule, NgbNavLink, NgbNavItem, NgbNavContent, ReactiveFormsModule, NgbTooltip,
     SentenceCasePipe, NgbNav, NgbNavOutlet, CoverImageChooserComponent, TranslocoModule, DefaultDatePipe,
     FileTypeGroupPipe, EditListComponent, SettingItemComponent, SettingSwitchComponent, SettingButtonComponent, LibraryTypeSubtitlePipe, NgTemplateOutlet, DatePipe, TypeaheadComponent],
-    templateUrl: './library-settings-modal.component.html',
-    styleUrls: ['./library-settings-modal.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  templateUrl: './library-settings-modal.component.html',
+  styleUrls: ['./library-settings-modal.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LibrarySettingsModalComponent implements OnInit {
 
@@ -99,9 +99,9 @@ export class LibrarySettingsModalComponent implements OnInit {
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly actionService = inject(ActionService);
   private readonly metadataService = inject(MetadataService);
+  protected readonly breakpointService = inject(BreakpointService);
 
   protected readonly LibraryType = LibraryType;
-  protected readonly Breakpoint = Breakpoint;
   protected readonly TabID = TabID;
   protected readonly WikiLink = WikiLink;
   protected readonly Action = Action;
@@ -146,7 +146,7 @@ export class LibrarySettingsModalComponent implements OnInit {
   setupStep = StepID.General;
   fileTypeGroups = allFileTypeGroup;
   excludePatterns: Array<string> = [''];
-  filesAtRoot = model<Array<string>>([]);
+  filesAtRoot = signal<Array<string>>([]);
 
   tasks: ActionItem<Library>[] = this.getTasks();
 

@@ -6,13 +6,14 @@ import {LibraryModifiedEvent} from '../_models/events/library-modified-event';
 import {NotificationProgressEvent} from '../_models/events/notification-progress-event';
 import {ThemeProgressEvent} from '../_models/events/theme-progress-event';
 import {UserUpdateEvent} from '../_models/events/user-update-event';
-import {User} from '../_models/user';
+import {User} from '../_models/user/user';
 import {DashboardUpdateEvent} from "../_models/events/dashboard-update-event";
 import {SideNavUpdateEvent} from "../_models/events/sidenav-update-event";
 import {SiteThemeUpdatedEvent} from "../_models/events/site-theme-updated-event";
 import {ExternalMatchRateLimitErrorEvent} from "../_models/events/external-match-rate-limit-error-event";
 import {AnnotationUpdateEvent} from "../_models/events/annotation-update-event";
 import {toSignal} from "@angular/core/rxjs-interop";
+import {ReadingSessionCloseEvent, ReadingSessionUpdateEvent} from "../_models/events/reading-session-close-event";
 
 export enum EVENTS {
   UpdateAvailable = 'UpdateAvailable',
@@ -125,6 +126,22 @@ export enum EVENTS {
    * Annotation is updated within the reader
    */
   AnnotationUpdate = 'AnnotationUpdate',
+  /**
+   * Reading Session close
+   */
+  ReadingSessionClose = 'ReadingSessionClose',
+  /**
+   * Reading Session Update
+   */
+  ReadingSessionUpdate = 'ReadingSessionUpdate',
+  /**
+   * Auth key has been rotated, created
+   */
+  AuthKeyUpdate = 'AuthKeyUpdate',
+  /**
+   * An Auth key has been deleted
+   */
+  AuthKeyDeleted = 'AuthKeyDeleted',
 }
 
 export interface Message<T> {
@@ -176,7 +193,7 @@ export class MessageHubService {
         accessTokenFactory: () => user.token
       })
       .withAutomaticReconnect()
-      //.withStatefulReconnect() // Requires signalr@8.0
+      .withStatefulReconnect()
       .build();
 
     this.hubConnection
@@ -260,6 +277,20 @@ export class MessageHubService {
       this.messagesSource.next({
         event: EVENTS.AnnotationUpdate,
         payload: resp.body as AnnotationUpdateEvent
+      });
+    });
+
+    this.hubConnection.on(EVENTS.ReadingSessionClose, resp => {
+      this.messagesSource.next({
+        event: EVENTS.ReadingSessionClose,
+        payload: resp.body as ReadingSessionCloseEvent
+      });
+    });
+
+    this.hubConnection.on(EVENTS.ReadingSessionUpdate, resp => {
+      this.messagesSource.next({
+        event: EVENTS.ReadingSessionUpdate,
+        payload: resp.body as ReadingSessionUpdateEvent
       });
     });
 
@@ -373,7 +404,21 @@ export class MessageHubService {
         event: EVENTS.PersonMerged,
         payload: resp.body
       });
-    })
+    });
+
+    this.hubConnection.on(EVENTS.AuthKeyUpdate, resp => {
+      this.messagesSource.next({
+        event: EVENTS.AuthKeyUpdate,
+        payload: resp.body
+      });
+    });
+
+    this.hubConnection.on(EVENTS.AuthKeyDeleted, resp => {
+      this.messagesSource.next({
+        event: EVENTS.AuthKeyDeleted,
+        payload: resp.body
+      });
+    });
   }
 
   stopHubConnection() {
@@ -381,9 +426,4 @@ export class MessageHubService {
       this.hubConnection.stop().catch(err => console.error(err));
     }
   }
-
-  sendMessage(methodName: string, body?: any) {
-    return this.hubConnection.invoke(methodName, body);
-  }
-
 }

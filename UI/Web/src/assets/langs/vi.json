@@ -81,10 +81,8 @@
         "share-series-reviews-label": "Chia sẻ đánh giá của Truyện",
         "share-series-reviews-tooltip": "Kavita có nên đưa đánh giá của bạn về truyện này cho những người dùng khác không",
         "clients-opds-alert": "OPDS không được bật trên máy chủ này. Điều này sẽ không ảnh hưởng đến người dùng Tachiyomi.",
-        "clients-api-key-tooltip": "Khóa API giống như mật khẩu. Việc đặt lại khóa sẽ làm mất hiệu lực mọi ứng dụng khách hiện có.",
         "clients-opds-url-tooltip": "Xem danh sách các máy khách OPDS được hỗ trợ: ",
-        "clients-opds-url-label": "OPDS URL",
-        "clients-api-key-label": "API Key"
+        "clients-opds-url-label": "OPDS URL"
     },
     "user-holds": {
         "no-data": "{{typeahead.no-data}}",
@@ -98,9 +96,7 @@
         "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
         "upload": "{{cover-image-chooser.upload}}",
         "add": "{{common.add}}",
-        "title": "Quản Lý Chủ Đề",
         "description": "Kavita có nhiều màu sắc, hãy tìm một bảng màu phù hợp với nhu cầu của bạn hoặc tự tạo một bảng màu và chia sẻ. Chủ đề có thể được áp dụng cho tài khoản của bạn hoặc áp dụng cho tất cả các tài khoản.",
-        "site-themes": "Chủ Đề Trang Web",
         "set-default": "Đặt Làm Mặc Định",
         "default-theme": "Mặc Định",
         "upload-continued": "một tệp css",
@@ -111,8 +107,7 @@
         "downloadable": "Có Thể Tải Xuống",
         "applied": "Đã áp dụng",
         "active-theme": "Kích hoạt",
-        "updated-toastr": "Trang mặc định đã được cập nhật thành {{name}}",
-        "scan-queued": "Đã lên lịch quét chủ đề trang web"
+        "updated-toastr": "Trang mặc định đã được cập nhật thành {{name}}"
     },
     "restriction-selector": {
         "age-rating-label": "{{metadata-fields.age-rating-title}}",
@@ -135,8 +130,6 @@
         "actions-header": "{{manage-users.actions-header}}",
         "description": "Phần này dành cho bạn để thiết lập các thiết bị không thể kết nối với Kavita thông qua trình duyệt web và thay vào đó có địa chỉ email chấp nhận tệp.",
         "title": "Trình Quản Lý Thiết Bị",
-        "devices-title": "Thiết Bị",
-        "no-devices": "Chưa có thiết bị nào được thiết lập",
         "platform-label": "Nền Tảng",
         "name-label": "Tên",
         "email-setup-alert": "Bạn muốn gửi tệp đến thiết bị của mình? Hãy yêu cầu quản trị viên thiết lập cài đặt Email trước!",
@@ -144,7 +137,6 @@
     },
     "edit-device-modal": {
         "device-name-label": "{{manage-devices.name-label}}",
-        "platform-label": "{{manage-devices.platform-label}}",
         "email-label": "{{common.email}}",
         "save": "{{common.save}}",
         "close": "{{common.close}}",
@@ -158,8 +150,6 @@
     "change-password": {
         "password-label": "{{common.password}}",
         "reset": "{{common.reset}}",
-        "edit": "{{common.edit}}",
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
         "required-field": "{{validation.required-field}}",
         "current-password-label": "Mật Khẩu Hiện Tại",
@@ -172,8 +162,6 @@
         "required-field": "{{validation.required-field}}",
         "valid-email": "{{validation.valid-email}}",
         "reset": "{{common.reset}}",
-        "edit": "{{common.edit}}",
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
         "email-label": "Email mới",
         "current-password-label": "Mật Khẩu Hiện Tại",
@@ -185,13 +173,10 @@
         "invite-url-label": "Liên kết mời",
         "invite-url-tooltip": "Sao chép và dán vào một tab mới",
         "has-invalid-email": "Có vẻ như bạn không có email hợp lệ. Thay đổi email sẽ yêu cầu quản trị viên gửi cho bạn liên kết để hoàn tất hành động này.",
-        "permission-error": "Bạn không có quyền thay đổi email của mình. Hãy liên hệ với quản trị viên của máy chủ.",
         "email-title": "Email"
     },
     "change-age-restriction": {
         "reset": "{{common.reset}}",
-        "edit": "{{common.edit}}",
-        "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
         "age-restriction-label": "Giới Hạn Độ Tuổi",
         "unknowns": "Mục Chưa Biết"
@@ -229,36 +214,6 @@
         "clear": "{{common.clear}}",
         "filter": "{{common.filter}}",
         "open-filtered-search": "Mở tìm kiếm được lọc cho {{item}}"
-    },
-    "user-stats-info-cards": {
-        "total-pages-read-tooltip": "{{user-stats-info-cards.total-pages-read-label}}: {{value}}",
-        "total-words-read-tooltip": "{{user-stats-info-cards.total-words-read-label}}: {{value}}",
-        "time-spent-reading-tooltip": "{{user-stats-info-cards.time-spent-reading-label}}: {{value}}",
-        "chapters-read-tooltip": "{{user-stats-info-cards.chapters-read-label}}: {{value}}",
-        "chapters-read-label": "Chương đã đọc",
-        "total-pages-read-label": "Tổng số trang đã đọc",
-        "total-words-read-label": "Tổng số từ đã đọc",
-        "time-spent-reading-label": "Thời gian dành cho việc đọc",
-        "avg-reading-per-week-label": "Đọc trung bình / Tuần",
-        "last-active-label": "Hoạt động cuối cùng",
-        "chapters": "{{value}} chương",
-        "pages-read-by-year-title": "Số trang đã đọc theo năm",
-        "words-read-by-year-title": "Số Từ Đã Đọc Theo Năm",
-        "words-count": "{{num}} từ",
-        "pages-count": "{{num}} trang"
-    },
-    "top-readers": {
-        "this-week": "{{time-periods.this-week}}",
-        "last-7-days": "{{time-periods.last-7-days}}",
-        "last-30-days": "{{time-periods.last-30-days}}",
-        "last-90-days": "{{time-periods.last-90-days}}",
-        "last-year": "{{time-periods.last-year}}",
-        "all-time": "{{time-periods.all-time}}",
-        "title": "Độc giả hàng đầu",
-        "time-selection-label": "Khung thời gian",
-        "manga-label": "Manga: {{value}} giờ",
-        "books-label": "Sách: {{value}} giờ",
-        "comics-label": "Comics: {{value}} giờ"
     },
     "role-selector": {
         "deselect-all": "{{common.deselect-all}}",
@@ -299,7 +254,6 @@
         "writer": "Tác Giả",
         "other": "Khác",
         "imprint": "Đóng Dấu",
-        "cover-artist": "{{artist}}",
         "inker": "Vẽ Chính",
         "letterer": "Vẽ Thoại",
         "penciller": "Phác Thảo"
@@ -399,29 +353,16 @@
         "bookmark": "Dấu Trang"
     },
     "book-reader": {
-        "bookmarks-header": "{{side-nav.bookmarks}}",
         "go-to-page": "Đi tới trang",
         "incognito-mode-alt": "Chế độ ẩn danh đang bật. Chuyển đổi để tắt.",
-        "next-page": "Trang tiếp theo",
-        "title": "Cài Đặt Sách",
         "page-label": "Trang",
-        "pagination-header": "Phần",
-        "go-to-last-page": "Đi tới trang cuối",
-        "prev-page": "Trang trước",
-        "prev-chapter": "Chương/Tập trước",
-        "next-chapter": "Chương/Tập tiếp theo",
         "skip-header": "Bỏ qua phần mở đầu",
-        "virtual-pages": "trang ảo",
-        "settings-header": "Cài Đặt",
-        "table-of-contents-header": "Mục Lục",
         "loading-book": "Đang tải sách…",
         "go-back": "Quay Lại",
-        "close-reader": "Đóng Trình Đọc",
         "incognito-mode-label": "Chế Độ Ẩn Danh",
         "next": "Tiếp Theo",
         "previous": "Trước Đó",
-        "go-to-page-prompt": "Có {{totalPages}} trang. Bạn muốn đến trang nào?",
-        "toc-header": "ToC"
+        "go-to-page-prompt": "Có {{totalPages}} trang. Bạn muốn đến trang nào?"
     },
     "confirm-email": {
         "username-label": "{{common.username}}",
@@ -457,7 +398,6 @@
     },
     "series-detail": {
         "close": "{{common.close}}",
-        "layout-mode-label": "{{user-preferences.layout-mode-book-label}}",
         "read": "{{common.read}}",
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
@@ -473,17 +413,6 @@
         "no-pages": "{{toasts.no-pages}}",
         "writers-title": "{{metadata-fields.writers-title}}",
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
-        "characters-title": "{{metadata-fields.characters-title}}",
-        "colorists-title": "{{metadata-fields.colorists-title}}",
-        "editors-title": "{{metadata-fields.editors-title}}",
-        "inkers-title": "{{metadata-fields.inkers-title}}",
-        "letterers-title": "{{metadata-fields.letterers-title}}",
-        "translators-title": "{{metadata-fields.translators-title}}",
-        "pencillers-title": "{{metadata-fields.pencillers-title}}",
-        "publishers-title": "{{metadata-fields.publishers-title}}",
-        "imprints-title": "{{metadata-fields.imprints-title}}",
-        "teams-title": "{{metadata-fields.teams-title}}",
-        "locations-title": "{{metadata-fields.locations-title}}",
         "genres-title": "{{metadata-fields.genres-title}}",
         "tags-title": "{{metadata-fields.tags-title}}",
         "ongoing": "{{publication-status-pipe.ongoing}}",
@@ -491,16 +420,10 @@
         "reading-lists-title": "{{side-nav.reading-lists}}",
         "time-to-read-alt": "{{sort-field-pipe.time-to-read}}",
         "scrobbling-tooltip": "{{settings.scrobbling}}",
-        "layout-mode-option-card": "Thẻ",
         "no-chapters": "Tập này không có chương nào. Không thể đọc được.",
-        "incognito": "Ẩn Danh",
         "cover-change": "Trình duyệt của bạn có thể mất tới một phút để làm mới hình ảnh. Cho đến lúc đó, hình ảnh cũ có thể được hiển thị trên một số trang.",
         "page-settings-title": "Cài Đặt Trang",
-        "layout-mode-option-list": "Danh Sách",
         "continue-from": "Tiếp tục {{title}}",
-        "continue": "Tiếp Tục",
-        "read-incognito": "Đọc Ẩn Danh",
-        "continue-incognito": "Tiếp Tục Ẩn Danh",
         "read-options-alt": "Tùy Chọn Đọc",
         "edit-series-alt": "Chỉnh Sửa Thông Tin",
         "send-to": "Tệp được gửi qua email tới {{deviceName}}",
@@ -955,19 +878,13 @@
         "sync-themes-success": "Tác vụ đồng bộ chủ đề đã được lên lịch"
     },
     "manage-users": {
-        "loading": "{{common.loading}}",
         "name-header": "Tên",
-        "none": "None",
-        "never": "Không bao giờ",
         "sharing-header": "Chia Sẻ",
         "no-data": "Không có người dùng nào khác.",
-        "username-pattern": "Tên người dùng chỉ có thể chứa các ký tự và khoảng trắng: {{characters}}",
         "actions-header": "Hành Động",
         "pending-tooltip": "Người dùng này chưa xác thực email của họ",
         "delete-user-tooltip": "Xóa Người Dùng",
         "resend-invite-tooltip": "Gửi Lại Lời Mời",
-        "resend": "Gửi Lại",
-        "setup": "Thiết Lập",
         "last-active-header": "Hoạt Động Cuối Cùng",
         "roles-header": "Vai Trò",
         "delete-user-alt": "Xóa Người Dùng {{user}}",
@@ -976,9 +893,7 @@
         "online-now-tooltip": "Đang Trực Tuyến",
         "too-many-libraries": "Rất Nhiều",
         "setup-user-alt": "Thiết Lập Người Dùng {{user}}",
-        "you-alt": "(Bạn)",
         "pending-title": "Đang chờ",
-        "title": "Người Dùng Đang Hoạt Động",
         "invite": "Mời",
         "resend-invite-alt": "Gửi Lại Lời Mời Tới {{user}}",
         "setup-user-tooltip": "Thiết Lập Người Dùng",
@@ -1028,7 +943,6 @@
         "admin-users": "Người Dùng",
         "admin-general": "Chung",
         "account-section-title": "Tài Khoản",
-        "user-stats": "Trạng Thái",
         "admin-statistics": "Thống Kê",
         "admin-system": "Hệ Thống",
         "admin-kavitaplus": "Kavita+",
@@ -1048,7 +962,6 @@
     },
     "collection-detail": {
         "item-count": "{{common.item-count}}",
-        "series-header": "Series",
         "no-data": "Không có mục nào. Hãy thử thêm một series.",
         "sync-progress": "Series Đã Thu Thập: {{title}}",
         "last-sync": "Đồng Bộ Lần Cuối: {{date}}",
@@ -1186,15 +1099,6 @@
         "title": "Nhập MAL Interest Stack",
         "restack-count": "{{num}} Restacks"
     },
-    "edit-chapter-progress": {
-        "action-header": "{{common.edit}}",
-        "edit-alt": "{{common.edit}}",
-        "no-data": "{{user-scrobble-history.no-data}}",
-        "user-header": "Người Dùng",
-        "page-read-header": "Trang Đã Đọc",
-        "date-created-header": "Đã Tạo (UTC)",
-        "date-updated-header": "Cập Nhật Lần Cuối (UTC)"
-    },
     "import-cbl-modal": {
         "close": "{{common.close}}",
         "validate-no-issue-description": "Không có vấn đề nào với tệp CBL, nhấn nút Tiếp Theo.",
@@ -1240,7 +1144,6 @@
         "first-time-reading-manga": "Chạm vào hình ảnh bất kỳ lúc nào để mở menu. Bạn có thể cấu hình các thiết lập khác nhau hoặc đi đến trang bằng cách nhấp vào thanh tiến trình. Chạm vào các cạnh của hình ảnh để di chuyển đến trang tiếp theo/trước đó.",
         "incognito-title": "Chế Độ Ẩn Danh:",
         "settings-tooltip": "Cài Đặt",
-        "enable-comic-book-label": "Giả Lập Sách Truyện",
         "bookmark-page-tooltip": "Đánh Dấu Trang",
         "layout-mode-switched": "Bố trí trang được chuyển sang Trang Đơn do không đủ không gian để hiển thị Trang Đôi",
         "series-progress": "Tiến độ Series: {{percentage}}",
@@ -1349,8 +1252,6 @@
         "lowest-folder-path-tooltip": "Đường dẫn thấp nhất từ thư viện gốc chứa tất cả các tệp của các series",
         "max-items-title": "Số lượng tối đa",
         "size-title": "Kích thước",
-        "force-refresh": "Bắt Buộc Làm Mới",
-        "force-refresh-tooltip": "Buộc làm mới metadata bên ngoài từ Kavita+",
         "loose-leaf-volume": "Chương rời",
         "specials-volume": "Đặc Biệt",
         "format-title": "Định Dạng",
@@ -1364,7 +1265,6 @@
         "view-files": "Xem Các Tệp",
         "last-added-title": "Mục cuối cùng được thêm",
         "publication-status-title": "Tình Trạng Xuất Bản",
-        "words-title": "Từ",
         "last-modified-title": "Sửa Đổi Gần Nhất",
         "publication-status-label": "Tình Trạng Xuất Bản",
         "library-title": "Thư Viện",
@@ -1403,7 +1303,6 @@
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
-        "progress-tab": "{{tabs.progress-tab}}",
         "info-tab": "{{tabs.info-tab}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "tags-tab": "{{tabs.tags-tab}}",
@@ -1412,7 +1311,6 @@
         "last-read-label": "{{sort-field-pipe.read-progress}}",
         "pages-label": "Trang",
         "sort-order-label": "Thứ Tự Sắp Xếp",
-        "sort-order-tooltip": "Thứ tự đọc mà chương này được sắp xếp trong tập truyện",
         "isbn-label": "ISBN",
         "title-label": "Tiêu Đề",
         "read-time-label": "Thời Gian Đọc",
@@ -1430,7 +1328,6 @@
     "edit-volume-modal": {
         "close": "{{common.close}}",
         "save": "{{common.save}}",
-        "progress-tab": "{{tabs.progress-tab}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
         "info-tab": "{{tabs.info-tab}}",
@@ -1438,17 +1335,12 @@
         "words-label": "{{edit-chapter-modal.length-title}}",
         "pages-count": "{{edit-chapter-modal.pages-count}}",
         "words-count": "{{edit-chapter-modal.words-count}}",
-        "reading-time-label": "{{edit-chapter-modal.reading-time-label}}",
         "date-added-label": "{{edit-chapter-modal.date-added-label}}",
         "size-label": "{{edit-chapter-modal.size-label}}",
         "id-label": "{{edit-chapter-modal.id-label}}",
-        "links-label": "{{series-metadata-detail.links-label}}",
-        "last-read-label": "{{edit-chapter-modal.last-read-label}}",
-        "read-time-label": "{{edit-chapter-modal.read-time-label}}",
         "files-label": "{{edit-chapter-modal.files-label}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "title": "Sửa",
-        "range-hours": "{{value}} {{hourWord}}"
+        "title": "Sửa"
     },
     "reading-activity": {
         "this-week": "{{time-periods.this-week}}",
@@ -1493,11 +1385,9 @@
         "most-active-users-title": "Người Dùng Chăm Chỉ Nhất",
         "total-read-time-label": "Tổng Thời Gian Đọc",
         "total-read-time-tooltip": "Tổng thời gian đọc: {{count}}",
-        "release-years-title": "Năm Phát Hành",
         "people-count": "{{num}} Người",
         "total-series-tooltip": "Tổng số Series: {{count}}",
         "popular-series-title": "Series Phổ Biến",
-        "recently-read-title": "Vừa Mới Đọc",
         "series-count": "{{num}} Series",
         "volume-count": "{{num}} Tập",
         "total-tags-label": "Tổng Số Tag",
@@ -1509,26 +1399,19 @@
         "popular-libraries-title": "Thư Viện Phổ Biến"
     },
     "customize-dashboard-modal": {
-        "close": "{{common.close}}",
-        "help": "{{common.help}}",
         "dashboard": "Bảng Điều Khiển",
-        "title-dashboard": "Tùy Chỉnh Bảng Điều Khiển",
-        "title-sidenav": "Tùy Chỉnh Thanh Điều Hướng Bên",
-        "title-external-sources": "Nguồn bên ngoài",
         "sidenav": "Thanh Điều Hướng Bên",
         "external-sources": "Nguồn bên ngoài",
         "smart-filters": "Bộ lọc thông minh",
         "title-smart-filters": "Bộ Lọc Thông Minh"
     },
     "customize-dashboard-streams": {
-        "save": "{{common.save}}",
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
         "no-data": "Tất cả bộ lọc thông minh đã được thêm vào Bảng điều khiển hoặc chưa có bộ lọc nào được tạo."
     },
     "customize-sidenav-streams": {
-        "save": "{{common.save}}",
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
@@ -1814,17 +1697,7 @@
         "click-to-show": "Spoiler, click để xem"
     },
     "api-key": {
-        "copy": "Sao Chép",
-        "show": "Hiện",
-        "hide": "Ẩn",
-        "regen-warning": "Việc tạo lại khóa API sẽ làm mất hiệu lực mọi ứng dụng khách hiện có.",
-        "confirm-reset": "Điều này sẽ vô hiệu hóa bất kỳ cấu hình OPDS nào bạn đã thiết lập. Bạn có chắc chắn muốn tiếp tục không?",
-        "key-reset": "Đặt lại API Key",
-        "no-key": "LỖI - KEY CHƯA ĐƯỢC THIẾT LẬP"
-    },
-    "user-stats": {
-        "library-read-progress-title": "Tiến trình đọc thư viện",
-        "read-percentage": "% Đã đọc"
+        "copy": "Sao Chép"
     },
     "device-platform-pipe": {
         "custom": "Tùy Chỉnh"
@@ -1876,8 +1749,7 @@
         "read-less": "Đọc Ít Hơn"
     },
     "card-detail-layout": {
-        "total-items": "Tổng {{count}} mục",
-        "jumpkey-count": "{{count}} Series"
+        "total-items": "Tổng {{count}} mục"
     },
     "card-item": {
         "cannot-read": "Không thể Đọc"
@@ -1947,7 +1819,6 @@
         "title": "{{personName}} Details",
         "close": "{{common.close}}",
         "name-label": "{{edit-series-modal.name-label}}",
-        "role-label": "Vai Trò",
         "anilist-id-label": "AniList ID",
         "hardcover-id-label": "Hardcover ID",
         "asin-label": "ASIN",
@@ -1955,7 +1826,6 @@
         "required-field": "{{validations.required-field}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "save": "{{common.save}}",
-        "loading": "{{common.loading}}",
         "general-tab": "{{edit-series-modal.general-tab}}",
         "cover-image-tab": "{{edit-series-modal.cover-image-tab}}",
         "mal-tooltip": "https://myanimelist.net/people/{MalId}/",
@@ -1982,14 +1852,6 @@
         "release-year": "Năm Phát Hành",
         "average-rating": "Xếp Hạng Trung Bình"
     },
-    "kavitaplus-metadata-breakdown-stats": {
-        "errored-series-label": "Series bị lỗi",
-        "completed-series-label": "Series Đã Hoàn Thành",
-        "complete": "Tất cả các Series đều có metadata",
-        "title": "Phân tích metadata Kavita+",
-        "description": "Kavita sẽ từ từ thu thập metadata (xếp hạng, đánh giá, đề xuất, v.v.) theo thời gian cho các series đủ điều kiện.",
-        "no-data": "Không có dữ liệu"
-    },
     "file-breakdown-stats": {
         "format-header": "Định Dạng",
         "total-files-header": "Tổng Số Tệp",
@@ -2006,9 +1868,7 @@
     },
     "day-breakdown": {
         "title": "Phân tích theo ngày",
-        "no-data": "Không có tiến trình, hãy bắt đầu đọc",
-        "x-axis-label": "Ngày trong Tuần",
-        "y-axis-label": "Sự Kiện Đọc"
+        "no-data": "Không có tiến trình, hãy bắt đầu đọc"
     },
     "carousel-reel": {
         "prev-items": "Mục Trước Đó",
@@ -2029,9 +1889,6 @@
     "download-indicator": {
         "progress": "{{percentage}}% đã tải"
     },
-    "browse-themes-modal": {
-        "title": "Duyệt Chủ Đề"
-    },
     "toasts": {
         "series-added-to-reading-list": "Series đã được thêm vào danh sách đọc",
         "stack-imported": "Đã nhập Stack",
@@ -2050,36 +1907,28 @@
         "select-files-warning": "Bạn cần chọn các tệp tin để tiến về phía trước",
         "reading-list-imported": "Đã nhập danh sách đọc",
         "load-prev-chapter": "{{entity}} trước đó đã được tải",
-        "book-settings-info": "Bạn có thể sửa đổi cài đặt sách, lưu các cài đặt đó cho tất cả sách và xem mục lục từ ngăn kéo.",
         "password-reset": "Đặt lại Mật Khẩu",
         "anilist-token-updated": "AniList Token đã được cập nhật",
         "library-created": "Thư viện đã được tạo thành công. Quá trình quét đã được bắt đầu.",
-        "alert-long-running": "Đây là một quá trình chạy lâu dài. Vui lòng cho nó thời gian để hoàn tất trước khi gọi lại.",
         "device-created": "Thiết bị đã được tạo",
         "delete-device": "Bạn có chắc chắn muốn xóa thiết bị này không?",
         "confirm-regen-covers": "Làm mới ảnh bìa sẽ buộc phải tính toán lại tất cả ảnh bìa. Đây là một thao tác nặng. Bạn có chắc chắn không muốn thực hiện Quét thay thế không?",
         "anilist-token-expired": "AniList token của bạn đã hết hạn. Scrobbling sẽ không còn xử lý cho đến khi bạn tạo lại nó trong Cài đặt người dùng > Tài khoản",
         "collection-tag-deleted": "Đã xóa Bộ sưu tập Tag",
         "force-kavita+-refresh-success": "Metadata bên ngoài của Kavita+ đã bị vô hiệu hóa",
-        "reading-lists-promoted": "Danh sách đọc đã được Quảng bá",
-        "reading-lists-unpromoted": "Danh sách đọc chưa được Quảng bá",
         "collection-not-owned": "Bạn không sở hữu bộ sưu tập này",
         "collections-promoted": "Bộ sưu tập đã được Quảng bá",
         "pdf-book-mode-screen-size": "Màn hình thiết bị quá nhỏ cho chế độ Sách",
         "bulk-scan": "Việc quét nhiều thư viện sẽ được thực hiện tuyến tính. Việc này có thể mất nhiều thời gian và có thể không hoàn tất tùy thuộc vào quy mô thư viện.",
         "bulk-covers": "Làm mới ảnh bìa trên nhiều thư viện rất tốn công và có thể mất nhiều thời gian. Bạn có chắc chắn muốn tiếp tục không?",
-        "regen-cover": "Một tác vụ đã được lên lịch để tạo lại hình ảnh bìa",
         "no-pages": "Không có trang nào. Kavita không thể đọc được archive này.",
-        "download-in-progress": "Quá trình tải xuống đang diễn ra. Vui lòng đợi.",
         "scan-queued": "Tác vụ quét đã được lên lịch cho {{name}}",
         "server-settings-updated": "Cài đặt máy chủ đã được cập nhật",
-        "unauthorized-2": "Không được phép",
         "confirm-delete-user": "Bạn có chắc chắn muốn xóa người dùng này không?",
         "item-removed": "Mục đã bị xóa",
         "nothing-to-remove": "Không có gì để xóa",
         "chapter-added-to-reading-list": "Chương đã được thêm vào danh sách đọc",
         "incognito-off": "Chế độ ẩn danh đã tắt. Tiến trình sẽ bắt đầu được theo dõi.",
-        "email-service-reset": "Đặt lại dịch vụ Email",
         "library-deleted": "Thư viện {{name}} đã bị xóa",
         "copied-to-clipboard": "Đã sao chép vào clipboard",
         "password-updated": "Mật Khẩu đã được cập nhật",
@@ -2095,14 +1944,12 @@
         "chapter-deleted": "Đã xóa Chương",
         "mal-token-required": "MAL Token là bắt buộc, cần được thiết lập trong Cài đặt người dùng",
         "must-select-library": "Phải chọn ít nhất một Thư viện",
-        "confirm-delete-reading-lists": "Bạn có chắc chắn muốn xóa danh sách đọc không? Không thể hoàn tác thao tác này.",
         "multiple-added-to-reading-list": "Các Chương và Tập đã được thêm vào danh sách đọc",
         "device-updated": "Thiết bị đã được cập nhật",
         "confirm-library-type-change": "Việc thay đổi loại thư viện sẽ kích hoạt một lần quét mới với các quy tắc phân tích cú pháp khác nhau và có thể dẫn đến việc tạo lại series và do đó bạn có thể mất tiến trình và dấu trang. Bạn nên sao lưu trước khi thực hiện việc này. Bạn có chắc chắn muốn tiếp tục không?",
         "volume-deleted": "Đã xóa Tập",
         "confirm-reset-server-settings": "Thao tác này sẽ đặt lại cài đặt của bạn về giá trị ban đầu. Bạn có chắc chắn muốn tiếp tục không?",
         "collection-updated": "Đã cập nhật bộ sưu tập",
-        "email-service-unresponsive": "Đường dẫn dịch vụ Email không phản hồi.",
         "refresh-covers-queued": "Tác vụ làm mới ảnh bìa đã được lên lịch cho {{name}}",
         "mark-unread": "Đánh dấu là Chưa Đọc",
         "mark-read": "Đánh dấu là Đã Đọc",
@@ -2136,8 +1983,6 @@
         "reading-lists-deleted": "Đã xóa danh sách đọc",
         "reading-list-updated": "Đã xóa danh sách đọc",
         "confirm-delete-reading-list": "Bạn có chắc chắn muốn xóa danh sách đọc không? Không thể hoàn tác thao tác này.",
-        "email-service-reachable": "Kết nối Email Kavita thành công",
-        "library-file-analysis-queued": "Tác vụ phân tích tệp của thư viện đã được lên lịch cho {{name}}",
         "series-removed-want-to-read": "Series đã bị xóa khỏi Danh Sách Muốn Đọc",
         "series-deleted": "Đã Xóa Series",
         "review-deleted": "Đã xóa đánh giá",
@@ -2254,7 +2099,6 @@
         "read": "Đọc",
         "loading": "Đang tải…",
         "series-count": "{{num}} Series",
-        "author-count": "{{num}} Tác giả",
         "issue-nums": "Vấn đề",
         "chapter-nums": "Chương",
         "book-num": "Sách",
@@ -2300,7 +2144,6 @@
         "smart-filters-tab": "Bộ lọc thông minh",
         "volumes-tab": "Tập",
         "specials-tab": "Đặc biệt",
-        "progress-tab": "Tiến trình",
         "cover-tab": "Ảnh Bìa",
         "books-tab": "Sách",
         "related-tab": "Liên quan",
@@ -2321,17 +2164,9 @@
         "scrobbling-tab": "Scrobbling"
     },
     "publication-status-stats": {
-        "year-header": "Năm",
         "title": "Tình Trạng Xuất Bản",
         "count-header": "Đếm",
         "visualisation-label": "Hình Ảnh Hóa",
         "data-table-label": "Bảng Dữ Liệu"
-    },
-    "manga-format-stats": {
-        "title": "Định Dạng",
-        "visualisation-label": "Hình Ảnh Hóa",
-        "data-table-label": "Bảng Dữ Liệu",
-        "format-header": "Định Dạng",
-        "count-header": "Đếm"
     }
 }

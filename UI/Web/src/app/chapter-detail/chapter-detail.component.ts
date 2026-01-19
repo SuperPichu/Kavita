@@ -2,11 +2,12 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
   ElementRef,
   inject,
-  model,
   OnInit,
+  signal,
   ViewChild
 } from '@angular/core';
 import {AsyncPipe, DOCUMENT, Location, NgClass, NgStyle} from "@angular/common";
@@ -39,9 +40,8 @@ import {LibraryType} from "../_models/library/library";
 import {LibraryService} from "../_services/library.service";
 import {ThemeService} from "../_services/theme.service";
 import {DownloadEvent, DownloadService} from "../shared/_services/download.service";
-import {translate, TranslocoDirective} from "@jsverse/transloco";
+import {TranslocoDirective} from "@jsverse/transloco";
 import {BulkSelectionService} from "../cards/bulk-selection.service";
-import {ToastrService} from "ngx-toastr";
 import {ReaderService} from "../_services/reader.service";
 import {AccountService} from "../_services/account.service";
 import {ReadMoreComponent} from "../shared/read-more/read-more.component";
@@ -61,7 +61,6 @@ import {
 } from "../series-detail/_components/metadata-detail-row/metadata-detail-row.component";
 import {DownloadButtonComponent} from "../series-detail/_components/download-button/download-button.component";
 import {hasAnyCast} from "../_models/common/i-has-cast";
-import {UserBreakpoint, UtilityService} from "../shared/_services/utility.service";
 import {EVENTS, MessageHubService} from "../_services/message-hub.service";
 import {CoverUpdateEvent} from "../_models/events/cover-update-event";
 import {ChapterRemovedEvent} from "../_models/events/chapter-removed-event";
@@ -71,8 +70,8 @@ import {ActionService} from "../_services/action.service";
 import {DefaultDatePipe} from "../_pipes/default-date.pipe";
 import {CoverImageComponent} from "../_single-module/cover-image/cover-image.component";
 import {DefaultModalOptions} from "../_models/default-modal-options";
-import {UserReview} from "../_single-module/review-card/user-review";
-import {User} from "../_models/user";
+import {UserReview} from "../_models/user-review";
+import {User} from "../_models/user/user";
 import {ReviewsComponent} from "../_single-module/reviews/reviews.component";
 import {ExternalRatingComponent} from "../series-detail/_components/external-rating/external-rating.component";
 import {Rating} from "../_models/rating";
@@ -80,7 +79,11 @@ import {AnnotationService} from "../_services/annotation.service";
 import {Annotation} from "../book-reader/_models/annotations/annotation";
 import {AnnotationsTabComponent} from "../_single-module/annotations-tab/annotations-tab.component";
 import {UtcToLocalTimePipe} from "../_pipes/utc-to-local-time.pipe";
-import {UtcToLocaleDatePipe} from "../_pipes/utc-to-locale-date.pipe";
+import {UtcToLocalDatePipe} from "../_pipes/utc-to-locale-date.pipe";
+import {ReadingProgressStatus} from "../_models/series-detail/reading-progress";
+import {ReadingProgressStatusPipePipe} from "../_pipes/reading-progress-status-pipe.pipe";
+import {ReadingProgressIconPipePipe} from "../_pipes/reading-progress-icon-pipe.pipe";
+import {BreakpointService} from "../_services/breakpoint.service";
 
 enum TabID {
   Related = 'related-tab',
@@ -123,7 +126,9 @@ enum TabID {
     ExternalRatingComponent,
     AnnotationsTabComponent,
     UtcToLocalTimePipe,
-    UtcToLocaleDatePipe
+    UtcToLocalDatePipe,
+    ReadingProgressStatusPipePipe,
+    ReadingProgressIconPipePipe
   ],
   templateUrl: './chapter-detail.component.html',
   styleUrl: './chapter-detail.component.scss',
@@ -142,46 +147,40 @@ export class ChapterDetailComponent implements OnInit {
   private readonly themeService = inject(ThemeService);
   private readonly downloadService = inject(DownloadService);
   private readonly bulkSelectionService = inject(BulkSelectionService);
-  private readonly toastr = inject(ToastrService);
   private readonly readerService = inject(ReaderService);
   protected readonly accountService = inject(AccountService);
   private readonly modalService = inject(NgbModal);
   private readonly filterUtilityService = inject(FilterUtilitiesService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly readingListService = inject(ReadingListService);
-  protected readonly utilityService = inject(UtilityService);
+  protected readonly breakpointService = inject(BreakpointService);
   private readonly messageHub = inject(MessageHubService);
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly actionService = inject(ActionService);
   private readonly location = inject(Location);
   private readonly annotationService = inject(AnnotationService);
 
-  protected readonly AgeRating = AgeRating;
-  protected readonly TabID = TabID;
-  protected readonly FilterField = FilterField;
-  protected readonly UserBreakpoint = UserBreakpoint;
-  protected readonly LibraryType = LibraryType;
-  protected readonly encodeURIComponent = encodeURIComponent;
-
   @ViewChild('scrollingBlock') scrollingBlock: ElementRef<HTMLDivElement> | undefined;
   @ViewChild('companionBar') companionBar: ElementRef<HTMLDivElement> | undefined;
 
-  isLoading: boolean = true;
+  isLoading = signal<boolean>(true);
   coverImage: string = '';
   chapterId: number = 0;
   seriesId: number = 0;
   libraryId: number = 0;
-  chapter: Chapter | null = null;
-  series: Series | null = null;
+  chapter = signal<Chapter | null>(null);
+  series = signal<Series | null>(null);
   libraryType: LibraryType | null = null;
-  hasReadingProgress = false;
   userReviews: Array<UserReview> = [];
   plusReviews: Array<UserReview> = [];
   rating: number = 0;
   ratings: Array<Rating> = [];
   hasBeenRated: boolean = false;
-  size: number = 0;
-  annotations = model<Annotation[]>([]);
+  size = computed(() => {
+    return (this.chapter()?.files || []).reduce((sum, f) => sum + f.bytes, 0);
+  })
+  annotations = signal<Annotation[]>([]);
+  readingProgressStatus = signal<ReadingProgressStatus>(ReadingProgressStatus.NoProgress);
 
   weblinks: Array<string> = [];
   activeTabId = TabID.Details;
@@ -191,7 +190,13 @@ export class ChapterDetailComponent implements OnInit {
   download$: Observable<DownloadEvent | null> | null = null;
   downloadInProgress: boolean = false;
   readingLists: ReadingList[] = [];
-  showDetailsTab: boolean = true;
+  showDetailsTab = computed(() => {
+    const chp = this.chapter();
+    const user = this.accountService.currentUserSignal();
+
+    return hasAnyCast(chp) || (chp?.genres || []).length > 0 ||
+        (chp?.tags || []).length > 0 || (chp?.webLinks || []).length > 0 || this.accountService.hasAdminRole(user!);
+  })
   mobileSeriesImgBackground: string | undefined;
   chapterActions: Array<ActionItem<Chapter>> = this.actionFactoryService.getChapterActions(this.handleChapterActionCallback.bind(this));
 
@@ -265,10 +270,9 @@ export class ChapterDetailComponent implements OnInit {
         return;
       }
 
-      this.series = results.series;
-      this.chapter = results.chapter;
-      this.size = this.chapter.files.reduce((sum, f) => sum + f.bytes, 0);
-      this.weblinks = this.chapter.webLinks.length > 0 ? this.chapter.webLinks.split(',') : [];
+      this.series.set(results.series);
+      this.chapter.set(results.chapter);
+      this.weblinks = results.chapter.webLinks.length > 0 ? results.chapter.webLinks.split(',') : [];
       this.libraryType = results.libraryType;
       this.userReviews = results.chapterDetail.reviews.filter(r => !r.isExternal);
       this.plusReviews = results.chapterDetail.reviews.filter(r => r.isExternal);
@@ -276,11 +280,17 @@ export class ChapterDetailComponent implements OnInit {
       this.hasBeenRated = results.chapterDetail.hasBeenRated;
       this.ratings = results.chapterDetail.ratings;
 
-      this.themeService.setColorScape(this.chapter.primaryColor, this.chapter.secondaryColor);
+      if (results.chapter.pagesRead > 0 && results.chapter.pagesRead < results.chapter.pages) {
+        this.readingProgressStatus.set(ReadingProgressStatus.Progress);
+      } else if (results.chapter.pagesRead >= results.chapter.pages) {
+        this.readingProgressStatus.set(ReadingProgressStatus.FullyRead);
+      }
+
+      this.themeService.setColorScape(results.chapter.primaryColor, results.chapter.secondaryColor);
 
       // Set up the download in progress
       this.download$ = this.downloadService.activeDownloads$.pipe(takeUntilDestroyed(this.destroyRef), map((events) => {
-        return this.downloadService.mapToEntityType(events, this.chapter!);
+        return this.downloadService.mapToEntityType(events, this.chapter()!);
       }));
 
       this.readingListService.getReadingListsForChapter(this.chapterId).subscribe(lists => {
@@ -296,14 +306,12 @@ export class ChapterDetailComponent implements OnInit {
         }
       }), takeUntilDestroyed(this.destroyRef)).subscribe();
 
-      this.showDetailsTab = hasAnyCast(this.chapter) || (this.chapter.genres || []).length > 0 ||
-        (this.chapter.tags || []).length > 0 || this.chapter.webLinks.length > 0;
 
-      if (!this.showDetailsTab && this.activeTabId === TabID.Details) {
+      if (!this.showDetailsTab() && this.activeTabId === TabID.Details) {
         this.activeTabId = TabID.Reviews;
       }
 
-      this.isLoading = false;
+      this.isLoading.set(false);
       this.cdRef.markForCheck();
     });
 
@@ -317,29 +325,23 @@ export class ChapterDetailComponent implements OnInit {
         return;
       }
 
-      this.chapter = d;
-      this.cdRef.markForCheck();
+      this.chapter.set(d);
     })
   }
 
   read(incognitoMode: boolean = false) {
     if (this.bulkSelectionService.hasSelections()) return;
-    if (this.chapter === null) return;
+    if (this.chapter()! === null) return;
 
-    if (this.chapter.pages === 0) {
-      this.toastr.error(translate('series-detail.no-pages'));
-      return;
-    }
-    this.router.navigate(this.readerService.getNavigationArray(this.series?.libraryId!, this.seriesId, this.chapter.id, this.chapter.files[0].format),
-      {queryParams: {incognitoMode}});
+    this.readerService.readChapter(this.libraryId, this.seriesId, this.chapter()!, incognitoMode);
   }
 
   openEditModal() {
     const ref = this.modalService.open(EditChapterModalComponent, DefaultModalOptions);
-    ref.componentInstance.chapter = this.chapter;
+    ref.componentInstance.chapter = this.chapter();
     ref.componentInstance.libraryType = this.libraryType;
     ref.componentInstance.libraryId = this.libraryId;
-    ref.componentInstance.seriesId = this.series!.id;
+    ref.componentInstance.seriesId = this.seriesId;
 
     ref.closed.subscribe(res => {
       this.loadData();
@@ -360,7 +362,7 @@ export class ChapterDetailComponent implements OnInit {
 
   downloadChapter() {
     if (this.downloadInProgress) return;
-    this.downloadService.download('chapter', this.chapter!, (d) => {
+    this.downloadService.download('chapter', this.chapter()!, (d) => {
       this.downloadInProgress = !!d;
       this.cdRef.markForCheck();
     });
@@ -405,8 +407,16 @@ export class ChapterDetailComponent implements OnInit {
         this.downloadChapter();
         break;
       case Action.Delete:
-        this.router.navigate(['library', this.libraryId, 'series', this.seriesId]);
+        this.chapterService.deleteChapter(this.chapterId).subscribe(() => {
+          this.router.navigate(['library', this.libraryId, 'series', this.seriesId]);
+        });
         break;
     }
   }
+
+  protected readonly AgeRating = AgeRating;
+  protected readonly TabID = TabID;
+  protected readonly FilterField = FilterField;
+  protected readonly LibraryType = LibraryType;
+  protected readonly encodeURIComponent = encodeURIComponent;
 }

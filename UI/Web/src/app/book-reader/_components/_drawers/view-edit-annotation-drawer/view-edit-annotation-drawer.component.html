@@ -22,7 +22,7 @@
       </div>
 
       <div class="flex-grow-1">
-        @if (utilityService.activeUserBreakpoint() >= UserBreakpoint.Desktop) {
+        @if (breakpointService.isDesktopOrAbove()) {
           @if (isEditOrCreateMode() && this.annotation()) {
             <div class="ms-2 d-flex w-100">
               <app-highlight-bar
@@ -64,9 +64,12 @@
 
               <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
                 <div class="d-flex align-items-center">
-                  {{ an.ownerUsername }}
+                  <app-profile-icon [userId]="an.ownerUserId" />
+                  <a class="ms-2" [routerLink]="['/profile', an.ownerUserId]" [fragment]="'stats-tab'" (click)="$event.stopPropagation()">
+                    {{ an.ownerUsername }}
+                  </a>
                 </div>
-                <div class="ms-2">{{ an.createdUtc | utcToLocaleDate | date: 'shortDate' }}</div>
+                <div class="ms-2">{{ an.createdUtc | utcToLocalDate | date: 'shortDate' }}</div>
               </div>
 
               @if (an.ownerUsername === accountService.currentUserSignal()?.username) {
@@ -80,7 +83,7 @@
       </div>
     </div>
 
-    @if (utilityService.activeUserBreakpoint() < UserBreakpoint.Desktop) {
+    @if (breakpointService.isTabletOrBelow()) {
       @if (isEditOrCreateMode() && this.annotation()) {
         <div class="d-flex align-content-center justify-content-center w-100">
           <app-highlight-bar

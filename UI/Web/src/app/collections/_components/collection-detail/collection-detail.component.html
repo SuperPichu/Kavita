@@ -8,7 +8,7 @@
               <h4>
                 <app-promoted-icon [promoted]="collectionTag.promoted" />
                 <span class="ms-2">{{collectionTag.title}}</span>
-                <app-card-actionables [entity]="collectionTag" [disabled]="actionInProgress" [inputActions]="collectionTagActions" [labelBy]="collectionTag.title" iconClass="fa-ellipsis-v" />
+                <app-card-actionables [entity]="collectionTag" [disabled]="actionInProgress" [actions]="collectionTagActions" [labelBy]="collectionTag.title" iconClass="fa-ellipsis-v" />
               </h4>
             }
             <h5 subtitle class="ms-2 subtitle-with-actionables">{{t('item-count', {num: series.length})}}</h5>
@@ -39,7 +39,7 @@
             <div class="col-md-10 col-xs-8 col-sm-6 mt-2">
               @if (summary.length > 0) {
                 <div class="mb-2">
-                  <app-read-more [text]="summary" [maxLength]="utilityService.activeUserBreakpoint() < UserBreakpoint.Desktop ? 170 : 200" />
+                  <app-read-more [text]="summary" [useResponsiveLength]="true" />
                 </div>
 
                 @if (collectionTag.source !== ScrobbleProvider.Kavita) {

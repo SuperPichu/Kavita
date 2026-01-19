@@ -7,8 +7,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.Serialization;
-using API.Archive;
 using API.Data.Metadata;
+using API.DTOs.Archive;
 using API.Entities.Enums;
 using API.Extensions;
 using API.Services.Tasks;
@@ -16,7 +16,6 @@ using Kavita.Common;
 using Microsoft.Extensions.Logging;
 using SharpCompress.Archives;
 using SharpCompress.Common;
-using YamlDotNet.Core;
 
 namespace API.Services;
 
@@ -243,6 +242,7 @@ public class ArchiveService : IArchiveService
                     var entryNames = archive.Entries.Where(archiveEntry => !archiveEntry.IsDirectory).Select(e => e.Key).ToList();
 
                     var entryName = FindCoverImageFilename(archivePath, entryNames);
+                    if (entryName == null) return string.Empty;
                     var entry = archive.Entries.Single(e => e.Key == entryName);
 
                     using var stream = entry.OpenEntryStream();

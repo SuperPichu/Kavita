@@ -1,4 +1,5 @@
 ﻿using System;
+using API.DTOs.Account;
 using API.DTOs.Reader;
 using API.DTOs.Update;
 using API.Entities.Person;
@@ -13,9 +14,10 @@ public static class MessageFactoryEntityTypes
     public const string Series = "series";
     public const string Volume = "volume";
     public const string Chapter = "chapter";
-    public const string CollectionTag = "collection";
+    public const string Collection = "collection";
     public const string ReadingList = "readingList";
     public const string Person = "person";
+    public const string User = "user";
 }
 public static class MessageFactory
 {
@@ -161,6 +163,22 @@ public static class MessageFactory
     /// Annotation is updated within the reader
     /// </summary>
     public const string AnnotationUpdate = "AnnotationUpdate";
+    /// <summary>
+    /// A Reading Session is starting or updating
+    /// </summary>
+    public const string ReadingSessionUpdate = "ReadingSessionUpdate";
+    /// <summary>
+    /// A Reading Session is closing
+    /// </summary>
+    public const string ReadingSessionClose = "ReadingSessionClose";
+    /// <summary>
+    /// Auth key has been rotated, created
+    /// </summary>
+    public const string AuthKeyUpdate = nameof(AuthKeyUpdate);
+    /// <summary>
+    /// An Auth key has been deleted
+    /// </summary>
+    public const string AuthKeyDeleted = nameof(AuthKeyDeleted);
 
 
 
@@ -719,6 +737,56 @@ public static class MessageFactory
             {
                 Annotation = dto
             },
+        };
+    }
+
+    public static SignalRMessage ReadingSessionUpdateEvent(int userId, int sessionId)
+    {
+        return new SignalRMessage()
+        {
+            Name = ReadingSessionUpdate,
+            Body = new
+            {
+                SessionId = sessionId,
+                UserId = userId,
+            }
+        };
+    }
+
+    public static SignalRMessage ReadingSessionCloseEvent(int userId, int sessionId)
+    {
+        return new SignalRMessage()
+        {
+            Name = ReadingSessionClose,
+            Body = new
+            {
+                SessionId = sessionId,
+                UserId = userId,
+            }
+        };
+    }
+
+    public static SignalRMessage AuthKeyUpdatedEvent(AuthKeyDto authKey)
+    {
+        return new SignalRMessage
+        {
+            Name = AuthKeyUpdate,
+            Body = new
+            {
+                AuthKey = authKey
+            }
+        };
+    }
+
+    public static SignalRMessage AuthKeyDeletedEvent(int id)
+    {
+        return new SignalRMessage
+        {
+            Name = AuthKeyDeleted,
+            Body = new
+            {
+                Id = id
+            }
         };
     }
 }

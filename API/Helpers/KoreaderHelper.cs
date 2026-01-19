@@ -1,10 +1,10 @@
 using API.DTOs.Progress;
 using System;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using API.Services;
-using API.Services.Tasks.Scanner.Parser;
+using System.Text.RegularExpressions;
 
 namespace API.Helpers;
 
@@ -12,8 +12,21 @@ namespace API.Helpers;
 /// All things related to Koreader
 /// </summary>
 /// <remarks>Original developer: https://github.com/MFDeAngelo</remarks>
-public static class KoreaderHelper
+public static partial class KoreaderHelper
 {
+    [GeneratedRegex(@"DocFragment\[(\d+)\]")]
+    private static partial Regex DocFragmentRegex();
+
+    [GeneratedRegex(@"^\d+$")]
+    private static partial Regex JustNumber();
+
+    /// <summary>
+    /// Matches #_doc_fragment_10, #_doc_fragment_10_ some_anchor, #_doc_fragment10, number captured in Group 1
+    /// </summary>
+    /// <returns></returns>
+    [GeneratedRegex(@"^#_doc_fragment_?(\d+)")]
+    private static partial Regex DocFragmentHashRegex();
+
     /// <summary>
     /// Hashes the document according to a custom Koreader hashing algorithm.
     /// Look at the util.partialMD5 method in the attached link.
@@ -24,7 +37,7 @@ public static class KoreaderHelper
     /// <param name="filePath">The path to the file to hash</param>
     public static string HashContents(string filePath)
     {
-        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath) || !Parser.IsEpub(filePath))
+        if (string.IsNullOrEmpty(filePath) || !File.Exists(filePath))
         {
             return null;
         }
@@ -71,58 +84,114 @@ public static class KoreaderHelper
 
     public static void UpdateProgressDto(ProgressDto progress, string koreaderPosition)
     {
-        // #_doc_fragment26
-        string docNumber;
-        if (koreaderPosition.StartsWith("#_doc_fragment"))
+        if (string.IsNullOrWhiteSpace(koreaderPosition)) return;
+
+        // Handle: #_doc_fragment_26, #_doc_fragment26, #_doc_fragment_10_ some_anchor
+        var hashMatch = DocFragmentHashRegex().Match(koreaderPosition);
+        if (hashMatch.Success)
         {
-            docNumber = koreaderPosition.Replace("#_doc_fragment", string.Empty);
-            progress.PageNum = int.Parse(docNumber) - 1;
+            progress.PageNum = int.Parse(hashMatch.Groups[1].Value) - 1;
+            progress.BookScrollId = null;
+            return;
+        }
+
+        // Check if koreaderPosition is just a number, this indicates an Archive/PDF
+        if (JustNumber().IsMatch(koreaderPosition))
+        {
+            progress.PageNum = int.Parse(koreaderPosition) - 1;
             return;
         }
 
         var path = koreaderPosition.Split('/');
         if (path.Length < 6)
         {
+            // Handle cases like: /body/DocFragment[10].0
+            if (path.Length >= 3)
+            {
+                progress.PageNum = GetPageNumber(path);
+            }
             return;
         }
 
-        docNumber = path[2].Replace("DocFragment[", string.Empty).Replace("]", string.Empty);
-        progress.PageNum = int.Parse(docNumber) - 1;
+        progress.PageNum = GetPageNumber(path);
 
         var lastPart = koreaderPosition.Split("/body/")[^1];
         var lastTag = path[5].ToUpper();
 
-        // TODO: Enhance this code: /body/DocFragment[27]/body/section/p[3]/text().229 -> p[3] but we probably can get more
+        // Remove trailing position indicators like .0, /text()[1].42
+        lastPart = lastPart.Split("/text()")[0];
 
-        if (lastTag == "A")
+        // Also strip trailing .N position markers
+        if (lastPart.Contains('.') && char.IsDigit(lastPart[^1]))
+        {
+            var dotIndex = lastPart.LastIndexOf('.');
+            if (dotIndex > 0 && lastPart[(dotIndex + 1)..].All(char.IsDigit))
+            {
+                lastPart = lastPart[..dotIndex];
+            }
+        }
+
+        // Skip anchor tags and id() selectors - can't reliably scroll to these
+        if (lastTag == "A" || lastPart.Contains("id(", StringComparison.InvariantCultureIgnoreCase) || lastTag.StartsWith("id(", StringComparison.InvariantCultureIgnoreCase))
         {
             progress.BookScrollId = null;
         }
         else
         {
             // The format that Kavita accepts as a progress string. It tells Kavita where Koreader last left off.
-            progress.BookScrollId = $"//html[1]/{BookService.BookReaderBodyScope[2..].ToLowerInvariant()}/{lastPart}";
+            progress.BookScrollId = $"//body/{lastPart}";
         }
     }
 
-
-    public static string GetKoreaderPosition(ProgressDto progressDto)
+    private static int GetPageNumber(string[] path, int offset = 2)
     {
-        string nonBodyTag;
-        var koreaderPageNumber = progressDto.PageNum + 1;
+        if (offset >= path.Length) return 0;
 
-        if (string.IsNullOrEmpty(progressDto.BookScrollId))
+        var match = DocFragmentRegex().Match(path[offset]);
+        if (!match.Success) return 0;
+
+        return int.Parse(match.Groups[1].Value) - 1;
+    }
+
+    /// <summary>
+    /// The format that Koreader accepts as a progress string. It tells Koreader where Kavita last left off.
+    /// </summary>
+    /// <remarks>
+    /// Koreader stores the format as:
+    /// /body/DocFragment[fragment_index]/body/[xpath_to_element]
+    /// fragment_index is the page number for the xhtml files
+    /// </remarks>
+    /// <param name="progressDto"></param>
+    /// <returns></returns>
+    public static string GetKoreaderPosition(ProgressDto? progressDto)
+    {
+        // Add 1 back to match KOReader's 1-based indexing
+        var fragmentIndex = (progressDto?.PageNum ?? 0) + 1;
+
+        if (string.IsNullOrEmpty(progressDto?.BookScrollId))
         {
-            nonBodyTag = "a";
-        }
-        else
-        {
-            // What we Store: //html[1]/BODY/APP-ROOT[1]/DIV[1]/DIV[1]/DIV[1]/APP-BOOK-READER[1]/DIV[1]/DIV[2]/DIV[1]/DIV[1]/DIV[1]/section/p[62]/text().0
-            // What we Need to send back: section/p[62]/text().0
-            nonBodyTag = progressDto.BookScrollId.Replace("//html[1]/", "//", StringComparison.InvariantCultureIgnoreCase).Replace(BookService.BookReaderBodyScope + "/", string.Empty, StringComparison.InvariantCultureIgnoreCase);
+            // No scroll position - point to start of fragment
+            // .0 is the character offset (start of element)
+            return $"/body/DocFragment[{fragmentIndex}].0";
         }
 
-        // The format that Koreader accepts as a progress string. It tells Koreader where Kavita last left off.
-        return $"/body/DocFragment[{koreaderPageNumber}]/body/{nonBodyTag}";
+
+        var targetPath = progressDto.BookScrollId
+                .Replace("//body/", string.Empty, StringComparison.InvariantCultureIgnoreCase);
+
+        // KOReader can't handle id() XPath selectors - just return the base path
+        if (targetPath.StartsWith("id(", StringComparison.OrdinalIgnoreCase))
+        {
+            return $"/body/DocFragment[{fragmentIndex}].0";
+        }
+
+        // Append .0 offset if the path doesn't already have a position marker
+        var fullPath = $"/body/DocFragment[{fragmentIndex}]/body/{targetPath}";
+        if (!fullPath.Contains("/text()") && !fullPath.EndsWith(".0"))
+        {
+            fullPath += ".0";
+        }
+
+        return fullPath;
     }
 }

@@ -1,13 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using API.Constants;
 using API.Data;
 using API.DTOs.Theme;
-using API.Entities;
-using API.Extensions;
+using API.Middleware;
 using API.Services;
 using API.Services.Tasks;
 using AutoMapper;
@@ -15,7 +13,6 @@ using Kavita.Common;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 
 namespace API.Controllers;
 
@@ -40,8 +37,6 @@ public class ThemeController : BaseApiController
         _mapper = mapper;
     }
 
-    [ResponseCache(CacheProfileName = ResponseCacheProfiles.TenMinute)]
-    [AllowAnonymous]
     [HttpGet]
     public async Task<ActionResult<IEnumerable<SiteThemeDto>>> GetThemes()
     {
@@ -49,7 +44,7 @@ public class ThemeController : BaseApiController
     }
 
 
-    [Authorize("RequireAdminRole")]
+    [Authorize(PolicyGroups.AdminPolicy)]
     [HttpPost("update-default")]
     public async Task<ActionResult> UpdateDefault(UpdateDefaultThemeDto dto)
     {
@@ -59,7 +54,7 @@ public class ThemeController : BaseApiController
         }
         catch (KavitaException)
         {
-            return BadRequest(await _localizationService.Translate(User.GetUserId(), "theme-doesnt-exist"));
+            return BadRequest(await _localizationService.Translate(UserId, "theme-doesnt-exist"));
         }
 
         return Ok();
@@ -87,8 +82,8 @@ public class ThemeController : BaseApiController
     /// Browse themes that can be used on this server
     /// </summary>
     /// <returns></returns>
-    [ResponseCache(CacheProfileName = ResponseCacheProfiles.Hour)]
     [HttpGet("browse")]
+    [ResponseCache(CacheProfileName = ResponseCacheProfiles.FiveMinute)]
     public async Task<ActionResult<IEnumerable<DownloadableSiteThemeDto>>> BrowseThemes()
     {
         var themes = await _themeService.GetDownloadableThemes();
@@ -101,9 +96,9 @@ public class ThemeController : BaseApiController
     /// <param name="themeId"></param>
     /// <returns></returns>
     [HttpDelete]
+    [DisallowRole(PolicyConstants.ReadOnlyRole)]
     public async Task<ActionResult<IEnumerable<DownloadableSiteThemeDto>>> DeleteTheme(int themeId)
     {
-        if (User.IsInRole(PolicyConstants.ReadOnlyRole)) return BadRequest(await _localizationService.Translate(User.GetUserId(), "permission-denied"));
         await _themeService.DeleteTheme(themeId);
 
         return Ok();
@@ -126,16 +121,15 @@ public class ThemeController : BaseApiController
     /// <param name="formFile"></param>
     /// <returns></returns>
     [HttpPost("upload-theme")]
+    [DisallowRole(PolicyConstants.ReadOnlyRole)]
     public async Task<ActionResult<SiteThemeDto>> DownloadTheme(IFormFile formFile)
     {
-        if (User.IsInRole(PolicyConstants.ReadOnlyRole)) return BadRequest(await _localizationService.Translate(User.GetUserId(), "permission-denied"));
-
         if (!formFile.FileName.EndsWith(".css")) return BadRequest("Invalid file");
         if (formFile.FileName.Contains("..")) return BadRequest("Invalid file");
         var tempFile = await UploadToTemp(formFile);
 
-        // Set summary as "Uploaded by User.GetUsername() on DATE"
-        var theme = await _themeService.CreateThemeFromFile(tempFile, User.GetUsername());
+        // Set summary as "Uploaded by Username! on DATE"
+        var theme = await _themeService.CreateThemeFromFile(tempFile, Username!);
         return Ok(_mapper.Map<SiteThemeDto>(theme));
     }
 

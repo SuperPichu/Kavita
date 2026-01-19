@@ -12,13 +12,12 @@ using API.Extensions.QueryExtensions.Filtering;
 using API.Helpers.Builders;
 using API.Services;
 using API.Services.Plus;
-using API.Services.Tasks.Scanner;
+using API.Services.Reading;
 using API.SignalR;
 using Kavita.Common;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
-using Polly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -53,14 +52,16 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
 
         // Create read progress on Partial and Full
         var readerService = new ReaderService(unitOfWork, Substitute.For<ILogger<ReaderService>>(),
             Substitute.For<IEventHub>(), Substitute.For<IImageService>(),
-            Substitute.For<IDirectoryService>(), Substitute.For<IScrobblingService>());
+            Substitute.For<IDirectoryService>(), Substitute.For<IScrobblingService>(),
+            Substitute.For<IReadingSessionService>(), Substitute.For<IClientInfoAccessor>(),
+            Substitute.For<ISeriesService>(), Substitute.For<IEntityNamingService>(),
+            Substitute.For<ILocalizationService>());
 
         // Select Partial and set pages read to 5 on first chapter
         var partialSeries = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(2);
@@ -195,12 +196,15 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         var readerService = new ReaderService(unitOfWork, Substitute.For<ILogger<ReaderService>>(),
             Substitute.For<IEventHub>(), Substitute.For<IImageService>(),
-            Substitute.For<IDirectoryService>(), Substitute.For<IScrobblingService>());
+            Substitute.For<IDirectoryService>(),
+            Substitute.For<IScrobblingService>(),
+            Substitute.For<IReadingSessionService>(), Substitute.For<IClientInfoAccessor>(),
+            Substitute.For<ISeriesService>(), Substitute.For<IEntityNamingService>(),
+            Substitute.For<ILocalizationService>());
 
         // Set progress to 99.99% (99/100 pages read)
         var series = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(1);
@@ -253,7 +257,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -395,7 +398,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -545,7 +547,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -671,7 +672,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -847,7 +847,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -894,7 +893,9 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
         var (unitOfWork, context, mapper) = await CreateDatabase();
         await SetupHasReleaseYear(context);
 
-        var foundSeries = await context.Series.HasReleaseYear(true, FilterComparison.IsInLast, 5).ToListAsync();
+        var years = DateTime.UtcNow.Year - 2020;
+
+        var foundSeries = await context.Series.HasReleaseYear(true, FilterComparison.IsInLast, years).ToListAsync();
         Assert.Equal(2, foundSeries.Count);
     }
 
@@ -904,7 +905,9 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
         var (unitOfWork, context, mapper) = await CreateDatabase();
         await SetupHasReleaseYear(context);
 
-        var foundSeries = await context.Series.HasReleaseYear(true, FilterComparison.IsNotInLast, 5).ToListAsync();
+        var years = DateTime.UtcNow.Year - 2020;
+
+        var foundSeries = await context.Series.HasReleaseYear(true, FilterComparison.IsNotInLast, years).ToListAsync();
         Assert.Single(foundSeries);
         Assert.Contains(foundSeries, s => s.Name == "2000");
     }
@@ -980,7 +983,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
 
@@ -1166,7 +1168,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;
@@ -1307,7 +1308,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
             .Build();
 
         context.Users.Add(user);
-        context.Library.Add(library);
         await context.SaveChangesAsync();
 
         return user;

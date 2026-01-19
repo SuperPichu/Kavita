@@ -8,13 +8,14 @@ using API.Data.Repositories;
 using API.DTOs.Collection;
 using API.Entities;
 using API.Entities.Enums;
+using API.Extensions.QueryExtensions;
 using API.Helpers.Builders;
 using API.Services;
 using API.Services.Plus;
 using API.SignalR;
 using Kavita.Common;
+using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using Polly;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -175,7 +176,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldThrowException_WhenTagDoesNotExist()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -193,7 +194,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldThrowException_WhenUserDoesNotOwnTag()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -216,7 +217,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldThrowException_WhenTitleIsEmpty()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -234,7 +235,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldThrowException_WhenTitleAlreadyExists()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -252,7 +253,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldUpdateCoverImageSettings()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -286,7 +287,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldAllowPromoteForAdminRole()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -313,7 +314,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldAllowPromoteForPromoteRole()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -341,7 +342,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task UpdateTag_ShouldNotChangePromotion_WhenUserHasNoPermission()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -444,7 +445,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task RemoveTagFromSeries_ShouldHandleEmptySeriesIdsList()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -465,7 +466,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task RemoveTagFromSeries_ShouldHandleNonExistentSeriesIds()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -486,7 +487,7 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task RemoveTagFromSeries_ShouldHandleNullItemsList()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
@@ -511,13 +512,13 @@ public class CollectionTagServiceTests(ITestOutputHelper outputHelper): Abstract
     [Fact]
     public async Task RemoveTagFromSeries_ShouldUpdateAgeRating_WhenMultipleSeriesRemain()
     {
-        // Arrange
+
         var (unitOfWork, context, _) = await CreateDatabase();
         var service = await Setup(unitOfWork, context);
 
         // Add a third series with a different age rating
         var s3 = new SeriesBuilder("Series 3").WithMetadata(new SeriesMetadataBuilder().WithAgeRating(AgeRating.PG).Build()).Build();
-        context.Library.First().Series.Add(s3);
+        context.Library.Includes(LibraryIncludes.Series).First().Series.Add(s3);
         await unitOfWork.CommitAsync();
 
         // Add series 3 to tag 2

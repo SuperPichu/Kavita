@@ -34,7 +34,7 @@ import {SettingItemComponent} from "../../settings/_components/setting-item/sett
 import {SettingButtonComponent} from "../../settings/_components/setting-button/setting-button.component";
 import {DefaultModalOptions} from "../../_models/default-modal-options";
 import {ColumnMode, NgxDatatableModule} from "@siemens/ngx-datatable";
-import {AnnotationService} from "../../_services/annotation.service";
+import {ResponsiveTableComponent} from "../../shared/_components/responsive-table/responsive-table.component";
 
 interface AdhocTask {
   name: string;
@@ -45,13 +45,13 @@ interface AdhocTask {
 }
 
 @Component({
-    selector: 'app-manage-tasks-settings',
-    templateUrl: './manage-tasks-settings.component.html',
-    styleUrls: ['./manage-tasks-settings.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ReactiveFormsModule, AsyncPipe, TitleCasePipe, DefaultValuePipe,
-        TranslocoModule, TranslocoLocaleModule, UtcToLocalTimePipe, SettingItemComponent,
-        SettingButtonComponent, NgxDatatableModule]
+  selector: 'app-manage-tasks-settings',
+  templateUrl: './manage-tasks-settings.component.html',
+  styleUrls: ['./manage-tasks-settings.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, AsyncPipe, TitleCasePipe, DefaultValuePipe,
+    TranslocoModule, TranslocoLocaleModule, UtcToLocalTimePipe, SettingItemComponent,
+    SettingButtonComponent, NgxDatatableModule, ResponsiveTableComponent]
 })
 export class ManageTasksSettingsComponent implements OnInit {
 
@@ -62,7 +62,6 @@ export class ManageTasksSettingsComponent implements OnInit {
   private readonly serverService = inject(ServerService);
   private readonly modalService = inject(NgbModal);
   private readonly downloadService = inject(DownloadService);
-  private readonly annotationService = inject(AnnotationService);
 
   serverSettings!: ServerSettings;
   settingsForm: FormGroup = new FormGroup({});
@@ -143,6 +142,7 @@ export class ManageTasksSettingsComponent implements OnInit {
   ];
 
   customOption = 'custom';
+  trackBy = (index: number, item: Job) => `${item.id}_${item.lastExecutionUtc}`;
 
 
   ngOnInit(): void {

@@ -1,8 +1,11 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { environment } from 'src/environments/environment';
-import { Member } from '../_models/auth/member';
+import {HttpClient} from '@angular/common/http';
+import {inject, Injectable} from '@angular/core';
+import {environment} from 'src/environments/environment';
+import {Member} from '../_models/auth/member';
 import {UserTokenInfo} from "../_models/kavitaplus/user-token-info";
+import {MemberInfo} from "../_models/user/member-info";
+import {map} from "rxjs/operators";
+import {TextResonse} from "../_types/text-response";
 
 @Injectable({
   providedIn: 'root'
@@ -17,8 +20,16 @@ export class MemberService {
     return this.httpClient.get<Member[]>(this.baseUrl + 'users?includePending=' + includePending);
   }
 
+  getMemberInfo(userId: number) {
+    return this.httpClient.get<MemberInfo>(this.baseUrl + 'users/profile-info?userId=' + userId);
+  }
+
   getMemberNames() {
     return this.httpClient.get<string[]>(this.baseUrl + 'users/names');
+  }
+
+  hasProfileShared(userId: number) {
+    return this.httpClient.get<boolean>(this.baseUrl + `users/has-profile-shared?userId=${userId}`, TextResonse).pipe(map(d => (d + '') == 'true'));
   }
 
   getUserTokenInfo() {
@@ -48,9 +59,4 @@ export class MemberService {
   removeSeriesToWantToRead(seriesIds: Array<number>) {
     return this.httpClient.post(this.baseUrl + 'want-to-read/remove-series', {seriesIds});
   }
-
-  getMember() {
-    return this.httpClient.get<Member>(this.baseUrl + 'users/myself');
-  }
-
 }

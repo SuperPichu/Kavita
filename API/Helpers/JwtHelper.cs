@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Globalization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Linq;
 
 namespace API.Helpers;
 
@@ -18,18 +16,8 @@ public static class JwtHelper
         // Parse the JWT and extract the expiry claim
         var jwtHandler = new JwtSecurityTokenHandler();
         var token = jwtHandler.ReadJwtToken(jwtToken);
-        return token.ValidTo;
 
-        // var exp = token.Claims.FirstOrDefault(c => c.Type == "exp")?.Value;
-        //
-        // if (long.TryParse(exp, CultureInfo.InvariantCulture, out var expSeconds))
-        // {
-        //     return DateTimeOffset.FromUnixTimeSeconds(expSeconds).UtcDateTime;
-        // }
-        //
-        //
-        //
-        // return DateTime.MinValue;
+        return token.ValidTo;
     }
 
     /// <summary>

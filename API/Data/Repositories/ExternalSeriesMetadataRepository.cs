@@ -2,21 +2,18 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using API.Constants;
 using API.DTOs;
 using API.DTOs.KavitaPlus.Manage;
 using API.DTOs.Recommendation;
-using API.DTOs.Scrobbling;
 using API.DTOs.SeriesDetail;
 using API.Entities;
 using API.Entities.Enums;
 using API.Entities.Metadata;
-using API.Extensions;
 using API.Extensions.QueryExtensions;
+using API.Helpers;
 using API.Services.Plus;
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
@@ -37,7 +34,7 @@ public interface IExternalSeriesMetadataRepository
     Task LinkRecommendationsToSeries(Series series);
     Task<bool> IsBlacklistedSeries(int seriesId);
     Task<IList<int>> GetSeriesThatNeedExternalMetadata(int limit, bool includeStaleData = false);
-    Task<IList<ManageMatchSeriesDto>> GetAllSeries(ManageMatchFilterDto filter);
+    Task<PagedList<ManageMatchSeriesDto>> GetAllSeries(ManageMatchFilterDto filter, UserParams userParams);
 }
 
 public class ExternalSeriesMetadataRepository : IExternalSeriesMetadataRepository
@@ -109,11 +106,11 @@ public class ExternalSeriesMetadataRepository : IExternalSeriesMetadataRepositor
     public async Task<bool> NeedsDataRefresh(int seriesId)
     {
         // TODO: Add unit test
-        var row = await _context.ExternalSeriesMetadata
+        return await _context.ExternalSeriesMetadata
             .Where(s => s.SeriesId == seriesId)
-            .FirstOrDefaultAsync();
-
-        return row == null || row.ValidUntilUtc <= DateTime.UtcNow;
+            .Select(s => s.ValidUntilUtc)
+            .Where(date => date < DateTime.UtcNow)
+            .AnyAsync();
     }
 
     public async Task<SeriesDetailPlusDto?> GetSeriesDetailPlusDto(int seriesId)
@@ -227,9 +224,9 @@ public class ExternalSeriesMetadataRepository : IExternalSeriesMetadataRepositor
             .ToListAsync();
     }
 
-    public async Task<IList<ManageMatchSeriesDto>> GetAllSeries(ManageMatchFilterDto filter)
+    public Task<PagedList<ManageMatchSeriesDto>> GetAllSeries(ManageMatchFilterDto filter, UserParams userParams)
     {
-        return await _context.Series
+        var source =  _context.Series
             .Include(s => s.Library)
             .Include(s => s.ExternalSeriesMetadata)
             .Where(s => !ExternalMetadataService.NonEligibleLibraryTypes.Contains(s.Library.Type))
@@ -237,7 +234,8 @@ public class ExternalSeriesMetadataRepository : IExternalSeriesMetadataRepositor
             .WhereIf(filter.LibraryType >= 0, s => s.Library.Type == (LibraryType) filter.LibraryType)
             .FilterMatchState(filter.MatchStateOption)
             .OrderBy(s => s.NormalizedName)
-            .ProjectTo<ManageMatchSeriesDto>(_mapper.ConfigurationProvider)
-            .ToListAsync();
+            .ProjectTo<ManageMatchSeriesDto>(_mapper.ConfigurationProvider);
+
+        return PagedList<ManageMatchSeriesDto>.CreateAsync(source, userParams);
     }
 }

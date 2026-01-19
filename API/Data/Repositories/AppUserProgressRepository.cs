@@ -3,11 +3,9 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using API.Data.ManualMigrations;
-using API.DTOs;
 using API.DTOs.Progress;
-using API.Entities;
 using API.Entities.Enums;
+using API.Entities.Progress;
 using API.Extensions.QueryExtensions;
 using API.Services.Tasks.Scanner.Parser;
 using AutoMapper;
@@ -25,11 +23,6 @@ public interface IAppUserProgressRepository
     Task<bool> UserHasProgress(LibraryType libraryType, int userId);
     Task<AppUserProgress?> GetUserProgressAsync(int chapterId, int userId);
     Task<bool> HasAnyProgressOnSeriesAsync(int seriesId, int userId);
-    /// <summary>
-    /// This is built exclusively for <see cref="MigrateUserProgressLibraryId"/>
-    /// </summary>
-    /// <returns></returns>
-    Task<AppUserProgress?> GetAnyProgress();
     Task<IEnumerable<AppUserProgress>> GetUserProgressForSeriesAsync(int seriesId, int userId);
     Task<IEnumerable<AppUserProgress>> GetAllProgress();
     Task<DateTime> GetLatestProgress();
@@ -38,7 +31,10 @@ public interface IAppUserProgressRepository
     Task<int> GetHighestFullyReadChapterForSeries(int seriesId, int userId);
     Task<float> GetHighestFullyReadVolumeForSeries(int seriesId, int userId);
     Task<DateTime?> GetLatestProgressForSeries(int seriesId, int userId);
+    Task<DateTime?> GetLatestProgressForVolume(int volumeId, int userId);
+    Task<DateTime?> GetLatestProgressForChapter(int chapterId, int userId);
     Task<DateTime?> GetFirstProgressForSeries(int seriesId, int userId);
+    Task<DateTime?> GetFirstProgressForUser(int userId);
     Task UpdateAllProgressThatAreMoreThanChapterPages();
     Task<IList<FullProgressDto>> GetUserProgressForChapter(int chapterId, int userId = 0);
 }
@@ -117,13 +113,6 @@ public class AppUserProgressRepository : IAppUserProgressRepository
         return await _context.AppUserProgresses
             .AnyAsync(aup => aup.PagesRead > 0 && aup.AppUserId == userId && aup.SeriesId == seriesId);
     }
-
-    #nullable enable
-    public async Task<AppUserProgress?> GetAnyProgress()
-    {
-        return await _context.AppUserProgresses.FirstOrDefaultAsync();
-    }
-    #nullable disable
 
     /// <summary>
     /// This will return any user progress. This filters out progress rows that have no pages read.
@@ -205,12 +194,37 @@ public class AppUserProgressRepository : IAppUserProgressRepository
         return list.Count == 0 ? null : list.DefaultIfEmpty().Max();
     }
 
+    public async Task<DateTime?> GetLatestProgressForVolume(int volumeId, int userId)
+    {
+        var list = await _context.AppUserProgresses.Where(p => p.AppUserId == userId && p.VolumeId == volumeId)
+            .Select(p => p.LastModifiedUtc)
+            .ToListAsync();
+        return list.Count == 0 ? null : list.DefaultIfEmpty().Max();
+    }
+
+    public async Task<DateTime?> GetLatestProgressForChapter(int chapterId, int userId)
+    {
+        return await _context.AppUserProgresses
+            .Where(p => p.AppUserId == userId && p.ChapterId == chapterId)
+            .Select(p => p.LastModifiedUtc)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<DateTime?> GetFirstProgressForSeries(int seriesId, int userId)
     {
         var list = await _context.AppUserProgresses.Where(p => p.AppUserId == userId && p.SeriesId == seriesId)
             .Select(p => p.LastModifiedUtc)
             .ToListAsync();
         return list.Count == 0 ? null : list.DefaultIfEmpty().Min();
+    }
+
+    public async Task<DateTime?> GetFirstProgressForUser(int userId)
+    {
+        return await _context.AppUserProgresses
+            .Where(p => p.AppUserId == userId)
+            .OrderBy(p => p.CreatedUtc)
+            .Select(p => p.CreatedUtc)
+            .FirstOrDefaultAsync();
     }
 
     public async Task UpdateAllProgressThatAreMoreThanChapterPages()

@@ -7,7 +7,6 @@ import {SettingItemComponent} from "../../settings/_components/setting-item/sett
 import {EntityTitleComponent} from "../../cards/entity-title/entity-title.component";
 import {SettingButtonComponent} from "../../settings/_components/setting-button/setting-button.component";
 import {CoverImageChooserComponent} from "../../cards/cover-image-chooser/cover-image-chooser.component";
-import {EditChapterProgressComponent} from "../../cards/edit-chapter-progress/edit-chapter-progress.component";
 import {CompactNumberPipe} from "../../_pipes/compact-number.pipe";
 import {DefaultDatePipe} from "../../_pipes/default-date.pipe";
 import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
@@ -15,7 +14,7 @@ import {BytesPipe} from "../../_pipes/bytes.pipe";
 import {ReadTimePipe} from "../../_pipes/read-time.pipe";
 import {Action, ActionFactoryService, ActionItem} from "../../_services/action-factory.service";
 import {Volume} from "../../_models/volume";
-import {Breakpoint, UtilityService} from "../../shared/_services/utility.service";
+import {UtilityService} from "../../shared/_services/utility.service";
 import {ImageService} from "../../_services/image.service";
 import {UploadService} from "../../_services/upload.service";
 import {AccountService} from "../../_services/account.service";
@@ -26,8 +25,8 @@ import {PersonRole} from "../../_models/metadata/person";
 import {forkJoin} from "rxjs";
 import {MangaFormat} from 'src/app/_models/manga-format';
 import {MangaFile} from "../../_models/manga-file";
-import {VolumeService} from "../../_services/volume.service";
-import {User} from "../../_models/user";
+import {User} from "../../_models/user/user";
+import {BreakpointService} from "../../_services/breakpoint.service";
 
 enum TabID {
   General = 'general-tab',
@@ -63,7 +62,6 @@ const blackList = [Action.Edit, Action.IncognitoRead, Action.AddToReadingList];
     EntityTitleComponent,
     SettingButtonComponent,
     CoverImageChooserComponent,
-    EditChapterProgressComponent,
     CompactNumberPipe,
     DefaultDatePipe,
     UtcToLocalTimePipe,
@@ -84,9 +82,8 @@ export class EditVolumeModalComponent implements OnInit {
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly actionService = inject(ActionService);
   private readonly downloadService = inject(DownloadService);
-  private readonly volumeService = inject(VolumeService);
+  protected readonly breakpointService = inject(BreakpointService);
 
-  protected readonly Breakpoint = Breakpoint;
   protected readonly TabID = TabID;
   protected readonly Action = Action;
   protected readonly PersonRole = PersonRole;

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using API.DTOs;
@@ -8,10 +7,7 @@ using API.Entities;
 using API.Entities.Enums;
 using API.Extensions;
 using API.Extensions.QueryExtensions;
-using API.Services;
 using AutoMapper;
-using AutoMapper.QueryableExtensions;
-using Kavita.Common;
 using Microsoft.EntityFrameworkCore;
 
 namespace API.Data.Repositories;
@@ -40,12 +36,11 @@ public interface IVolumeRepository
     Task<string?> GetVolumeCoverImageAsync(int volumeId);
     Task<IList<int>> GetChapterIdsByVolumeIds(IReadOnlyList<int> volumeIds);
     Task<IList<VolumeDto>> GetVolumesDtoAsync(int seriesId, int userId, VolumeIncludes includes = VolumeIncludes.Chapters);
-    Task<Volume?> GetVolumeAsync(int volumeId, VolumeIncludes includes = VolumeIncludes.Files);
+    Task<Volume?> GetVolumeByIdAsync(int volumeId, VolumeIncludes includes = VolumeIncludes.Files);
     Task<VolumeDto?> GetVolumeDtoAsync(int volumeId, int userId);
     Task<IEnumerable<Volume>> GetVolumesForSeriesAsync(IList<int> seriesIds, bool includeChapters = false);
     Task<IEnumerable<Volume>> GetVolumes(int seriesId);
     Task<IList<Volume>> GetVolumesById(IList<int> volumeIds, VolumeIncludes includes = VolumeIncludes.None);
-    Task<Volume?> GetVolumeByIdAsync(int volumeId);
     Task<IList<Volume>> GetAllWithCoversInDifferentEncoding(EncodeFormat encodeFormat);
     Task<IEnumerable<string>> GetCoverImagesForLockedVolumesAsync();
 }
@@ -156,20 +151,13 @@ public class VolumeRepository : IVolumeRepository
     /// <returns></returns>
     public async Task<VolumeDto?> GetVolumeDtoAsync(int volumeId, int userId)
     {
-        var volume = await _context.Volume
+        return await _context.Volume
             .Where(vol => vol.Id == volumeId)
             .Includes(VolumeIncludes.Chapters | VolumeIncludes.Files)
             .AsSplitQuery()
             .OrderBy(v => v.MinNumber)
-            .ProjectTo<VolumeDto>(_mapper.ConfigurationProvider)
+            .ProjectToWithProgress<Volume, VolumeDto>(_mapper, userId)
             .FirstOrDefaultAsync(vol => vol.Id == volumeId);
-
-        if (volume == null) return null;
-
-        var volumeList = new List<VolumeDto>() {volume};
-        await AddVolumeModifiers(userId, volumeList);
-
-        return volumeList[0];
     }
 
     /// <summary>
@@ -201,7 +189,7 @@ public class VolumeRepository : IVolumeRepository
     /// </summary>
     /// <param name="volumeId"></param>
     /// <returns></returns>
-    public async Task<Volume?> GetVolumeAsync(int volumeId, VolumeIncludes includes = VolumeIncludes.Files)
+    public async Task<Volume?> GetVolumeByIdAsync(int volumeId, VolumeIncludes includes = VolumeIncludes.Files)
     {
         return await _context.Volume
             .Includes(includes)
@@ -218,22 +206,13 @@ public class VolumeRepository : IVolumeRepository
     /// <returns></returns>
     public async Task<IList<VolumeDto>> GetVolumesDtoAsync(int seriesId, int userId, VolumeIncludes includes = VolumeIncludes.Chapters)
     {
-        var volumes =  await _context.Volume
+        return await _context.Volume
             .Where(vol => vol.SeriesId == seriesId)
             .Includes(includes)
             .OrderBy(volume => volume.MinNumber)
-            .ProjectTo<VolumeDto>(_mapper.ConfigurationProvider)
+            .ProjectToWithProgress<Volume, VolumeDto>(_mapper, userId)
             .AsSplitQuery()
             .ToListAsync();
-
-        await AddVolumeModifiers(userId, volumes);
-
-        return volumes;
-    }
-
-    public async Task<Volume?> GetVolumeByIdAsync(int volumeId)
-    {
-        return await _context.Volume.FirstOrDefaultAsync(x => x.Id == volumeId);
     }
 
     public async Task<IList<Volume>> GetAllWithCoversInDifferentEncoding(EncodeFormat encodeFormat)
@@ -246,31 +225,6 @@ public class VolumeRepository : IVolumeRepository
             .ToListAsync();
     }
 
-
-    private async Task AddVolumeModifiers(int userId, IReadOnlyCollection<VolumeDto> volumes)
-    {
-        var volIds = volumes.Select(s => s.Id);
-        var userProgress = await _context.AppUserProgresses
-            .Where(p => p.AppUserId == userId && volIds.Contains(p.VolumeId))
-            .AsNoTracking()
-            .ToListAsync();
-
-        foreach (var v in volumes)
-        {
-            foreach (var c in v.Chapters)
-            {
-                var progresses = userProgress.Where(p => p.ChapterId == c.Id).ToList();
-                if (progresses.Count == 0) continue;
-                c.PagesRead = progresses.Sum(p => p.PagesRead);
-                c.LastReadingProgressUtc = progresses.Max(p => p.LastModifiedUtc);
-                c.LastReadingProgress = progresses.Max(p => p.LastModified);
-            }
-
-            v.PagesRead = userProgress
-                .Where(p => p.VolumeId == v.Id)
-                .Sum(p => p.PagesRead);
-        }
-    }
 
     /// <summary>
     /// Returns cover images for locked chapters

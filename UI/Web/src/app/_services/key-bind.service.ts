@@ -114,17 +114,20 @@ const ReservedKeyBinds: KeyBind[] = [
  * array to be displayed on the settings page
  */
 export const DefaultKeyBinds: Readonly<Record<KeyBindTarget, KeyBind[]>> = {
-  [KeyBindTarget.NavigateToSettings]: [{meta: true, key: KeyCode.Comma}],
-  [KeyBindTarget.OpenSearch]: [{control: true, key: KeyCode.KeyK}, {meta: true, key: KeyCode.KeyK}],
+  [KeyBindTarget.NavigateToSettings]: [],
+  [KeyBindTarget.OpenSearch]: [{control: true, key: KeyCode.KeyK}],
   [KeyBindTarget.NavigateToScrobbling]: [],
   [KeyBindTarget.ToggleFullScreen]: [{key: KeyCode.KeyF}],
   [KeyBindTarget.BookmarkPage]: [{key: KeyCode.KeyB, control: true}],
   [KeyBindTarget.OpenHelp]: [{key: KeyCode.KeyH}],
   [KeyBindTarget.GoTo]: [{key: KeyCode.KeyG}],
   [KeyBindTarget.ToggleMenu]: [{key: KeyCode.Space}],
-  [KeyBindTarget.PageLeft]: [{key: KeyCode.ArrowLeft}, {key: KeyCode.ArrowUp}],
-  [KeyBindTarget.PageRight]: [{key: KeyCode.ArrowRight}, {key: KeyCode.ArrowDown}],
-  [KeyBindTarget.Escape]: [{key: KeyCode.Escape}]
+  [KeyBindTarget.PageLeft]: [{key: KeyCode.ArrowLeft}],
+  [KeyBindTarget.PageRight]: [{key: KeyCode.ArrowRight}],
+  [KeyBindTarget.Escape]: [{key: KeyCode.Escape}],
+  [KeyBindTarget.PageUp]: [{key: KeyCode.ArrowUp}],
+  [KeyBindTarget.PageDown]: [{key: KeyCode.ArrowDown}],
+  [KeyBindTarget.OffsetDoublePage]: [{key: KeyCode.KeyO}],
 } as const;
 
 type KeyBindGroup = {
@@ -157,6 +160,9 @@ export const KeyBindGroups: KeyBindGroup[] = [
       {target: KeyBindTarget.ToggleMenu},
       {target: KeyBindTarget.PageRight},
       {target: KeyBindTarget.PageLeft},
+      {target: KeyBindTarget.PageUp},
+      {target: KeyBindTarget.PageDown},
+      {target: KeyBindTarget.OffsetDoublePage},
     ],
   }
 ];
@@ -274,6 +280,7 @@ export class KeyBindService {
 
   private handleKeyEvent(event: KeyboardEvent) {
     if (this.disabled()) return;
+    if (event.key === undefined) return;
 
     const eventKey = event.key.toLowerCase() as KeyCode;
 

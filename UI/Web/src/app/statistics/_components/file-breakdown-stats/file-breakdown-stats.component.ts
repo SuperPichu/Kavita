@@ -1,99 +1,49 @@
-import {
-  ChangeDetectionStrategy,
-  ChangeDetectorRef,
-  Component,
-  DestroyRef,
-  inject,
-  QueryList,
-  TemplateRef,
-  ViewChild,
-  ViewChildren
-} from '@angular/core';
-import {FormControl, ReactiveFormsModule} from '@angular/forms';
-import {PieChartModule} from '@swimlane/ngx-charts';
-import {BehaviorSubject, combineLatest, map, Observable, shareReplay} from 'rxjs';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, inject, OnInit, signal,} from '@angular/core';
+import {ReactiveFormsModule} from '@angular/forms';
+import {tap} from 'rxjs';
 import {StatisticsService} from 'src/app/_services/statistics.service';
-import {compare, SortableHeader, SortEvent} from 'src/app/_single-module/table/_directives/sortable-header.directive';
-import {FileExtension, FileExtensionBreakdown} from '../../_models/file-breakdown';
-import {PieDataItem} from '../../_models/pie-data-item';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {MangaFormatPipe} from '../../../_pipes/manga-format.pipe';
-import {BytesPipe} from '../../../_pipes/bytes.pipe';
-import { AsyncPipe, DecimalPipe } from '@angular/common';
-import {TranslocoDirective, TranslocoService} from "@jsverse/transloco";
+import {FileExtension} from '../../_models/file-breakdown';
+import {TranslocoDirective} from "@jsverse/transloco";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
-import {ColumnMode, NgxDatatableModule} from "@siemens/ngx-datatable";
-import {UtcToLocalTimePipe} from "../../../_pipes/utc-to-local-time.pipe";
-
-export interface StackedBarChartDataItem {
-  name: string,
-  series: Array<PieDataItem>;
-}
+import {NgxDatatableModule} from "@siemens/ngx-datatable";
+import {MangaFormatPipe} from "../../../_pipes/manga-format.pipe";
+import {BytesPipe} from "../../../_pipes/bytes.pipe";
+import {CompactNumberPipe} from "../../../_pipes/compact-number.pipe";
+import {ResponsiveTableComponent} from "../../../shared/_components/responsive-table/responsive-table.component";
+import {StatsNoDataComponent} from "../../../common/stats-no-data/stats-no-data.component";
 
 @Component({
-    selector: 'app-file-breakdown-stats',
-    templateUrl: './file-breakdown-stats.component.html',
-    styleUrls: ['./file-breakdown-stats.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgbTooltip, ReactiveFormsModule, PieChartModule, AsyncPipe, DecimalPipe, BytesPipe, MangaFormatPipe, TranslocoDirective, SortableHeader, NgxDatatableModule, UtcToLocalTimePipe]
+  selector: 'app-file-breakdown-stats',
+  templateUrl: './file-breakdown-stats.component.html',
+  styleUrls: ['./file-breakdown-stats.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [NgbTooltip, ReactiveFormsModule, TranslocoDirective, NgxDatatableModule, MangaFormatPipe, BytesPipe, CompactNumberPipe, ResponsiveTableComponent, StatsNoDataComponent]
 })
-export class FileBreakdownStatsComponent {
+export class FileBreakdownStatsComponent implements OnInit {
 
-  private readonly destroyRef = inject(DestroyRef);
   private readonly cdRef = inject(ChangeDetectorRef);
 
-  @ViewChildren(SortableHeader<PieDataItem>) headers!: QueryList<SortableHeader<PieDataItem>>;
-  @ViewChild('modalTable') modalTable!: TemplateRef<any>;
-
-  rawData$!: Observable<FileExtensionBreakdown>;
-  files$!: Observable<Array<FileExtension>>;
-  vizData2$!: Observable<Array<PieDataItem>>;
-
-  currentSort = new BehaviorSubject<SortEvent<FileExtension>>({column: 'extension', direction: 'asc'});
-  currentSort$: Observable<SortEvent<FileExtension>> = this.currentSort.asObservable();
+  files = signal<FileExtension[]>([]);
+  totalSize = signal<number>(0);
 
   view: [number, number] = [700, 400];
-
-  formControl: FormControl = new FormControl(true, []);
 
   downloadInProgress: {[key: string]: boolean}  = {};
 
   private readonly statService = inject(StatisticsService);
-  private readonly translocoService = inject(TranslocoService);
 
-  constructor() {
-    this.rawData$ = this.statService.getFileBreakdown().pipe(takeUntilDestroyed(this.destroyRef), shareReplay());
+  trackByExtension = (_: number, item: FileExtension) => item.extension + '_' + item.totalFiles;
 
-    this.files$ = combineLatest([this.currentSort$, this.rawData$]).pipe(
-      map(([sortConfig, data]) => {
-        return {sortConfig, fileBreakdown: data.fileBreakdown};
-      }),
-      map(({ sortConfig, fileBreakdown }) => {
-        return (sortConfig.column) ? fileBreakdown.sort((a: FileExtension, b: FileExtension) => {
-          if (sortConfig.column === '') return 0;
-          const res = compare(a[sortConfig.column], b[sortConfig.column]);
-          return sortConfig.direction === 'asc' ? res : -res;
-        }) : fileBreakdown;
-      }),
-      takeUntilDestroyed(this.destroyRef)
-    );
-
-
-    this.vizData2$ = this.files$.pipe(takeUntilDestroyed(this.destroyRef), map(data => data.map(d => {
-      return {name: d.extension || this.translocoService.translate('file-breakdown-stats.not-classified'), value: d.totalFiles, extra: d.totalSize};
-    })));
+  ngOnInit() {
+    this.statService.getFileBreakdown().pipe(
+      tap(res => {
+        // Using sort props breaks the table for some users; https://github.com/Kareadita/Kavita/issues/4365
+        this.files.set(res.fileBreakdown.sort((a, b) => b.totalFiles - a.totalFiles));
+        this.totalSize.set(res.totalFileSize);
+      })
+    ).subscribe();
   }
 
-  onSort(evt: SortEvent<FileExtension>) {
-    this.currentSort.next(evt);
-
-    // Must clear out headers here
-    this.headers.forEach((header) => {
-      if (header.sortable !== evt.column) {
-        header.direction = '';
-      }
-    });
-  }
 
   export(format: string) {
     this.downloadInProgress[format] = true;
@@ -105,6 +55,4 @@ export class FileBreakdownStatsComponent {
         this.cdRef.markForCheck();
       });
   }
-
-  protected readonly ColumnMode = ColumnMode;
 }
