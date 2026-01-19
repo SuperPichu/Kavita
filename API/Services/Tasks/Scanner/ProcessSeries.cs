@@ -12,6 +12,7 @@ using API.Data.Repositories;
 using API.DTOs.KavitaPlus.Metadata;
 using API.Entities;
 using API.Entities.Enums;
+using API.Entities.Metadata;
 using API.Entities.Person;
 using API.Extensions;
 using API.Helpers;

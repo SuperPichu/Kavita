@@ -15,6 +15,7 @@ using API.Entities.Enums;
 using API.Entities.Metadata;
 using API.Entities.Person;
 using API.Extensions;
+using API.Helpers;
 using API.Helpers.Builders;
 using API.Services;
 using API.Services.Plus;
@@ -58,10 +59,14 @@ public class SeriesServiceTests(ITestOutputHelper outputHelper) : AbstractDbTest
 
         var locService = new LocalizationService(ds, new MockHostingEnvironment(),
             Substitute.For<IMemoryCache>(), Substitute.For<IUnitOfWork>());
+        var processSeries = new ProcessSeries(unitOfWork, Substitute.For<ILogger<ProcessSeries>>(),
+        Substitute.For<IEventHub>(), ds, Substitute.For<ICacheHelper>(),
+        Substitute.For<IReadingItemService>(), Substitute.For<IFileService>(), Substitute.For<IReadingListService>(),
+        Substitute.For<IExternalMetadataService>());
 
         return new SeriesService(unitOfWork, Substitute.For<IEventHub>(),
             Substitute.For<ITaskScheduler>(), Substitute.For<ILogger<SeriesService>>(), locService,
-            Substitute.For<IReadingListService>(), new EntityNamingService());
+            Substitute.For<IReadingListService>(), new EntityNamingService(), processSeries);
     }
 
     private static UpdateRelatedSeriesDto CreateRelationsDto(Series series)

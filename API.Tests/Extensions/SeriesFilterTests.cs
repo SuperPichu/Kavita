@@ -985,10 +985,6 @@ public class SeriesFilterTests(ITestOutputHelper outputHelper) : AbstractDbTest(
         context.Users.Add(user);
         await context.SaveChangesAsync();
 
-
-        var seriesService = new SeriesService(unitOfWork, Substitute.For<IEventHub>(),
-            Substitute.For<ITaskScheduler>(), Substitute.For<ILogger<SeriesService>>(),
-            Substitute.For<IScrobblingService>(), Substitute.For<ILocalizationService>(), Substitute.For<IReadingListService>(), Substitute.For<IProcessSeries>());
         var ratingService = new RatingService(unitOfWork, Substitute.For<IScrobblingService>(), Substitute.For<ILogger<RatingService>>());
 
         // Select 0 Rating
