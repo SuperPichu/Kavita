@@ -64,6 +64,7 @@ public interface IChapterRepository
     Task<ChapterDto?> GetCurrentlyReadingChapterAsync(int seriesId, int userId);
     Task<ChapterDto?> GetFirstChapterForSeriesAsync(int seriesId, int userId);
     Task<ChapterDto?> GetFirstChapterForVolumeAsync(int volumeId, int userId);
+    Task<ChapterDto?> GetChapterByFilenameAsync(string filename, int userId);
     Task<IList<ChapterDto>> GetChapterDtosAsync(IEnumerable<int> chapterIds, int userId);
 }
 public class ChapterRepository : IChapterRepository
@@ -465,5 +466,15 @@ public class ChapterRepository : IChapterRepository
             .Where(c => chapterIdList.Contains(c.Id))
             .ProjectToWithProgress<Chapter, ChapterDto>(_mapper, userId)
             .ToListAsync();
+    }
+
+    public Task<ChapterDto?> GetChapterByFilenameAsync(string filename, int userId)
+    {
+        return _context.Chapter
+            .Includes(ChapterIncludes.Files | ChapterIncludes.People)
+            .Where(c => c.Files.Any(f => f.FilePath == filename))
+            .ProjectToWithProgress<Chapter, ChapterDto>(_mapper, userId)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
     }
 }

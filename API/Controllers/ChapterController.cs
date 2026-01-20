@@ -28,15 +28,17 @@ public class ChapterController : BaseApiController
     private readonly IEventHub _eventHub;
     private readonly ILogger<ChapterController> _logger;
     private readonly IMapper _mapper;
+    private readonly ITaskScheduler _taskScheduler;
 
     public ChapterController(IUnitOfWork unitOfWork, ILocalizationService localizationService, IEventHub eventHub, ILogger<ChapterController> logger,
-        IMapper mapper)
+        IMapper mapper, ITaskScheduler taskScheduler)
     {
         _unitOfWork = unitOfWork;
         _localizationService = localizationService;
         _eventHub = eventHub;
         _logger = logger;
         _mapper = mapper;
+        _taskScheduler = taskScheduler;
     }
 
     /// <summary>
@@ -48,6 +50,19 @@ public class ChapterController : BaseApiController
     public async Task<ActionResult<ChapterDto>> GetChapter(int chapterId)
     {
         var chapter = await _unitOfWork.ChapterRepository.GetChapterDtoAsync(chapterId, UserId);
+
+        return Ok(chapter);
+    }
+
+    /// <summary>
+    /// Gets a single chapter
+    /// </summary>
+    /// <param name="filename"></param>
+    /// <returns></returns>
+    [HttpGet("by-filename")]
+    public async Task<ActionResult<ChapterDto>> GetChapter([FromQuery] string filename)
+    {
+        var chapter = await _unitOfWork.ChapterRepository.GetChapterByFilenameAsync(filename, UserId);
 
         return Ok(chapter);
     }
@@ -195,7 +210,7 @@ public class ChapterController : BaseApiController
     public async Task<ActionResult> UpdateChapterMetadata(UpdateChapterDto dto)
     {
         var chapter = await _unitOfWork.ChapterRepository.GetChapterAsync(dto.Id,
-            ChapterIncludes.People | ChapterIncludes.Genres | ChapterIncludes.Tags);
+            ChapterIncludes.People | ChapterIncludes.Genres | ChapterIncludes.Tags | ChapterIncludes.Volumes);
         if (chapter == null)
             return BadRequest(_localizationService.Translate(UserId, "chapter-doesnt-exist"));
 
@@ -244,7 +259,8 @@ public class ChapterController : BaseApiController
         if (string.IsNullOrEmpty(dto.WebLinks))
         {
             chapter.WebLinks = string.Empty;
-        } else
+        }
+        else
         {
             chapter.WebLinks = string.Join(',', dto.WebLinks
                     .Split(',')
@@ -399,7 +415,8 @@ public class ChapterController : BaseApiController
 
 
         _unitOfWork.ChapterRepository.Update(chapter);
-
+        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(chapter.Volume.SeriesId);
+        await _taskScheduler.ScanSeries(series.LibraryId, chapter.Volume.SeriesId, true);
         if (!_unitOfWork.HasChanges())
         {
             return Ok();
