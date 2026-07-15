@@ -1,0 +1,66 @@
+<ng-container *transloco="let t; prefix:'manage-remap-rules-modal'">
+  <div class="modal-header">
+    <h4 class="modal-title">{{t('title')}}</h4>
+    <button type="button" class="btn-close" [attr.aria-label]="t('close')" (click)="close()"></button>
+  </div>
+
+  <div class="modal-body">
+    <div class="list-group list-group-flush">
+      @for (rule of sortedRules(); track rule.id) {
+        <div class="list-group-item d-flex justify-content-between align-items-center py-2">
+          <div class="d-flex flex-column">
+            <div>
+              <code>{{rule.cblSeriesName || rule.normalizedCblSeriesName}}</code>
+              <i class="fa fa-arrow-right mx-2" aria-hidden="true"></i>
+              <span>{{rule.seriesNameAtMapping}}</span>
+            </div>
+            <small class="text-muted">
+              @switch (rule.kind) {
+                @case (CblRemapRuleKind.Series) {
+                  {{t('series-level')}}
+                  @if (rule.cblVolume) {
+                    {{t('volume-num', {num: rule.cblVolume})}}
+                  }
+                }
+                @case (CblRemapRuleKind.Volume) {
+                  {{t('volume-num', {num: rule.cblVolume})}}
+                  <i class="fa fa-arrow-right mx-1" aria-hidden="true"></i>
+                  {{t('volume-target', {num: rule.volumeNumber})}}
+                }
+                @case (CblRemapRuleKind.Chapter) {
+                  @if (rule.cblVolume) {
+                    {{t('volume-num', {num: rule.cblVolume})}}
+                  }
+                  @if (rule.cblNumber) {
+                    {{t('issue-num', {num: rule.cblNumber})}}
+                  }
+                  <i class="fa fa-arrow-right mx-1" aria-hidden="true"></i>
+                  <app-entity-title [libraryType]="rule.libraryType"
+                                    [prioritizeTitleName]="false"
+                                    [entity]="cblService.buildChapterStub(rule)" />
+                }
+              }
+            </small>
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            @if (rule.isGlobal) {
+              <span class="badge bg-info">{{t('global')}}</span>
+            }
+            @if (rule.appUserId === currentUserId() && !accountService.hasReadOnlyRole()) {
+              <button class="btn btn-sm btn-outline-danger" (click)="deleteRule(rule)">
+                <i class="fa fa-trash" aria-hidden="true"></i>
+                <span class="visually-hidden">{{t('delete-rule')}}</span>
+              </button>
+            }
+          </div>
+        </div>
+      } @empty {
+        <div class="list-group-item text-muted">{{t('no-rules')}}</div>
+      }
+    </div>
+  </div>
+
+  <div class="modal-footer">
+    <button class="btn btn-secondary" (click)="close()">{{t('close')}}</button>
+  </div>
+</ng-container>

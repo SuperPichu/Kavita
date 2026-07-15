@@ -1,5 +1,15 @@
 import {AsyncPipe, DOCUMENT, NgClass} from '@angular/common';
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, EventEmitter, inject, Input, OnInit, Output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  DestroyRef, ElementRef,
+  inject,
+  Input,
+  OnInit,
+  output,
+  viewChild
+} from '@angular/core';
 import {combineLatest, filter, map, Observable, of, shareReplay, tap} from 'rxjs';
 import {PageSplitOption} from 'src/app/_models/preferences/page-split-option';
 import {ReaderMode} from 'src/app/_models/preferences/reader-mode';
@@ -29,7 +39,7 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
   private document = inject<Document>(DOCUMENT);
   readerService = inject(ReaderService);
 
-
+  readonly imageElement = viewChild<ElementRef<HTMLImageElement>>('image');
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
   @Input({required: true}) image$!: Observable<HTMLImageElement | null>;
@@ -37,7 +47,7 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
   @Input({required: true}) showClickOverlay$!: Observable<boolean>;
   @Input({required: true}) pageNum$!: Observable<{pageNum: number, maxPages: number}>;
   @Input({required: true}) getPage!: (pageNum: number) => HTMLImageElement;
-  @Output() imageHeight: EventEmitter<number> = new EventEmitter<number>();
+  readonly imageHeight = output<number>();
   private readonly destroyRef = inject(DestroyRef);
 
   debugMode: DEBUG_MODES = DEBUG_MODES.None;

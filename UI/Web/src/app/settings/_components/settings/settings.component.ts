@@ -1,14 +1,6 @@
 import {ChangeDetectionStrategy, ChangeDetectorRef, Component, computed, DestroyRef, inject} from '@angular/core';
-import {
-  ChangeAgeRestrictionComponent
-} from "../../../user-settings/change-age-restriction/change-age-restriction.component";
-import {ChangeEmailComponent} from "../../../user-settings/change-email/change-email.component";
-import {ChangePasswordComponent} from "../../../user-settings/change-password/change-password.component";
 import {ManageDevicesComponent} from "../../../user-settings/manage-devices/manage-devices.component";
 import {ManageAuthKeysComponent} from "../../../user-settings/manage-auth-keys/manage-auth-keys.component";
-import {
-  ManageScrobblingProvidersComponent
-} from "../../../user-settings/manage-scrobbling-providers/manage-scrobbling-providers.component";
 import {
   ManageUserPreferencesComponent
 } from "../../../user-settings/manga-user-preferences/manage-user-preferences.component";
@@ -41,7 +33,6 @@ import {
 import {
   ImportMalCollectionComponent
 } from "../../../collections/_components/import-mal-collection/import-mal-collection.component";
-import {ImportCblComponent} from "../../../reading-list/_components/import-cbl/import-cbl.component";
 import {LicenseService} from "../../../_services/license.service";
 import {ManageMatchedMetadataComponent} from "../../../admin/manage-matched-metadata/manage-matched-metadata.component";
 import {ManageUserTokensComponent} from "../../../admin/manage-user-tokens/manage-user-tokens.component";
@@ -62,15 +53,14 @@ import {FontManagerComponent} from "../../../user-settings/font-manager/font-man
 import {ServerActivityComponent} from "../../../admin/server-activity/server-activity.component";
 import {ServerDevicesComponent} from "../../../admin/server-devices/server-devices.component";
 import {ManageCustomKeyBindsComponent} from "../../../user-settings/custom-key-binds/manage-custom-key-binds.component";
+import {AccountSettingsComponent} from "src/app/user-settings/account-settings/account-settings.component";
+import {CblManagerComponent} from "../../../user-settings/cbl-manager/cbl-manager.component";
+import {ManageRemapRulesComponent} from "../../../user-settings/manage-remap-rules/manage-remap-rules.component";
 
 @Component({
   selector: 'app-settings',
   imports: [
-    ChangeAgeRestrictionComponent,
-    ChangeEmailComponent,
-    ChangePasswordComponent,
     ManageDevicesComponent,
-    ManageScrobblingProvidersComponent,
     ManageUserPreferencesComponent,
     SideNavCompanionBarComponent,
     ThemeManagerComponent,
@@ -89,7 +79,6 @@ import {ManageCustomKeyBindsComponent} from "../../../user-settings/custom-key-b
     ManageMediaIssuesComponent,
     ManageCustomizationComponent,
     ImportMalCollectionComponent,
-    ImportCblComponent,
     ManageMatchedMetadataComponent,
     ManageUserTokensComponent,
     EmailHistoryComponent,
@@ -103,7 +92,10 @@ import {ManageCustomKeyBindsComponent} from "../../../user-settings/custom-key-b
     ServerActivityComponent,
     ServerDevicesComponent,
     ManageCustomKeyBindsComponent,
-    ManageAuthKeysComponent
+    ManageAuthKeysComponent,
+    AccountSettingsComponent,
+    CblManagerComponent,
+    ManageRemapRulesComponent
   ],
   templateUrl: './settings.component.html',
   styleUrl: './settings.component.scss',
@@ -115,11 +107,11 @@ export class SettingsComponent {
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
-  private readonly licenseService = inject(LicenseService);
+  protected readonly licenseService = inject(LicenseService);
   protected readonly accountService = inject(AccountService);
 
   fragment: SettingsTabId = SettingsTabId.Account;
-  hasActiveLicense = computed(() => this.licenseService.hasValidLicenseSignal());
+  hasActiveLicense = computed(() => this.licenseService.hasValidLicense());
 
   constructor() {
     this.route.fragment.pipe(tap(frag => {

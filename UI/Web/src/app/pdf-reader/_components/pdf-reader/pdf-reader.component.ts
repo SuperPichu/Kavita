@@ -4,13 +4,13 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   HostListener,
   inject,
   OnDestroy,
   OnInit,
-  signal,
-  ViewChild
+  viewChild
 } from '@angular/core';
 import {ActivatedRoute, Router} from '@angular/router';
 import {
@@ -32,7 +32,7 @@ import {CHAPTER_ID_DOESNT_EXIST, ReaderService} from 'src/app/_services/reader.s
 import {SeriesService} from 'src/app/_services/series.service';
 import {ThemeService} from 'src/app/_services/theme.service';
 import {NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
-import {AsyncPipe, DOCUMENT, NgStyle} from '@angular/common';
+import {DOCUMENT, NgStyle} from '@angular/common';
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {PdfLayoutMode} from "../../../_models/preferences/pdf-layout-mode";
 import {PdfScrollMode} from "../../../_models/preferences/pdf-scroll-mode";
@@ -47,12 +47,19 @@ import {KeyBindService} from "../../../_services/key-bind.service";
 import {KeyBindTarget} from "../../../_models/preferences/preferences";
 import {Breakpoint, BreakpointService} from "../../../_services/breakpoint.service";
 
+const KEYBIND_TARGETS = [
+  {keyBindTarget: KeyBindTarget.OpenHelp},
+  {keyBindTarget: KeyBindTarget.Escape},
+  {keyBindTarget: KeyBindTarget.FirstPage, description: 'first-page'},
+  {keyBindTarget: KeyBindTarget.LastPage, description: 'last-page'},
+];
+
 @Component({
   selector: 'app-pdf-reader',
   templateUrl: './pdf-reader.component.html',
   styleUrls: ['./pdf-reader.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgStyle, NgxExtendedPdfViewerModule, NgbTooltip, AsyncPipe, TranslocoDirective,
+  imports: [NgStyle, NgxExtendedPdfViewerModule, NgbTooltip, TranslocoDirective,
     PdfScrollModeTypePipe, PdfSpreadTypePipe]
 })
 export class PdfReaderComponent implements OnInit, OnDestroy {
@@ -75,7 +82,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
 
   protected readonly ScrollModeType = ScrollModeType;
 
-  @ViewChild('container') container!: ElementRef;
+  readonly container = viewChild.required<ElementRef>('container');
 
   libraryId!: number;
   seriesId!: number;
@@ -123,7 +130,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   /**
    * True if Preferences.DataSaver is true
    */
-  disableLoadingIndicator = signal(false);
+  disableLoadingIndicator = computed(() => this.accountService.userPreferences()?.dataSaver);
   isLoading: boolean = true;
   /**
    * How much of the current document is loaded
@@ -137,7 +144,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   isSearchOpen: boolean = false;
 
   canDownload = computed(() =>
-    this.accountService.hasDownloadRole(this.accountService.currentUserSignal()!)
+    this.accountService.hasDownloadRole()
   );
 
   constructor() {
@@ -147,9 +154,34 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
 
       this.keyBindService.registerListener(
         this.destroyRef,
-        () => this.closeReader(),
-        [KeyBindTarget.Escape],
+        (e) => {
+          switch (e.target) {
+            case KeyBindTarget.Escape:
+              this.closeReader();
+              break;
+            case KeyBindTarget.FirstPage:
+              this.currentPage = 0;
+              this.cdRef.markForCheck();
+              break;
+            case KeyBindTarget.LastPage:
+              this.currentPage = this.maxPages;
+              this.cdRef.markForCheck();
+              break;
+            case KeyBindTarget.OpenHelp:
+              this.openShortcutModal();
+          }
+
+        },
+        KEYBIND_TARGETS.map(k => k.keyBindTarget as KeyBindTarget),
       );
+
+      effect(() => {
+        const prefs = this.accountService.userPreferences();
+        if (prefs) {
+          pdfDefaultOptions.disableAutoFetch = prefs.dataSaver;
+          this.cdRef.markForCheck();
+        }
+      });
   }
 
   @HostListener('window:resize', ['$event'])
@@ -207,17 +239,12 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
 
     window.addEventListener('keydown', this.downloadHandler, { capture: true });
 
-    this.accountService.currentUser$.pipe(take(1)).subscribe(user => {
-      if (user) {
-        this.user = user;
-        this.init();
-      }
-    });
+    this.init();
   }
 
   private downloadHandler = (event: KeyboardEvent) => {
     if (event.ctrlKey && event.key.toLowerCase() === 's') {
-      if (!this.accountService.hasDownloadRole(this.accountService.currentUserSignal()!)) {
+      if (!this.accountService.hasDownloadRole()) {
         event.preventDefault();
         event.stopImmediatePropagation(); // Stops ALL other handlers
       }
@@ -228,7 +255,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   calcScrollbarNeeded() {
     const viewContainer = this.document.querySelector('#viewerContainer');
     if (viewContainer == null) return;
-    this.scrollbarNeeded = viewContainer.scrollHeight > this.container?.nativeElement?.clientHeight;
+    this.scrollbarNeeded = viewContainer.scrollHeight > this.container()?.nativeElement?.clientHeight;
     this.cdRef.markForCheck();
   }
 
@@ -290,9 +317,6 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
     this.backgroundColor = this.themeMap[this.theme].background;
     this.fontColor = this.themeMap[this.theme].font; // TODO: Move this to an observable or something
 
-    this.disableLoadingIndicator.set(this.user.preferences.dataSaver);
-    pdfDefaultOptions.disableAutoFetch = this.user.preferences.dataSaver;
-
     this.calcScrollbarNeeded();
 
     this.bookService.getBookInfo(this.chapterId).subscribe(info => {
@@ -315,7 +339,7 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
       }
       this.cdRef.markForCheck();
     });
-    setTimeout(() => this.readerService.enableWakeLock(this.container.nativeElement), 1000);
+    setTimeout(() => this.readerService.enableWakeLock(this.container().nativeElement), 1000);
   }
 
   /**
@@ -387,7 +411,12 @@ export class PdfReaderComponent implements OnInit, OnDestroy {
   }
 
   closeReader() {
-    this.readerService.closeReader(this.libraryId, this.seriesId, this.chapterId, this.readingListMode, this.readingListId);
+     this.readerService.closeShortCutModal();
+     this.readerService.closeReader(this.libraryId, this.seriesId, this.chapterId, this.readingListMode, this.readingListId);
+  }
+
+  openShortcutModal() {
+     this.readerService.openShortcutModal(KEYBIND_TARGETS);
   }
 
   updateLoading(state: boolean) {

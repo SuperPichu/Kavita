@@ -14,6 +14,8 @@ import {ExternalMatchRateLimitErrorEvent} from "../_models/events/external-match
 import {AnnotationUpdateEvent} from "../_models/events/annotation-update-event";
 import {toSignal} from "@angular/core/rxjs-interop";
 import {ReadingSessionCloseEvent, ReadingSessionUpdateEvent} from "../_models/events/reading-session-close-event";
+import {ReadingListUpdatedEvent} from "../_models/events/reading-list-updated-event";
+import {SeriesUpdateEvent} from "../_models/events/series-update-event";
 
 export enum EVENTS {
   UpdateAvailable = 'UpdateAvailable',
@@ -38,8 +40,8 @@ export enum EVENTS {
    */
   CleanupProgress = 'CleanupProgress',
   /**
-   * A subtype of NotificationProgress that represnts a user downloading a file or group of files.
-   * Note: In v0.5.5, this is being replaced by an inbrowser experience. The message is changed and this will be moved to dashboard view once built
+   * A subtype of NotificationProgress that represents a user downloading a file or group of files.
+   * Note: In v0.5.5, this is being replaced by an in-browser experience. The message is changed and this will be moved to dashboard view once built
    */
   DownloadProgress = 'DownloadProgress',
   /**
@@ -142,6 +144,14 @@ export enum EVENTS {
    * An Auth key has been deleted
    */
   AuthKeyDeleted = 'AuthKeyDeleted',
+  /**
+   * A Reading List was updated (like via Sync operation)
+   */
+  ReadingListUpdated = 'ReadingListUpdated',
+  /**
+   * A series was updated (E.x. K+ match)
+   */
+  SeriesUpdated = 'SeriesUpdated'
 }
 
 export interface Message<T> {
@@ -301,6 +311,13 @@ export class MessageHubService {
       });
     });
 
+    this.hubConnection.on(EVENTS.DownloadProgress, (resp: NotificationProgressEvent) => {
+      this.messagesSource.next({
+        event: EVENTS.DownloadProgress,
+        payload: resp
+      });
+    });
+
     this.hubConnection.on(EVENTS.SiteThemeProgress, resp => {
       this.messagesSource.next({
         event: EVENTS.SiteThemeProgress,
@@ -378,6 +395,13 @@ export class MessageHubService {
       });
     });
 
+    this.hubConnection.on(EVENTS.ReadingListUpdated, resp => {
+      this.messagesSource.next({
+        event: EVENTS.ReadingListUpdated,
+        payload: resp.body as ReadingListUpdatedEvent
+      });
+    });
+
     this.hubConnection.on(EVENTS.UpdateAvailable, resp => {
       this.messagesSource.next({
         event: EVENTS.UpdateAvailable,
@@ -417,6 +441,13 @@ export class MessageHubService {
       this.messagesSource.next({
         event: EVENTS.AuthKeyDeleted,
         payload: resp.body
+      });
+    });
+
+    this.hubConnection.on(EVENTS.SeriesUpdated, resp => {
+      this.messagesSource.next({
+        event: EVENTS.SeriesUpdated,
+        payload: resp.body as SeriesUpdateEvent
       });
     });
   }

@@ -4,18 +4,17 @@ import {DecimalPipe, NgClass} from "@angular/common";
 import {
   SideNavCompanionBarComponent
 } from "../../sidenav/_components/side-nav-companion-bar/side-nav-companion-bar.component";
-import {translate, TranslocoDirective} from "@jsverse/transloco";
+import {TranslocoDirective} from "@jsverse/transloco";
 import {JumpbarService} from "../../_services/jumpbar.service";
 import {BrowsePerson} from "../../_models/metadata/browse/browse-person";
 import {Pagination} from "../../_models/pagination";
 import {JumpKey} from "../../_models/jumpbar/jump-key";
 import {MetadataService} from "../../_services/metadata.service";
 import {BrowseGenre} from "../../_models/metadata/browse/browse-genre";
-import {FilterField} from "../../_models/metadata/v2/filter-field";
+import {SeriesFilterField} from "../../_models/metadata/v2/series-filter-field";
 import {FilterComparison} from "../../_models/metadata/v2/filter-comparison";
 import {FilterUtilitiesService} from "../../shared/_services/filter-utilities.service";
 import {CompactNumberPipe} from "../../_pipes/compact-number.pipe";
-import {Title} from "@angular/platform-browser";
 
 @Component({
   selector: 'app-browse-genres',
@@ -33,13 +32,12 @@ import {Title} from "@angular/platform-browser";
 })
 export class BrowseGenresComponent implements OnInit {
 
-  protected readonly FilterField = FilterField;
+  protected readonly FilterField = SeriesFilterField;
 
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly metadataService = inject(MetadataService);
   private readonly jumpbarService = inject(JumpbarService);
   private readonly filterUtilityService = inject(FilterUtilitiesService);
-  private readonly titleService = inject(Title);
 
   isLoading = false;
   genres: Array<BrowseGenre> = [];
@@ -52,8 +50,6 @@ export class BrowseGenresComponent implements OnInit {
     this.isLoading = true;
     this.cdRef.markForCheck();
 
-    this.titleService.setTitle('Kavita - ' + translate('browse-genres.title'));
-
     this.metadataService.getGenreWithCounts(undefined, undefined).subscribe(d => {
       this.genres = d.result;
       this.pagination = d.pagination;
@@ -63,7 +59,7 @@ export class BrowseGenresComponent implements OnInit {
     });
   }
 
-  openFilter(field: FilterField, genre: BrowseGenre) {
+  openFilter(field: SeriesFilterField, genre: BrowseGenre) {
     if (genre.seriesCount === 0) return; // We don't yet have an issue page
     this.filterUtilityService.applyFilter(['all-series'], field, FilterComparison.Equal, `${genre.id}`).subscribe();
   }

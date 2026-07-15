@@ -128,6 +128,10 @@ export const DefaultKeyBinds: Readonly<Record<KeyBindTarget, KeyBind[]>> = {
   [KeyBindTarget.PageUp]: [{key: KeyCode.ArrowUp}],
   [KeyBindTarget.PageDown]: [{key: KeyCode.ArrowDown}],
   [KeyBindTarget.OffsetDoublePage]: [{key: KeyCode.KeyO}],
+  [KeyBindTarget.FirstPage]: [{key: KeyCode.ArrowLeft, control: true}],
+  [KeyBindTarget.LastPage]: [{key: KeyCode.ArrowRight, control: true}],
+  [KeyBindTarget.NextChapter]: [{key: KeyCode.ArrowRight, control: true, shift: true}],
+  [KeyBindTarget.PreviousChapter]: [{key: KeyCode.ArrowLeft, control: true, shift: true}],
 } as const;
 
 type KeyBindGroup = {
@@ -163,6 +167,10 @@ export const KeyBindGroups: KeyBindGroup[] = [
       {target: KeyBindTarget.PageUp},
       {target: KeyBindTarget.PageDown},
       {target: KeyBindTarget.OffsetDoublePage},
+      {target: KeyBindTarget.FirstPage},
+      {target: KeyBindTarget.LastPage},
+      {target: KeyBindTarget.PreviousChapter},
+      {target: KeyBindTarget.NextChapter},
     ],
   }
 ];
@@ -202,7 +210,7 @@ export class KeyBindService {
    * @private
    */
   private readonly customKeyBinds = computed(() => {
-    const customKeyBinds = this.accountService.currentUserSignal()?.preferences.customKeyBinds ?? {};
+    const customKeyBinds = this.accountService.currentUser()?.preferences.customKeyBinds ?? {};
     return Object.fromEntries(Object.entries(customKeyBinds).filter(([target, _]) => {
       return DefaultKeyBinds[target as KeyBindTarget] !== undefined; // Filter out unused or old targets
     }))

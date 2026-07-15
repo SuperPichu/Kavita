@@ -1,0 +1,17 @@
+<ng-container *transloco="let t; prefix: 'edit-external-metadata-form'">
+  <div class="row g-2">
+    @for(item of metadata(); track item.key) {
+      <div class="col-auto mb-3">
+        <app-label-card
+          [label]="t(item.key + '-label')"
+          [value]="item.value | defaultValue:t('not-set-label')"
+          [linkUrl]="item.linkUrl ?? undefined" />
+      </div>
+    }
+    <div class="col-auto mb-3">
+      <app-label-card
+        [label]="t('isbn-label')"
+        [value]="isbn() | defaultValue:t('not-set-label')" />
+    </div>
+  </div>
+</ng-container>

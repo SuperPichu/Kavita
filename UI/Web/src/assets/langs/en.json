@@ -1,4 +1,17 @@
 {
+    "title": {
+        "reading-list": "Reading Lists",
+        "home": "Home",
+        "bookmarks": "Bookmarks",
+        "collections": "Collections",
+        "browse-genres": "Browse Genres",
+        "browse-tags": "Browse Tags",
+        "want-to-read": "Want To Read",
+        "reading-lists": "Reading Lists",
+        "settings": "Settings",
+        "all-series": "All Series",
+        "profile": "{{username}}'s Profile"
+    },
     "login": {
         "title": "Sign in to your account",
         "username": "{{common.username}}",
@@ -14,6 +27,13 @@
         "error-loading-info": "An error occurred loading OIDC info, contact your administrator",
         "timeout": "OIDC resolution has timed out or an error has occurred"
     },
+    "authority-validation-result-pipe": {
+        "success": "Authority is valid",
+        "invalid-authority": "Kavita can load the OIDC configuration, but the issuer does not match",
+        "failure": "Kavita cannot load the OIDC configuration",
+        "not-applicable": "Kavita cannot validate the authority because it is not configured",
+        "missing-https": "{{manage-oidc-connect.tls-required}}"
+    },
     "manage-oidc-connect": {
         "save": "{{common.save}}",
         "reset-label": "Reset ids",
@@ -23,7 +43,7 @@
         "save-success": "Successfully updated your OIDC settings",
         "notice": "Notice",
         "restart-required": "Changing Provider or advanced settings requires a manual restart of Kavita to take effect.",
-        "auto-save-required": "You've changed critical settings, auto save to persist them",
+        "auto-save-required": "You've changed critical settings, manually save to persist them",
         "provider-title": "Provider",
         "provider-tooltip": "Provider settings require you to manually click Save. Kavita must be configured as a confidential client and needs a redirect URL. See the <a href='https://wiki.kavitareader.com/guides/admin-settings/open-id-connect/' target='_blank' rel='noreferrer noopener'>wiki</a> for more details.",
         "behavior-title": "Behavior",
@@ -31,6 +51,7 @@
         "other-field-invalid": "{{validation.other-field-invalid}}",
         "invalid-uri": "{{validation.invalid-uri}}",
         "tls-required": "The OIDC provider must use tls (https)",
+        "checking-authority": "Checking if the authority is valid, please be patient...",
         "manual-save-label": "Changing provider settings requires a manual save",
         "authority-label": "Authority",
         "authority-tooltip": "The URL to your OIDC provider, do not include the .well-known/openid-configuration path",
@@ -85,7 +106,8 @@
         "image-only": "Images",
         "add-auth-key": "New",
         "description": "An Auth Key is like a password. Rotating it will invalidate any existing clients.",
-        "copy-key": "{{common.copy}}"
+        "copy-key": "{{common.copy}}",
+        "clients-opds-error": "Failed to load OPDS url for key: {{key}}"
     },
     "create-auth-key": {
         "create-title": "Create Auth Key",
@@ -148,8 +170,8 @@
         "delete-selected-label": "Delete selected",
         "no-data": "{{common.no-data}}",
         "volume-and-chapter-num": "Volume {{v}} Chapter {{n}}",
-        "volume-num": "Volume {{num}}",
-        "chapter-num": "Chapter {{num}}",
+        "volume-num": "{{entity-title.volume-num}}",
+        "chapter-num": "{{entity-title.chapter-num}}",
         "rating": "Rating {{r}}",
         "not-applicable": "Not Applicable",
         "processed": "Processed",
@@ -304,27 +326,29 @@
         "active-theme": "Active",
         "updated-toastr": "Site default has been updated to {{name}}",
         "delete": "{{common.delete}}",
-        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
-        "upload": "{{cover-image-chooser.upload}}",
         "upload-continued": "a css file",
         "preview-default": "Select a theme first",
         "preview-default-admin": "Select a theme first or upload one manually",
         "preview-title": "Preview",
         "add": "{{common.add}}"
     },
-    "font-manager": {
-        "description": "Kavita's epub reader comes with a few build-in fonts, add your own fonts here. Upload a file, or use a google fonts url. See the <a href='{{wikiLink}}' target='_blank' rel='noreferrer noopener'>wiki</a> for more information.",
+    "file-drag-and-drop-upload": {
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
         "enter-an-url-pre-title": "Enter an {{url}}",
         "url": "url",
+        "url-label": "Url",
+        "back": "Back",
+        "load": "Load"
+    },
+    "font-manager": {
+        "description": "Kavita's epub reader comes with a few build-in fonts, add your own fonts here. Upload a file, or use a google fonts url. See the <a href='{{wikiLink}}' target='_blank' rel='noreferrer noopener'>wiki</a> for more information.",
         "add": "{{common.add}}",
         "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
         "upload": "{{cover-image-chooser.upload}}",
         "upload-continued": "a font file",
         "preview-default": "Upload your own font via file or Google Font url",
         "delete": "{{common.delete}}",
-        "url-label": "Url",
-        "back": "Back",
-        "load": "Load",
         "no-preview": "This font cannot be previewed. This will take the default style from the book.",
         "brown-fox": "The quick brown fox jumps over the lazy dog",
         "filter-system-fonts-label": "Filter System Fonts"
@@ -404,6 +428,13 @@
         "required-field": "{{validation.required-field}}",
         "passwords-must-match": "Passwords must match",
         "permission-error": "You do not have permission to change your password. Reach out to the admin of the server."
+    },
+    "change-username": {
+        "username-label": "{{common.username}}",
+        "new-username-label": "New Username",
+        "reset": "{{common.reset}}",
+        "save": "{{common.save}}",
+        "required-field": "{{validation.required-field}}"
     },
     "change-email": {
         "email-title": "Email",
@@ -538,6 +569,29 @@
         "partial": "Partial",
         "failure": "Failure"
     },
+    "cbl-match-tier-pipe": {
+        "remap-rule": "Remap Rule",
+        "external-id": "External ID",
+        "exact-name": "Exact Name",
+        "comicvine-naming": "ComicVine Naming",
+        "article-stripped": "Article Stripped",
+        "reprint-stripped": "Reprint Stripped",
+        "alternate-series": "Alternate Series",
+        "user-decision": "User Decision",
+        "unmatched": "Unmatched"
+    },
+    "cbl-import-reason-pipe": {
+        "chapter-missing": "Chapter Missing",
+        "volume-missing": "Volume Missing",
+        "series-missing": "Series Not Found",
+        "name-conflict": "Name Conflict",
+        "all-series-missing": "All Series Missing",
+        "empty-file": "Empty File",
+        "series-collision": "Multiple Series Match",
+        "all-chapter-missing": "All Chapters Missing",
+        "success": "Success",
+        "invalid-file": "Invalid File"
+    },
     "cbl-conflict-reason-pipe": {
         "all-series-missing": "Your account is missing access to all series in the list or Kavita does not have anything present in the list.",
         "chapter-missing": "{{series}}: Chapter {{chapter}} is missing from Kavita. This item will be skipped.",
@@ -610,7 +664,6 @@
         "penciller": "Penciller",
         "publisher": "Publisher",
         "writer": "Writer",
-        "other": "Other",
         "imprint": "Imprint",
         "translator": "Translator",
         "team": "{{filter-field-pipe.team}}",
@@ -679,19 +732,11 @@
     },
     "all-filters": {
         "title": "All Smart Filters",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
-        "create": "{{common.create}}"
+        "description": "Smart filters are saved filters that can be bound against the side nav and dashboard. You can create them for Series and Reading Lists by giving a name and using Save button.",
+        "count": "{{count}} Total Smart Filters"
     },
     "announcements": {
         "title": "Announcements"
-    },
-    "out-of-date-modal": {
-        "title": "Don't fall behind!",
-        "close": "{{common.close}}",
-        "subtitle": "It seems your install is more than {{count}} versions behind!",
-        "description-1": "Please consider upgrading so that you're running the latest version of Kavita.",
-        "description-2": "Take a look at our <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> for instructions on how to update.",
-        "description-3": "If there is a specific reason you haven't updated yet we would love to know what is keeping you on an outdated version! Stop by our discord and let us know what is blocking your upgrade path."
     },
     "changelog": {
         "installed": "Installed",
@@ -713,19 +758,25 @@
         "feature-requests": "Feature Requests",
         "known-issues": "Known Issues"
     },
-    "new-version-modal": {
-        "title": "Kavita was updated!",
-        "description": "A new version of Kavita is available. Refresh to update.",
-        "added": "{{changelog.added}}",
-        "changed": "{{changelog.changed}}",
-        "fixed": "{{changelog.fixed}}",
-        "developer": "{{changelog.developer}}",
-        "theme": "{{changelog.theme}}",
-        "removed": "{{changelog.removed}}",
-        "known-issues": "{{changelog.known-issues}}",
-        "api": "{{changelog.api}}",
+    "version-update-modal": {
         "close": "{{common.close}}",
-        "refresh": "Refresh"
+        "out-of-date": {
+            "title": "Don't fall behind!",
+            "subtitle": "It seems your install is more than {{count}} versions behind!",
+            "description-1": "Please consider upgrading so that you're running the latest version of Kavita.",
+            "description-2": "Take a look at our <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> for instructions on how to update.",
+            "description-3": "If there is a specific reason you haven't updated yet we would love to know what is keeping you on an outdated version! Stop by our discord and let us know what is blocking your upgrade path."
+        },
+        "new-version": {
+            "title": "Kavita was updated!",
+            "description": "A new version of Kavita is available. Refresh to update.",
+            "refresh": "Refresh"
+        },
+        "update-notification": {
+            "title": "New Update Available!",
+            "help": "How to Update",
+            "download": "Download"
+        }
     },
     "invite-user": {
         "title": "Invite User",
@@ -934,7 +985,9 @@
         "create": "Create",
         "contains-spoilers-label": "{{annotation-card.contains-spoilers-label}}",
         "edit": "Edit",
-        "delete": "Delete"
+        "delete": "Delete",
+        "read-more": "{{read-more.read-more}}",
+        "read-less": "{{read-more.read-less}}"
     },
     "quill-wrapper": {
         "clean-tooltip": "Remove all styles"
@@ -944,9 +997,7 @@
         "close": "{{common.close}}",
         "no-data": "{{common.no-data}}",
         "page-num-label": "{{book-reader.page-num-label}}",
-        "load-bookmark": "Load",
-        "image-header": "Image",
-        "text-header": "Text"
+        "load-bookmark": "Load"
     },
     "page-chapter-label-pipe": {
         "page-only": "— Page {{pageNumber}}",
@@ -983,7 +1034,8 @@
         "page-num-label": "Page {{page}}",
         "completion-label": "{{percent}} complete",
         "force-selected-one-column": "Layout mode switched to One Column due to insufficient space to render Two Columns",
-        "forced-vertical-switch": "Layout mode switched as Two Column layout doesn't work with Vertical Writing Style"
+        "forced-vertical-switch": "Layout mode switched as Two Column layout doesn't work with Vertical Writing Style",
+        "shortcuts-menu-alt": "{{manga-reader.shortcuts-menu-alt}}"
     },
     "personal-table-of-contents": {
         "no-data": "Nothing Bookmarked yet",
@@ -1040,16 +1092,6 @@
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
         "edit-series-alt": "Edit Information",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "storyline-tab": "{{tabs.storyline-tab}}",
-        "books-tab": "{{tabs.books-tab}}",
-        "volumes-tab": "{{tabs.volumes-tab}}",
-        "specials-tab": "{{tabs.specials-tab}}",
-        "related-tab": "{{tabs.related-tab}}",
-        "details-tab": "{{tabs.details-tab}}",
-        "annotations-tab": "{{tabs.annotations-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "recommendations-tab": "{{tabs.recommendations-tab}}",
         "send-to": "File emailed to {{deviceName}}",
         "no-pages": "{{toasts.no-pages}}",
         "no-chapters": "There are no chapters to this volume. Cannot read.",
@@ -1082,7 +1124,7 @@
         "progress": "Continue",
         "progress-incognito": "Continue incognito",
         "full-read": "Re-Read",
-        "full-read-incognito": "Reread incognito"
+        "full-read-incognito": "Read incognito"
     },
     "match-series-modal": {
         "title": "Match {{seriesName}}",
@@ -1143,12 +1185,6 @@
     "read-more": {
         "read-more": "Read More",
         "read-less": "Read Less"
-    },
-    "update-notification-modal": {
-        "title": "New Update Available!",
-        "close": "{{common.close}}",
-        "help": "How to Update",
-        "download": "Download"
     },
     "side-nav-companion-bar": {
         "page-settings-title": "{{series-detail.page-settings-title}}",
@@ -1216,11 +1252,6 @@
         "close": "{{common.close}}",
         "edit-title": "Edit {{name}}",
         "add-title": "Add Library",
-        "general-tab": "{{tabs.general-tab}}",
-        "folder-tab": "{{tabs.folder-tab}}",
-        "cover-tab": "{{tabs.cover-tab}}",
-        "advanced-tab": "{{tabs.advanced-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
         "name-label": "Name",
         "library-name-unique": "Library name must be unique",
         "last-scanned-label": "Last Scanned:",
@@ -1286,6 +1317,8 @@
         "font-size-label": "{{manage-reading-profiles.font-size-book-label}}",
         "line-spacing-label": "{{manage-reading-profiles.line-height-book-label}}",
         "margin-label": "{{manage-reading-profiles.margin-book-label}}",
+        "disable-bookmark-icon-label": "{{manage-reading-profiles.disable-bookmark-icon-label}}",
+        "disable-bookmark-icon-tooltip": "{{manage-reading-profiles.disable-bookmark-icon-tooltip}}",
         "reset-to-defaults": "Reset to Defaults",
         "update-parent": "Save to {{name}}",
         "loading": "loading",
@@ -1342,6 +1375,7 @@
         "items-selected": "{{num}} items selected",
         "mark-as-unread": "Mark as Unread",
         "mark-as-read": "Mark as Read",
+        "mark-as-read-with-session": "Mark as Read with Session",
         "deselect-all": "{{common.deselect-all}}"
     },
     "card-detail-layout": {
@@ -1349,7 +1383,9 @@
         "no-data": "{{common.no-data}}"
     },
     "card-item": {
-        "cannot-read": "Cannot Read"
+        "cannot-read": "Cannot Read",
+        "select": "Select",
+        "read": "read"
     },
     "details-tab": {
         "writers-title": "{{metadata-fields.writers-title}}",
@@ -1374,8 +1410,27 @@
         "format-title": "{{metadata-filter.format-label}}",
         "length-title": "{{edit-chapter-modal.words-label}}",
         "age-rating-title": "{{metadata-fields.age-rating-title}}",
-        "folder-path-title": "Folder path",
-        "file-path-title": "Files"
+        "folder-path-title": "{{edit-series-modal.folder-path-title}}",
+        "file-path-title": "Files",
+        "external-metadata-title": "External Metadata",
+        "basic-metadata-title": "Basic Metadata",
+        "read-time-label": "Read time",
+        "pages-label": "{{edit-chapter-modal.pages-label}}",
+        "words-label": "{{edit-chapter-modal.words-label}}",
+        "added-label": "Added",
+        "updated-label": "Updated",
+        "kavita-id-label": "Kavita ID",
+        "sort-order-label": "{{edit-chapter-modal.sort-order-label}}",
+        "language-label": "Language",
+        "is-special-label": "Special",
+        "pub-status-label": "{{metadata-filter.publication-status-label}}",
+        "yes-label": "Yes",
+        "no-label": "No",
+        "file-info-title": "File info",
+        "not-set-label": "Not set",
+        "pages-count": "{{series-detail.pages-count}}",
+        "words-count": "{{series-detail.words-count}}",
+        "bytes-count": "{{num}} bytes"
     },
     "related-tab": {
         "reading-lists-title": "{{reading-lists.title}}",
@@ -1388,7 +1443,7 @@
         "url": "Url",
         "drag-n-drop": "Drag and drop",
         "upload": "Upload",
-        "upload-continued": "an image",
+        "upload-continued": "image",
         "url-label": "Url",
         "load": "Load",
         "back": "Back",
@@ -1399,7 +1454,8 @@
         "applied": "{{theme-manager.applied}}"
     },
     "download-indicator": {
-        "progress": "{{percentage}}% downloaded"
+        "progress": "{{percentage}}% downloaded",
+        "completed": "Download complete"
     },
     "edit-series-relation": {
         "description-part-1": "Not sure what relationship to add? See our",
@@ -1434,11 +1490,17 @@
     },
     "entity-title": {
         "special": "Special",
-        "issue-num": "{{common.issue-hash-num}}",
-        "chapter": "{{common.chapter-num}}",
-        "book-num": "{{common.book-num-shorthand}}",
-        "vol-num": "{{user-scrobble-history.volume-num}}",
-        "single-volume": "Single Volume"
+        "issue-num": "Issue #{{num}}",
+        "chapter-num": "Chapter {{num}}",
+        "book-num": "Book {{num}}",
+        "volume-num": "Volume {{num}}",
+        "single-volume": "Single Volume",
+        "book-title": "Book",
+        "book-title-plural": "Books",
+        "issue-title": "Issue",
+        "issue-title-plural": "Issues",
+        "chapter-title": "Chapter",
+        "chapter-title-plural": "Chapters"
     },
     "external-series-card": {
         "open-external": "Open External"
@@ -1649,7 +1711,9 @@
         "library-database-backup-label": "Kavita Backup",
         "library-database-backup-tooltip": "How often Kavita will backup the database and other related files.",
         "cleanup-label": "Cleanup",
-        "cleanup-tooltip": "How often Kavita will run cleanup tasks. This can be heavy and should be performed at midnight in most cases",
+        "cleanup-tooltip": "How often Kavita will run cleanup tasks. This can be heavy and should be performed at midnight in most cases.",
+        "cbl-sync-label": "Reading List Sync",
+        "cbl-sync-tooltip": "How often Kavita will check for new updates to CBL Reading Lists. Defaults to daily at 4am.",
         "adhoc-tasks-title": "Ad-hoc Tasks",
         "job-title-header": "Job Title",
         "description-header": "Description",
@@ -1657,16 +1721,9 @@
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "required": "{{validation.required-field}}",
-        "custom-label": "Custom Schedule (Cron Notation)",
-        "cron-notation": "This is not valid Cron Notation",
         "recurring-tasks-title": "{{title}}",
         "last-executed-header": "Last Executed",
         "cron-header": "Cron",
-        "disabled": "Disabled",
-        "daily": "Daily",
-        "weekly": "Weekly",
-        "custom": "Custom",
         "convert-media-task": "Convert Media to Target Encoding",
         "convert-media-task-desc": "Runs a long-running task which will convert all kavita-managed media to the target encoding. This is slow (especially on ARM devices).",
         "convert-media-task-success": "Conversion of Media to Target Encoding has been queued",
@@ -1739,10 +1796,6 @@
         "save": "{{common.save}}",
         "close": "{{common.close}}",
         "cancel": "{{common.cancel}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "series-tab": "{{tabs.series-tab}}",
         "name-label": "Name",
         "name-validation": "Name must be unique",
         "promote-label": "Promote",
@@ -1803,7 +1856,8 @@
         "theme": "Theme",
         "font": "Epub Fonts",
         "customize": "Customize",
-        "cbl-import": "CBL Reading List",
+        "cbl-import": "Reading List Manager",
+        "remap-rules": "Remap Rules",
         "mal-stack-import": "MAL Stack",
         "admin-public-metadata": "Manage Metadata"
     },
@@ -1850,12 +1904,164 @@
         "key-bind-title-page-down": "Page down",
         "key-bind-tooltip-page-down": "Move one page downwards",
         "key-bind-title-offset-double-page": "Offset double page",
-        "key-bind-tooltip-offset-double-page": "Offset pages for double page spread alignment"
+        "key-bind-tooltip-offset-double-page": "Offset pages for double page spread alignment",
+        "key-bind-title-next-chapter": "Next Chapter",
+        "key-bind-tooltip-next-chapter": "Load the next chapter",
+        "key-bind-title-previous-chapter": "Previous Chapter",
+        "key-bind-tooltip-previous-chapter": "Load the previous chapter",
+        "key-bind-title-first-page": "First Page",
+        "key-bind-tooltip-first-page": "Move to the first page",
+        "key-bind-title-last-page": "Last Page",
+        "key-bind-tooltip-last-page": "Move to the last page"
+    },
+    "cbl-manager": {
+        "browse-repo": "Browse CBLs",
+        "description": "You can import Reading Lists from file, url, or browse the CBL Repo. Lists created from an online source will automatically update in the background or on demand.",
+        "url": "Url to CBL",
+        "preview-default": "Upload your own CBL v1/v2 file for import",
+        "enter-an-url-pre-title": "{{font-manager.enter-an-url-pre-title}}",
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
+        "upload-continued": "a cbl file",
+        "downloaded": "Downloaded",
+        "url-label": "Url",
+        "load": "Load",
+        "back": "Back",
+        "item-count": "{{common.item-count}}",
+        "missing-count": "{{reading-list-detail.missing-count}}",
+        "provider-url": "URL",
+        "provider-file": "File",
+        "update-available": "Update available",
+        "search-placeholder": "Search reading lists...",
+        "filter-has-update": "Has update",
+        "filter-all": "All",
+        "filter-local": "Local",
+        "no-results": "No matching reading lists",
+        "add": "{{common.add}}",
+        "sync": "Sync",
+        "sync-manual": "Sync (Manual)",
+        "delete": "{{common.delete}}",
+        "view-list": "View Reading List",
+        "last-synced": "Last Synced: {{date}}",
+        "last-checked": "Last Checked: {{date}}",
+        "not-authorized": "You lack the ability to interact with this content",
+        "source": "Source"
+    },
+    "import-cbl-modal": {
+        "title": "CBL Importer",
+        "description": "On this screen you can build remap rules to automatically map series or issues to Kavita entities. Remap rules will apply to this and future lists.",
+        "close": "{{common.close}}",
+        "matched-count": "{{count}} matched",
+        "issues-count": "{{count}} issues",
+        "unmatched-count": "{{count}} missing",
+        "matched-items-header": "Matched Items",
+        "issues-header": "Items Needing Attention",
+        "remap-rules-header": "Remap Rules",
+        "tier-label": "Matched via",
+        "skip-item": "Skip",
+        "select-series": "Search for series",
+        "pick-candidate": "Select correct series",
+        "finalize": "Import All",
+        "finalize-single": "Import",
+        "previous-file": "Previous",
+        "next-file": "Next",
+        "file-counter": "File {{current}} of {{total}}",
+        "no-remap-rules": "No remap rules",
+        "delete-rule": "{{common.delete}}",
+        "manage-rules": "Manage Remap Rules",
+        "col-series": "Requested Series",
+        "col-vol-issue": "Req Vol / Issue",
+        "col-status": "Status",
+        "col-matched-series": "Matched Series",
+        "col-matched-issue": "Matched Issue",
+        "col-action": "Action",
+        "resolve": "Resolve",
+        "select-chapter": "Select the matching chapter",
+        "edit-match": "Edit match",
+        "cancel": "{{common.cancel}}",
+        "undo": "Undo",
+        "remap-rule-used": "Matched via remap rule",
+        "import-success": "Successfully imported {{count}} reading list(s)",
+        "processing": "Processing",
+        "new-list": "New",
+        "update-list": "Update",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "refresh": "Refresh",
+        "wiki": "Wiki",
+        "promote": "{{actionable.promote}}",
+        "promote-tooltip": "{{actionable.promote-tooltip}}"
+    },
+    "manage-remap-rules-modal": {
+        "title": "Manage Remap Rules",
+        "close": "{{common.close}}",
+        "no-rules": "No remap rules saved",
+        "delete-rule": "{{common.delete}}",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "global": "Global",
+        "series-level": "Series-level",
+        "volume-target": "{{common.volume-num-shorthand}}"
+    },
+    "manage-remap-rules": {
+        "create-rule-title": "Create Rule",
+        "edit-rule-title": "Edit Remap Rule",
+        "new-rule-title": "New Remap Rule",
+        "cbl-series-name-label": "CBL Series Name",
+        "cbl-series-name-placeholder": "Enter CBL series name...",
+        "kavita-series-label": "Kavita Series",
+        "save": "{{common.save}}",
+        "cancel": "{{common.cancel}}",
+        "my-rules-header": "My Rules",
+        "global-rules-header": "Global Rules",
+        "other-users-rules-header": "Other Users' Rules",
+        "cbl-name-col": "CBL Name",
+        "cbl-volume-col": "CBL Volume",
+        "cbl-issue-col": "CBL Issue",
+        "mapped-series-col": "Mapped Series",
+        "mapped-vol-issue-col": "Mapped Vol / Issue",
+        "created-col": "Created",
+        "created-by-col": "Created By",
+        "user-col": "User",
+        "delete": "{{common.delete}}",
+        "promote": "{{actionable.promote}}",
+        "promote-tooltip": "Promote to global rule",
+        "demote": "Demote",
+        "demote-tooltip": "Demote to user rule",
+        "by": "by",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "cbl-volume-label": "CBL Volume",
+        "cbl-volume-placeholder": "e.g. 2016",
+        "cbl-number-label": "CBL Issue #",
+        "cbl-number-placeholder": "e.g. 1",
+        "kavita-chapter-label": "Kavita Chapter (optional)",
+        "series-level": "Series-level",
+        "edit": "{{common.edit}}"
+    },
+    "browse-cbl-repo-modal": {
+        "title": "CBL Repo Browser",
+        "rate-limit-warning": "Kavita is coming close to hitting Rate Limit for GitHub! You have {{remaining}} calls left.",
+        "rate-limit-resets": "Rate Limit resets {{time}}",
+        "breadcrumb-alt-label": "Breadcrumbs",
+        "root-alt-label": "Root folder",
+        "instructions": "Browse for Reading Lists to download. Downloaded files will be kept in sync with your library.",
+        "file-browser-label": "CBL Repo Browser",
+        "type-header": "File Type",
+        "name-header": "Name",
+        "select-all-files": "Select All",
+        "loading": "{{common.loading}}",
+        "select-file-alt-label": "Select File: {{name}}",
+        "empty-directory": "Empty Directory",
+        "cancel": "{{common.cancel}}",
+        "served-from-cache": "Served from Cache",
+        "download": "Download",
+        "owned-label": "Owned",
+        "close": "{{common.close}}"
     },
     "collection-detail": {
         "no-data": "There are no items. Try adding a series.",
         "no-data-filtered": "No items match your current filter.",
-        "title-alt": "Kavita - {{collectionName}} Collection",
         "sync-progress": "Series Collected: {{title}}",
         "last-sync": "Last Sync: {{date}}",
         "item-count": "{{common.item-count}}"
@@ -1887,7 +2093,8 @@
     "reading-list-item": {
         "remove": "{{common.remove}}",
         "read": "{{common.read}}",
-        "released-label": "Released: {{date}}"
+        "released-label": "Released: {{date}}",
+        "pages-count": "{{series-detail.pages-count}}"
     },
     "stream-list-item": {
         "remove": "{{common.remove}}",
@@ -1900,6 +2107,7 @@
     },
     "reading-list-detail": {
         "item-count": "{{common.item-count}}",
+        "missing-count": "{{num}} missing",
         "page-settings-title": "Page Settings",
         "remove-read": "Remove Read",
         "order-numbers-label": "Order Numbers",
@@ -1913,15 +2121,14 @@
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
         "publishers-title": "{{metadata-fields.publishers-title}}",
         "items-title": "Items",
-        "storyline-tab": "{{series-detail.storyline-tab}}",
-        "details-tab": "{{series-detail.details-tab}}",
         "edit-alt": "{{common.edit}}",
         "edit-label": "Edit Mode",
         "date-range-title": "Date Range",
         "more-alt": "{{series-detail.more-alt}}",
         "reorder-alt": "Reorder Items",
-        "dnd-warning": "Drag and drop is unavailable on mobile devices or when the reading list has more than 100 items.",
-        "loading-alt": "{{pdf-reader.loading-message}}"
+        "loading-alt": "{{pdf-reader.loading-message}}",
+        "tags-title": "{{metadata-fields.tags-title}}",
+        "filter-label": "{{common.filter}}"
     },
     "events-widget": {
         "title-alt": "Activity",
@@ -1935,7 +2142,56 @@
         "no-data": "Not much going on here",
         "left-to-process": "Left to Process: {{leftToProcess}} / {{totalToProcess}}",
         "download-in-queue": "{{num}} downloads in Queue",
-        "reading-now": "{{num}} reading now"
+        "reading-now": "{{num}} reading now",
+        "downloads-active": "{{count}} download(s) in progress"
+    },
+    "download-queue-drawer": {
+        "title": "Downloads",
+        "cancel": "{{common.cancel}}",
+        "cancel-all": "Cancel All",
+        "retry": "Retry",
+        "retry-all": "Retry All",
+        "clear": "Clear",
+        "empty": "No downloads",
+        "close": "{{common.close}}",
+        "paused-after-refresh": "{{ count }} item(s) paused — ready to resume",
+        "resume": "Resume",
+        "pause": "Pause",
+        "paused": "Paused",
+        "clear-all": "Clear All",
+        "failed-from-auth": "Not Authenticated, refresh browser",
+        "failed-interrupted": "Interrupted by page refresh",
+        "tab-downloading": "Downloading",
+        "tab-completed": "Completed",
+        "today": "Today",
+        "older": "Older",
+        "queued": "{{download-queue-status-pipe.queued}}",
+        "preparing": "{{download-queue-status-pipe.preparing}}",
+        "downloading": "{{download-queue-status-pipe.downloading}}",
+        "completed": "{{download-queue-status-pipe.completed}}",
+        "failed": "{{download-queue-status-pipe.failed}}",
+        "cancelled": "{{download-queue-status-pipe.cancelled}}"
+    },
+    "download-queue-item": {
+        "retry": "{{download-queue-drawer.retry}}",
+        "cancel": "{{common.cancel}}",
+        "remove": "Remove"
+    },
+    "download-queue-status-pipe": {
+        "queued": "Queued",
+        "preparing": "Preparing",
+        "downloading": "Downloading",
+        "completed": "Completed",
+        "failed": "Failed",
+        "cancelled": "Cancelled"
+    },
+    "download-queue-widget": {
+        "title": "{{download-queue-drawer.title}}"
+    },
+    "reading-list-provider-pipe": {
+        "none": "System",
+        "file": "File",
+        "url": "Url"
     },
     "shortcuts-modal": {
         "title": "Keyboard Shortcuts",
@@ -1947,7 +2203,8 @@
         "double-click": "double click",
         "close-reader": "Close reader",
         "toggle-menu": "Toggle Menu",
-        "offset-double-page": "{{keybind-setting-description-pipe.key-bind-title-offset-double-page}}"
+        "offset-double-page": "{{keybind-setting-description-pipe.key-bind-title-offset-double-page}}",
+        "navigate-to-settings": "{{keybind-setting-description-pipe.key-bind-title-navigate-to-settings}}"
     },
     "grouped-typeahead": {
         "files": "Files",
@@ -2021,21 +2278,21 @@
     },
     "edit-reading-list-modal": {
         "title": "Edit Reading List: {{name}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "year-validation": "Must be greater than 1000, 0 or blank",
         "month-validation": "Must be between 1 and 12 or blank",
         "name-unique-validation": "Name must be unique",
         "required-field": "{{validation.required-field}}",
+        "name-label": "{{edit-series-modal.name-label}}",
         "summary-label": "Summary",
         "year-label": "Year",
         "month-label": "Month",
         "ending-title": "Ending",
         "starting-title": "Starting",
-        "promote-label": "Promote",
-        "promote-tooltip": "Promotion means that the collection can be seen server-wide, not just for you. All series within this collection will still have user-access restrictions placed on them."
+        "promote-label": "{{actionable.promote}}",
+        "promote-tooltip": "Promotion means that the collection can be seen server-wide, not just for you. All series within this collection will still have user-access restrictions placed on them.",
+        "tags-label": "{{metadata-fields.tags-title}}"
     },
     "import-mal-collection-modal": {
         "close": "{{common.close}}",
@@ -2044,16 +2301,17 @@
         "series-count": "{{common.series-count}}",
         "restack-count": "{{num}} Restacks",
         "nothing-found": "Nothing found",
-        "track": "Track"
+        "track": "Track",
+        "by-author": "by {{author}}"
     },
     "import-mappings": {
         "import-step": "Import",
         "configure-step": "Configure",
         "conflicts-step": "Resolve collisions",
         "finalize-step": "Finalize",
-        "prev": "{{import-cbl-modal.prev}}",
-        "import": "{{import-cbl-modal.import}}",
-        "next": "{{import-cbl-modal.next}}",
+        "prev": "{{import-cbl.prev}}",
+        "import": "{{import-cbl.import}}",
+        "next": "{{import-cbl.next}}",
         "save": "{{common.save}}",
         "import-description": "Upload a file you, or someone else, has exported to replace or merge with your current settings.",
         "select-files-warning": "You must upload a json file to continue",
@@ -2078,7 +2336,7 @@
         "to-pick": "Choose resolution",
         "finalize-title": "Preview of your settings, press save to finish your import"
     },
-    "import-cbl-modal": {
+    "import-cbl": {
         "close": "{{common.close}}",
         "title": "CBL Import",
         "help-label": "{{common.help}}",
@@ -2104,7 +2362,8 @@
         "light-theme-alt": "Light Theme",
         "dark-theme-alt": "Dark Theme",
         "close-reader-alt": "Close Reader",
-        "toggle-incognito": "Turn off Incognito Mode"
+        "toggle-incognito": "Turn off Incognito Mode",
+        "shortcuts-menu-alt": "{{manga-reader.shortcuts-menu-alt}}"
     },
     "pdf-layout-mode-pipe": {
         "single": "Single Page",
@@ -2235,23 +2494,29 @@
         "average-rating": "Average Rating",
         "random": "Random",
         "user-rating": "My rating",
+        "unread-chapter-count": "Unread Chapters Count",
         "person-name": "Name",
         "person-series-count": "Series Count",
         "person-chapter-count": "Chapter Count",
         "annotation-owner": "Owner",
         "annotation-series": "Series name",
-        "annotation-color": "Color"
+        "annotation-color": "Color",
+        "readinglist-title": "Title",
+        "readinglist-releaseyear-start": "Release Year (Start)",
+        "readinglist-releaseyear-end": "Release Year (End)",
+        "readinglist-item-count": "Item Count"
     },
     "edit-series-modal": {
         "title": "{{seriesName}} Details",
         "general-tab": "{{tabs.general-tab}}",
         "metadata-tab": "{{tabs.metadata-tab}}",
         "people-tab": "{{tabs.people-tab}}",
-        "web-links-tab": "{{tabs.weblink-tab}}",
+        "weblinks-tab": "{{tabs.weblink-tab}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "related-tab": "{{tabs.related-tab}}",
         "info-tab": "{{tabs.info-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
+        "external-ids-tab": "{{tabs.external-ids-tab}}",
         "genres-label": "{{metadata-fields.genres-title}}",
         "tags-label": "{{metadata-fields.tags-title}}",
         "cover-artist-label": "{{metadata-fields.cover-artists-title}}",
@@ -2342,15 +2607,9 @@
         "age-rating-label": "{{edit-series-modal.age-rating-label}}",
         "web-link-description": "{{edit-series-modal.web-link-description}}",
         "web-link-label": "{{edit-series-modal.web-link-label}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "people-tab": "{{tabs.people-tab}}",
-        "weblink-tab": "{{tabs.weblink-tab}}",
+        "external-ids-tab": "{{tabs.external-ids-tab}}",
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "tags-tab": "{{tabs.tags-tab}}",
         "pages-label": "Pages",
         "words-label": "Length",
         "pages-count": "{{series-detail.pages-count}}",
@@ -2372,6 +2631,8 @@
         "cover-image-tab": "{{tabs.cover-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
         "info-tab": "{{tabs.info-tab}}",
+        "external-ids-tab": "{{tabs.external-ids-tab}}",
+        "read-time-label": "{{edit-chapter-modal.read-time-label}}",
         "pages-label": "{{edit-chapter-modal.pages-label}}",
         "words-label": "{{edit-chapter-modal.words-label}}",
         "pages-count": "{{edit-chapter-modal.pages-count}}",
@@ -2384,9 +2645,6 @@
     },
     "edit-person-modal": {
         "title": "{{personName}} Details",
-        "general-tab": "{{edit-series-modal.general-tab}}",
-        "cover-image-tab": "{{edit-series-modal.cover-image-tab}}",
-        "aliases-tab": "Aliases",
         "close": "{{common.close}}",
         "name-label": "{{edit-series-modal.name-label}}",
         "mal-id-label": "MAL Id",
@@ -2475,7 +2733,8 @@
         "vols-and-chapters": "{{volCount}} Volumes / {{chpCount}} Chapters",
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
-        "provided-by-label": "Provided by"
+        "provided-by-label": "Provided by",
+        "story-and-art-label": "Story & Art"
     },
     "next-expected-card": {
         "title": "~{{date}}",
@@ -2483,8 +2742,6 @@
     },
     "server-stats": {
         "stats-title": "Explore",
-        "stats-tab": "{{tabs.stats-tab}}",
-        "management-tab": "{{tabs.management-tab}}",
         "total-series-label": "Total Series",
         "total-series-tooltip": "Total Series: {{count}}",
         "total-volumes-label": "Total Volumes",
@@ -2539,10 +2796,6 @@
         "time-reading-label": "Total Read Time:",
         "avg-reading-per-week-label": "Avg Per Week:",
         "stats-title": "A look at {{username}}'s journey through {{libraryName}}",
-        "overview-tab": "{{tabs.overview-tab}}",
-        "stats-tab": "{{tabs.stats-tab}}",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "activity-tab": "{{tabs.activity-tab}}",
         "no-reviews": "No Reviews yet",
         "total-reads-badge": "{{reads}} Reads",
         "k+-badge": "K+ Subscriber"
@@ -2585,7 +2838,9 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "pagination-label": "Activity pagination",
-        "page-info": "Page {{current}} of {{total}} ({{items}} total records)"
+        "page-info": "Page {{current}} of {{total}} ({{items}} total records)",
+        "num-more": "{{num}} more",
+        "generated-session-tooltip": "This reading session has been automatically generated based on an estimate"
     },
     "user-stats-info-cards": {
         "pages-read-by-year-title": "Pages read by year",
@@ -2787,11 +3042,7 @@
         "remove-rule": "Remove Row"
     },
     "customize-dashboard-modal": {
-        "title-smart-filters": "Smart Filters",
-        "dashboard": "Dashboard",
-        "sidenav": "Side Nav",
-        "external-sources": "External Sources",
-        "smart-filters": "Smart Filters",
+        "title-smart-filters": "{{tabs.smart-filters-tab}}",
         "description": "You can customize different aspects of Kavita by reordering, toggling visibility, and binding smart filters/external sources to your home page or side nav."
     },
     "customize-dashboard-streams": {
@@ -2799,7 +3050,7 @@
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
-        "smart-filter-title": "{{customize-dashboard-modal.title-smart-filters}}"
+        "smart-filter-title": "{{tabs.smart-filters-tab}}"
     },
     "customize-sidenav-streams": {
         "no-data": "All Smart filters added to Side Nav or none created yet.",
@@ -2807,8 +3058,8 @@
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
-        "smart-filters-title": "Smart Filters",
-        "external-sources-title": "{{customize-dashboard-modal.external-sources}}",
+        "smart-filters-title": "{{tabs.smart-filters-tab}}",
+        "external-sources-title": "{{tabs.external-sources-tab}}",
         "reorder-when-filter-present": "You cannot reorder items via drag & drop while a filter is present. Use {{customize-sidenav-streams.order-numbers-label}}",
         "order-numbers-label": "{{reading-list-detail.order-numbers-label}}",
         "bulk-mode-label": "Bulk Mode"
@@ -2833,8 +3084,10 @@
         "save": "{{common.save}}",
         "edit-smart-filter": "Edit {{name}}",
         "name-label": "Name",
+        "entity-type-label": "Entity Type",
         "required-field": "Smart Filters need a name",
-        "filter-name-unique": "Smart Filter names must be unique"
+        "filter-name-unique": "Smart Filter names must be unique",
+        "no-content": "This smart filter has no results on the dashboard"
     },
     "edit-external-source-item": {
         "not-unique": "External source exists with this host. Ensure you don't have duplicates",
@@ -2842,6 +3095,7 @@
         "host-label": "Host",
         "name-label": "Name",
         "api-key-label": "API Key",
+        "api-key-tooltip": "Not required to auto login when the host uses OIDC",
         "save": "{{common.save}}",
         "edit": "{{common.edit}}",
         "cancel": "{{common.cancel}}",
@@ -2897,6 +3151,12 @@
         "average-rating": "Average rating",
         "file-size": "File size"
     },
+    "filter-entity-type-pipe": {
+        "series": "{{tabs.series-tab}}",
+        "reading-list": "{{add-to-list-modal.reading-list-label}}",
+        "person": "Person",
+        "annotation": "Annotation"
+    },
     "filter-comparison-pipe": {
         "begins-with": "Begins with",
         "contains": "Contains",
@@ -2914,7 +3174,8 @@
         "is-in-last": "Is in last",
         "is-not-in-last": "Is not in last",
         "must-contains": "Must Contains",
-        "is-empty": "Is Empty"
+        "is-empty": "Is Empty",
+        "is-not-empty": "Is Not Empty"
     },
     "log-level-pipe": {
         "debug": "Debug",
@@ -2922,6 +3183,17 @@
         "trace": "Trace",
         "warning": "Warning",
         "critical": "Critical"
+    },
+    "cron-frequency-pipe": {
+        "disabled": "Disabled",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "custom": "Custom"
+    },
+    "setting-cron-item": {
+        "custom-label": "Custom Schedule (Cron Notation)",
+        "required-field": "{{validation.required-field}}",
+        "cron-notation": "This is not valid Cron Notation"
     },
     "confirm": {
         "alert": "Alert",
@@ -2959,6 +3231,7 @@
         "person-name": "Name",
         "person-series-count": "Series Count",
         "person-chapter-count": "Chapter Count",
+        "person-library": "{{stream-list-item.library}}",
         "average-rating": "Average Rating",
         "annotation-owner": "Owner",
         "annotation-series": "Series name",
@@ -2968,9 +3241,21 @@
         "annotation-selection": "Highlight Text",
         "annotation-likes": "Likes",
         "annotation-liked-by": "Liked by",
-        "series": "{{tabs.series-tab}}"
+        "series": "{{tabs.series-tab}}",
+        "readinglist-title": "Title",
+        "readinglist-release-year": "{{sort-field-pipe.release-year}}",
+        "readinglist-item-count": "{{sort-field-pipe.readinglist-item-count}}",
+        "readinglist-tags": "{{metadata-fields.tags-title}}",
+        "readinglist-writer": "{{person-role-pipe.writer}}",
+        "readinglist-artist": "{{person-role-pipe.artist}}",
+        "readinglist-provider": "Provider",
+        "readinglist-missing-item-count": "Missing Item Count"
     },
     "toasts": {
+        "save-remap-rule": "Save \"{{from}} → {{to}}\" as a remap rule for future imports?",
+        "import-complete": "Import complete",
+        "failed-to-validate": "Failed to validate file",
+        "failed-to-import": "Failed to import {{name}}",
         "no-pages": "There are no pages. Kavita was not able to read this archive.",
         "scan-queued": "Scan queued for {{name}}",
         "server-settings-updated": "Server settings updated",
@@ -3050,6 +3335,8 @@
         "confirm-library-type-change": "Changing library type will trigger a new scan with different parsing rules and may lead to series being re-created and hence you may lose progress and bookmarks. You should backup before you do this. Are you sure you want to continue?",
         "confirm-download-size": "The {{entityType}} is {{size}}. Are you sure you want to continue?",
         "confirm-download-size-ios": "iOS has issues downloading files that are larger than 200MB, this download might not complete.",
+        "redownload-confirm": "You've previously downloaded {{title}} on {{date}}. Do you want to redownload?",
+        "redownload-confirm-bulk": "You've previously downloaded (part of) {{title}}. Do you want to redownload these items?",
         "list-doesnt-exist": "This list doesn't exist",
         "confirm-delete-smart-filter": "Are you sure you want to delete this Smart Filter?",
         "smart-filter-deleted": "Smart Filter Deleted",
@@ -3063,8 +3350,11 @@
         "collections-unpromoted": "Collections un-promoted",
         "reading-list-promoted": "Reading List promoted",
         "reading-list-unpromoted": "Reading List un-promoted",
+        "confirm-delete-collection": "Are you sure you want to delete the collection? This cannot be undone.",
         "confirm-delete-collections": "Are you sure you want to delete multiple collections?",
         "collections-deleted": "Collections deleted",
+        "confirm-delete-annotations": "Are you sure you want to delete the annotations? This cannot be undone.",
+        "annotations-deleted": "Annotation deleted",
         "chapter-deleted": "Chapter deleted",
         "volume-deleted": "Volume deleted",
         "pdf-book-mode-screen-size": "Screen too small for Book mode",
@@ -3089,7 +3379,15 @@
         "confirm-force-delete-font": "This font is currently in use. Do you want to force delete it? This will force users back to the Default font.",
         "font-in-use": "Cannot delete as the font is in use by one or more users.",
         "k+-resend-welcome-email-success": "An email was sent to your Kavita+ email",
-        "profile-unauthorized": "This user is not sharing their profile"
+        "profile-unauthorized": "This user is not sharing their profile",
+        "confirm-delete-client-device": "Are you sure you want to delete this device?",
+        "confirm-delete-cbl-remap-rule": "Are you sure you want to delete this remap rule?",
+        "cbl-remap-rule-created": "Remap rule created",
+        "cbl-remap-rule-deleted": "Remap rule deleted",
+        "cbl-remap-rule-promoted": "Rule promoted to global",
+        "cbl-remap-rule-demoted": "Rule demoted to user scope",
+        "confirm-delete-read-from-readinglist": "Are you sure you want to remove all read issues from this reading list? This cannot be undone.",
+        "reading-list-sync-enqueued": "The Reading List has been enqueued for sync."
     },
     "read-time-pipe": {
         "less-than-hour": "<1 Hour",
@@ -3129,6 +3427,8 @@
         "edit-tooltip": "Edit settings or details",
         "mark-as-read": "Mark as Read",
         "mark-as-read-tooltip": "Mark progress as fully read",
+        "mark-as-read-with-session": "Mark as Read with Session",
+        "mark-as-read-with-session-tooltip": "Mark progress as fully read and generate a session for it",
         "mark-as-unread": "Mark as Unread",
         "mark-as-unread-tooltip": "Mark progress as not read",
         "scan-series": "Scan Series",
@@ -3193,7 +3493,17 @@
         "export": "Export",
         "like": "Like",
         "unlike": "Remove likes",
-        "edit-device-name": "Edit Name"
+        "edit-device-name": "Edit Name",
+        "export-v1": "CBL v1",
+        "export-v1-tooltip": "Use CBL v1 (XML)",
+        "export-v2": "CBL v2",
+        "export-v2-tooltip": "Use CBL v2 (JSON)",
+        "cbl-manager": "CBL Manager",
+        "cbl-manager-tooltip": "Manage/Sync CBLs",
+        "add-to-dashboard": "Add to Dashboard",
+        "add-to-dashboard-tooltip": "Adds the smart filter to the bottom of your Dashboard",
+        "add-to-side-nav": "Add to Side Nav",
+        "add-to-side-nav-tooltip": "Adds the smart filter to the bottom of your Side Nav"
     },
     "preferences": {
         "left-to-right": "Left to Right",
@@ -3235,6 +3545,12 @@
         "tablet": "Tablet",
         "desktop": "Desktop"
     },
+    "account-settings": {
+        "oidc": "{{login.oidc}}",
+        "unlink-oidc": "Remove OIDC link",
+        "confirm-unlink": "Are you sure you want to remove your OIDC link?",
+        "confirm-unlink-extra": "If you are currently authenticated with the OIDC account, you will be logged out. You can link again via email at any time."
+    },
     "manage-reading-profiles": {
         "description": "Not all your series may be read in the same way, set up distinct reading profiles per library/series/device to make getting back in your series as seamless as possible.",
         "extra-tip": "Assign reading profiles via the action menu on series and libraries, or in bulk. When changing settings in a reader, a hidden profile is created that remembers your choices for that series (not for pdfs). This profile is removed when you assign one of your own reading profiles to the series. More information can be found on the",
@@ -3249,7 +3565,6 @@
         "selection-tip": "Select a profile from the list, or create a new one at the top right",
         "set-devices": "Set Devices",
         "select-devices-for": "Set devices for {{name}}",
-        "image-reader-settings-title": "Image Reader",
         "reading-direction-label": "Reading Direction",
         "reading-direction-tooltip": "Direction to click to move to next page. Right to Left means you click on left side of screen to move to next page.",
         "scaling-option-label": "Scaling Options",
@@ -3277,7 +3592,6 @@
         "disable-width-override-label": "Disable width override",
         "disable-width-override-tooltip": "Prevent the width override from taking effect when your screen is at least the configured breakpoint or smaller",
         "reset": "{{common.reset}}",
-        "book-reader-settings-title": "Book Reader",
         "tap-to-paginate-label": "Tap to Paginate",
         "tap-to-paginate-tooltip": "Should the sides of the book reader screen allow tapping on it to move to prev/next page",
         "immersive-mode-label": "Immersive Mode",
@@ -3298,7 +3612,8 @@
         "line-height-book-tooltip": "How much spacing between the lines of the book",
         "margin-book-label": "Margin",
         "margin-book-tooltip": "How much spacing on each side of the screen. This will override to 0 on mobile devices regardless of this setting.",
-        "pdf-reader-settings-title": "PDF Reader",
+        "disable-bookmark-icon-label": "Disable Bookmark Icon",
+        "disable-bookmark-icon-tooltip": "Removes bookmark icons from images in the reader",
         "pdf-scroll-mode-label": "Scroll Mode",
         "pdf-scroll-mode-tooltip": "How you scroll through pages. Vertical/Horizontal and Tap to Paginate (no scroll)",
         "pdf-spread-mode-label": "Spread Mode",
@@ -3314,6 +3629,16 @@
     },
     "list-select-modal": {
         "hidden": "{{amount}} items hidden due to invalid state"
+    },
+    "edit-external-metadata-form": {
+        "aniListId-label": "AniList Id",
+        "malId-label": "MAL Id",
+        "mangaBakaId-label": "MangaBaka Id",
+        "hardcoverId-label": "Hardcover Id",
+        "comicVineId-label": "Comic Vine Id",
+        "metronId-label": "Metron Id",
+        "not-set-label": "Not set",
+        "isbn-label": "{{edit-chapter-modal.isbn-label}}"
     },
     "validation": {
         "required-field": "This field is required",
@@ -3361,7 +3686,18 @@
         "annotations-tab": "Annotations",
         "overview-tab": "Overview",
         "management-tab": "Management",
-        "activity-tab": "Activity"
+        "activity-tab": "Activity",
+        "external-ids-tab": "External Ids",
+        "aliases-tab": "Aliases",
+        "chapters-tab": "Chapters",
+        "dashboard-tab": "Dashboard",
+        "sidenav-tab": "Side Nav",
+        "external-sources-tab": "External Sources",
+        "image-reader-tab": "Image Reader",
+        "book-reader-tab": "Book Reader",
+        "pdf-reader-tab": "PDF Reader",
+        "bookmark-image-tab": "Image",
+        "bookmark-text-tab": "Text"
     },
     "common": {
         "reset-to-default": "Reset to Default",
@@ -3404,11 +3740,6 @@
         "book-num-shorthand": "Book {{num}}",
         "issue-num-shorthand": "#{{num}}",
         "volume-num-shorthand": "Vol {{num}}",
-        "book-nums": "Books",
-        "issue-nums": "Issues",
-        "chapter-nums": "Chapters",
-        "volume-nums": "Volumes",
-        "roles": "Roles",
         "libraries": "Libraries"
     }
 }

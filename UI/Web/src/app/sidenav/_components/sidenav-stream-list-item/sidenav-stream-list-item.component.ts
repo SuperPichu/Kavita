@@ -1,22 +1,38 @@
-import {ChangeDetectionStrategy, Component, EventEmitter, inject, Input, Output} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, inject, input, output} from '@angular/core';
 import {APP_BASE_HREF, NgClass} from '@angular/common';
 import {SideNavStream} from "../../../_models/sidenav/sidenav-stream";
 import {StreamNamePipe} from "../../../_pipes/stream-name.pipe";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {SideNavStreamType} from "../../../_models/sidenav/sidenav-stream-type.enum";
+import {FilterUtilitiesService} from "../../../shared/_services/filter-utilities.service";
 
 @Component({
-    selector: 'app-sidenav-stream-list-item',
+  selector: 'app-sidenav-stream-list-item',
   imports: [StreamNamePipe, TranslocoDirective, NgClass],
-    templateUrl: './sidenav-stream-list-item.component.html',
-    styleUrls: ['./sidenav-stream-list-item.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+  templateUrl: './sidenav-stream-list-item.component.html',
+  styleUrls: ['./sidenav-stream-list-item.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SidenavStreamListItemComponent {
-  @Input({required: true}) item!: SideNavStream;
-  @Input({required: true}) position: number = 0;
-  @Output() hide: EventEmitter<SideNavStream> = new EventEmitter<SideNavStream>();
-  @Output() delete: EventEmitter<SideNavStream> = new EventEmitter<SideNavStream>();
+  item = input.required<SideNavStream>();
+  position = input.required<number>();
+
+  hide = output<SideNavStream>();
+  delete = output<SideNavStream>();
+
+  externalUrl = computed(() => {
+    const host = this.item().externalSource?.host;
+    const apiKey = this.item().externalSource?.apiKey;
+
+    if (!host)
+      return '';
+
+    return host + 'login' + (!!apiKey ? 'apiKey=' + apiKey : '');
+  });
+  loadFilterUrl = computed(() => {
+    return this.baseUrl + FilterUtilitiesService.getFilterLink(this.item().entityType, this.item().smartFilterEncoded ?? '');
+  });
+
   protected readonly SideNavStreamType = SideNavStreamType;
   protected readonly baseUrl = inject(APP_BASE_HREF);
 }

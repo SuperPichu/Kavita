@@ -50,8 +50,8 @@
         "is-processed-header": "処理済み",
         "no-data": "{{common.no-data}}",
         "volume-and-chapter-num": "第 {{v}} 巻 第 {{n}} 章",
-        "volume-num": "第 {{num}} 巻",
-        "chapter-num": "第 {{num}} 章",
+        "volume-num": "{{entity-title.volume-num}}",
+        "chapter-num": "{{entity-title.chapter-num}}",
         "rating": "レーティング {{r}}",
         "not-applicable": "該当なし",
         "processed": "処理済み",
@@ -65,7 +65,7 @@
     },
     "scrobble-event-type-pipe": {
         "chapter-read": "読書の進捗状況",
-        "score-updated": "レーティング更新",
+        "score-updated": "評価の更新",
         "want-to-read-add": "後で読む: 追加",
         "want-to-read-remove": "後で読む: 削除",
         "review": "レビュー更新"
@@ -94,7 +94,7 @@
     },
     "user-preferences": {
         "title": "ユーザーダッシュボード",
-        "pref-description": "これらはアカウントに紐付けられたグローバル設定です。リーダー設定は読書プロフィールにあります。",
+        "pref-description": "これらはアカウントに紐付けられたグローバル設定です。リーダー設定は読書プロファイルにあります。",
         "account-tab": "{{tabs.account-tab}}",
         "preferences-tab": "{{tabs.preferences-tab}}",
         "theme-tab": "{{tabs.theme-tab}}",
@@ -132,7 +132,7 @@
         "social-settings-title": "ソーシャル設定",
         "highlight-bar-label": "注釈のハイライトカラー",
         "highlight-bar-tooltip": "この色設定はすべての本で共有されます",
-        "colorscape-label": "色空間を使用する",
+        "colorscape-label": "カラースケープを使用する",
         "data-saver-label": "データセーバー",
         "data-saver-tooltip": "自動プリフェッチを防止することでデータ使用量を最小限に抑えます (例: PDF リーダー)",
         "social-include-unknowns-tooltip": "年齢制限が未設定のシリーズや章でもソーシャル機能を有効にします",
@@ -158,7 +158,7 @@
         "include-continue-from-tooltip": "OPDS フィールドに「X から続行」エントリーを挿入して、最後の読み取りポイントを探す手間を省きます (Kavita の続行ボタンをエミュレートします)"
     },
     "user-holds": {
-        "title": "Scrobble Holds",
+        "title": "Scrobble を保留",
         "description": "これはユーザーが管理するシリーズのリストで、上流の Scrobble プロバイダに同期されません。シリーズをいつでも削除でき、次の Scrobble イベント（読書進捗、評価、後で読む状況）が発生すると Scrobble がトリガーされます。",
         "no-data": "{{typeahead.no-data}}",
         "series-name-header": "{{manage-matched-metadata.series-name-header}}",
@@ -177,8 +177,6 @@
         "active-theme": "アクティブ",
         "updated-toastr": "サイトのデフォルトが {{name}} に更新されました",
         "delete": "{{common.delete}}",
-        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
-        "upload": "{{cover-image-chooser.upload}}",
         "upload-continued": "CSS ファイル",
         "preview-default": "テーマを選択",
         "preview-default-admin": "最初にテーマを選択するか、手動でアップロードしてください",
@@ -414,8 +412,8 @@
         "ongoing": "連載中",
         "hiatus": "休止中",
         "completed": "完結",
-        "cancelled": "連載中止",
-        "ended": "完結"
+        "cancelled": "打ち切り",
+        "ended": "連載終了"
     },
     "person-role-pipe": {
         "artist": "作画 / 著者",
@@ -427,7 +425,6 @@
         "penciller": "下書き (線画)",
         "publisher": "出版社",
         "writer": "原作 / 脚本 (ストーリー)",
-        "other": "その他",
         "imprint": "レーベル (インプリント)",
         "translator": "翻訳",
         "team": "{{filter-field-pipe.team}}",
@@ -488,19 +485,10 @@
     },
     "all-filters": {
         "title": "全てのスマートフィルター",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
-        "create": "{{common.create}}"
+        "count": "{{count}} {{tabs.smart-filters-tab}}"
     },
     "announcements": {
         "title": "お知らせ"
-    },
-    "out-of-date-modal": {
-        "title": "遅れをとらないでください！",
-        "close": "{{common.close}}",
-        "subtitle": "インストールが {{count}} バージョン以上古いようです!",
-        "description-1": "Kavita の最新バージョンを実行できるようにアップグレードすることを検討してください。",
-        "description-2": "更新方法については、<a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> をご覧ください。",
-        "description-3": "まだアップデートされていない具体的な理由がある場合は、ぜひ古いバージョンを使い続けている理由を教えて下さい! Discord で、アップグレードの妨げになっている要因をお聞かせください。"
     },
     "changelog": {
         "installed": "インストール済",
@@ -671,15 +659,6 @@
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
         "edit-series-alt": "情報の編集",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "storyline-tab": "{{tabs.storyline-tab}}",
-        "books-tab": "{{tabs.books-tab}}",
-        "volumes-tab": "{{tabs.volumes-tab}}",
-        "specials-tab": "{{tabs.specials-tab}}",
-        "related-tab": "{{tabs.related-tab}}",
-        "details-tab": "{{tabs.details-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "recommendations-tab": "{{tabs.recommendations-tab}}",
         "send-to": "ファイルは {{deviceName}} にメールで送信されました",
         "no-pages": "{{toasts.no-pages}}",
         "no-chapters": "この巻には章がありません。読むことができません。",
@@ -701,7 +680,6 @@
         "scrobbling-tooltip": "{{settings.scrobbling}}: {{value}}",
         "publication-status-title": "出版物",
         "publication-status-tooltip": "出版状況",
-        "annotations-tab": "{{tabs.annotations-tab}}",
         "on": "{{reader-settings.on}}",
         "off": "{{reader-settings.off}}",
         "loading": "{{common.loading}}",
@@ -741,13 +719,7 @@
     },
     "read-more": {
         "read-more": "もっと読む",
-        "read-less": "あまり読まない"
-    },
-    "update-notification-modal": {
-        "title": "新しいアップデートが利用可能になりました!",
-        "close": "{{common.close}}",
-        "help": "更新方法",
-        "download": "ダウンロード"
+        "read-less": "折りたたむ"
     },
     "side-nav-companion-bar": {
         "page-settings-title": "{{series-detail.page-settings-title}}",
@@ -765,7 +737,7 @@
         "all-series": "すべてのシリーズ",
         "clear": "{{common.clear}}",
         "donate": "寄付する",
-        "donate-tooltip": "Kavita+にサブスクライブすることでこれを削除できます",
+        "donate-tooltip": "Kavita+ を購読するとこれを削除できます",
         "back": "戻る",
         "more": "さらに表示",
         "customize": "{{settings.customize}}",
@@ -777,11 +749,6 @@
         "close": "{{common.close}}",
         "edit-title": "{{name}} を編集",
         "add-title": "ライブラリを追加",
-        "general-tab": "{{tabs.general-tab}}",
-        "folder-tab": "{{tabs.folder-tab}}",
-        "cover-tab": "{{tabs.cover-tab}}",
-        "advanced-tab": "{{tabs.advanced-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
         "name-label": "名前",
         "library-name-unique": "ライブラリ名は一意である必要があります",
         "last-scanned-label": "最終スキャン:",
@@ -878,12 +845,14 @@
         "enter": "Enter",
         "loading": "ロード中",
         "update-parent": "{{name}} に保存",
-        "create-new": "暗黙的な新しいプロフィール",
-        "create-new-tooltip": "現在の暗黙的なプロフィールから新しい管理可能なプロフィールを作成します",
-        "reading-profile-updated": "読書プロフィールを更新しました",
+        "create-new": "自動生成プロファイル",
+        "create-new-tooltip": "現在の読書傾向をもとに、設定の変更や管理が可能な新しいプロファイルを作成します",
+        "reading-profile-updated": "読書プロファイルを更新しました",
         "line-spacing-min-label": "1 倍",
         "line-spacing-max-label": "2.5 倍",
-        "reading-profile-promoted": "読書プロフィールを昇格しました"
+        "reading-profile-promoted": "読書プロファイルを昇格しました",
+        "disable-bookmark-icon-label": "{{manage-reading-profiles.disable-bookmark-icon-label}}",
+        "disable-bookmark-icon-tooltip": "{{manage-reading-profiles.disable-bookmark-icon-tooltip}}"
     },
     "table-of-contents": {
         "no-data": "この本にはメタデータまたは TOC ファイルに目次が設定されていません"
@@ -903,14 +872,17 @@
         "items-selected": "{{num}} 個の項目が選択されました",
         "mark-as-unread": "未読にする",
         "mark-as-read": "既読にする",
-        "deselect-all": "{{common.deselect-all}}"
+        "deselect-all": "{{common.deselect-all}}",
+        "mark-as-read-with-session": "読書済みにする"
     },
     "card-detail-layout": {
         "total-items": "合計 {{count}} 件の項目",
         "no-data": "{{common.no-data}}"
     },
     "card-item": {
-        "cannot-read": "読むことができません"
+        "cannot-read": "読むことができません",
+        "select": "選択",
+        "read": "既読"
     },
     "details-tab": {
         "writers-title": "{{metadata-fields.writers-title}}",
@@ -936,7 +908,8 @@
         "length-title": "{{edit-chapter-modal.words-label}}",
         "age-rating-title": "{{metadata-fields.age-rating-title}}",
         "folder-path-title": "フォルダーパス",
-        "file-path-title": "ファイル"
+        "file-path-title": "ファイル",
+        "external-metadata-title": "外部メタデータ"
     },
     "related-tab": {
         "reading-lists-title": "{{reading-lists.title}}",
@@ -960,7 +933,8 @@
         "applied": "{{theme-manager.applied}}"
     },
     "download-indicator": {
-        "progress": "{{percentage}}% ダウンロードされました"
+        "progress": "{{percentage}}% ダウンロードされました",
+        "completed": "ダウンロード完了"
     },
     "edit-series-relation": {
         "description-part-1": "どの関係を追加すべきかわからない場合は、以下をご覧ください。",
@@ -984,11 +958,17 @@
     },
     "entity-title": {
         "special": "スペシャル",
-        "issue-num": "{{common.issue-hash-num}}",
-        "chapter": "{{common.chapter-num}}",
-        "book-num": "{{common.book-num-shorthand}}",
-        "vol-num": "{{user-scrobble-history.volume-num}}",
-        "single-volume": "単巻"
+        "issue-num": "第 {{num}} 号",
+        "book-num": "第 {{num}} 冊",
+        "single-volume": "単巻",
+        "chapter-num": "第 {{num}} 章",
+        "volume-num": "第 {{num}} 巻",
+        "book-title": "冊",
+        "book-title-plural": "冊",
+        "issue-title": "号",
+        "issue-title-plural": "号",
+        "chapter-title": "章",
+        "chapter-title-plural": "章"
     },
     "external-series-card": {
         "open-external": "外部を開く"
@@ -1108,7 +1088,7 @@
         "no-data": "問題はありません"
     },
     "default-date-pipe": {
-        "never": "もう質問しない"
+        "never": "無し"
     },
     "manage-settings": {
         "notice": "お知らせ:",
@@ -1116,9 +1096,9 @@
         "base-url-label": "ベース URL",
         "base-url-tooltip": "Kavita をベース URL (例: yourdomain.com/kavita) でホストする場合は、こちらを使用してください。非ルートユーザーを使用した Docker ではサポートされていません。",
         "ip-address-label": "IPアドレス",
-        "ip-address-tooltip": "サーバーがリッスンする IP アドレスのカンマ区切りリスト。Docker 上で実行している場合は固定値です。変更を反映するには再起動が必要です。",
+        "ip-address-tooltip": "サーバーがリッスンする IP アドレスをカンマ区切りで指定します。Docker 上で実行している場合、これは固定されます。変更を反映するには再起動が必要です。",
         "port-label": "ポート",
-        "port-tooltip": "サーバーがリッスンするIPアドレスのカンマ区切りのリストです。Dockerで実行している場合は固定されています。有効にするには再起動が必要です。",
+        "port-tooltip": "サーバーがリッスンする IP アドレスを指定します。Docker 上で実行している場合、これは固定されます。変更を反映するには再起動が必要です。",
         "backup-label": "日次バックアップ",
         "backup-tooltip": "保持するバックアップの数です。デフォルトは 30、最小値は 1、最大値は 30 です。",
         "log-label": "ログの日数",
@@ -1192,16 +1172,9 @@
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "required": "{{validation.required-field}}",
-        "custom-label": "カスタムスケジュール (Cron 表記)",
-        "cron-notation": "これは有効な Cron 表記ではありません",
         "recurring-tasks-title": "{{title}}",
         "last-executed-header": "最終実行",
         "cron-header": "Cron",
-        "disabled": "無効",
-        "daily": "毎日",
-        "weekly": "毎週",
-        "custom": "カスタム",
         "convert-media-task": "メディアをターゲットエンコーディングに変換する",
         "convert-media-task-desc": "Kavita で管理されているすべてのメディアをターゲットのエンコーディングに変換する、長時間実行タスクを実行します。これは処理速度が遅くなります（特に ARM デバイスの場合）。",
         "bust-cache-task": "キャッシュを破棄",
@@ -1264,10 +1237,6 @@
         "save": "{{common.save}}",
         "close": "{{common.close}}",
         "cancel": "{{common.cancel}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "series-tab": "{{tabs.series-tab}}",
         "name-label": "名前",
         "name-validation": "名前は一意である必要があります",
         "promote-label": "昇格",
@@ -1325,9 +1294,9 @@
         "font": "EPUB フォント",
         "admin-metadata": "メタデータの管理",
         "admin-mappings-import": "メタデータ設定",
-        "reading-profiles": "読書プロフィール",
+        "reading-profiles": "読書プロファイル",
         "custom-key-binds": "キーバインド",
-        "cbl-import": "CBL 読書リスト",
+        "cbl-import": "読書リストマネージャー",
         "mal-stack-import": "MAL スタック",
         "admin-public-metadata": "メタデータの管理",
         "scrobble-holds": "Scrobble を保留"
@@ -1335,7 +1304,6 @@
     "collection-detail": {
         "no-data": "項目がありません。シリーズを追加してみてください。",
         "no-data-filtered": "このフィルターに一致したものがありません。",
-        "title-alt": "Kavita - {{collectionName}} コレクション",
         "item-count": "{{common.item-count}}",
         "sync-progress": "収録シリーズ: {{title}}",
         "last-sync": "最終同期: {{date}}"
@@ -1392,16 +1360,13 @@
         "writers-title": "{{metadata-fields.writers-title}}",
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
         "publishers-title": "{{metadata-fields.publishers-title}}",
-        "storyline-tab": "{{series-detail.storyline-tab}}",
-        "details-tab": "{{series-detail.details-tab}}",
         "edit-alt": "{{common.edit}}",
         "more-alt": "{{series-detail.more-alt}}",
         "loading-alt": "{{pdf-reader.loading-message}}",
         "items-title": "項目",
         "edit-label": "編集モード",
         "date-range-title": "日付範囲",
-        "reorder-alt": "項目の再配列",
-        "dnd-warning": "ドラッグ & ドロップ機能はモバイルデバイスでは利用できません。また、読書リストの項目数が 100 を超える場合も利用できません。"
+        "reorder-alt": "項目の再配列"
     },
     "events-widget": {
         "title-alt": "活動内容",
@@ -1415,7 +1380,8 @@
         "no-data": "詳しくはこちら",
         "left-to-process": "未処理: {{leftToProcess}} / {{totalToProcess}}",
         "download-in-queue": "キュー内のダウンロード数 {{num}} 件",
-        "reading-now": "現在 {{num}} 人が読書中です"
+        "reading-now": "現在 {{num}} 人が読書中です",
+        "downloads-active": "{{count}} 件のダウンロードが進行中です"
     },
     "shortcuts-modal": {
         "title": "キーボードショートカット",
@@ -1479,8 +1445,6 @@
     },
     "edit-reading-list-modal": {
         "title": "読書リストを編集: {{name}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "year-validation": "1000 より大きいか、0、または空白である必要があります",
@@ -1492,7 +1456,7 @@
         "month-label": "月",
         "ending-title": "終了",
         "starting-title": "開始",
-        "promote-label": "昇格",
+        "promote-label": "{{actionable.promote}}",
         "promote-tooltip": "「昇格」は、そのコレクションがあなただけでなくサーバー全体で見えるようになることを意味します。このコレクション内の全てのシリーズには引き続きユーザーアクセスの制限が適用されます。"
     },
     "import-mal-collection-modal": {
@@ -1506,23 +1470,39 @@
     },
     "import-cbl-modal": {
         "close": "{{common.close}}",
-        "title": "CBL をインポート",
-        "import-description": "まず、.cbl ファイルをインポートしてください。Kavita はインポート前に複数のチェックを実行します。ファイルに問題がある場合、一部の手順で処理が中断されることがあります。",
-        "validate-description": "すべてのファイルの検証が完了し、リストに対して実行する操作があるかどうかを確認しました。失敗したリストは次のステップに進みません。CBL ファイルを修正して再試行してください。",
-        "validate-warning": "CBL に問題があり、インポートできません。問題を修正してから、もう一度お試しください。",
-        "validate-no-issue-description": "CBL に問題は見つかりませんでした。「次へ」を押してください。",
-        "dry-run-description": "これはドライランであり、「次へ」を押してインポートを実行した場合に何が起こるかを示しています。失敗した操作はインポートされません。",
-        "prev": "前へ",
-        "import": "インポート",
-        "restart": "再起動",
-        "next": "次へ",
-        "import-step": "CBL をインポート",
-        "validate-cbl-step": "CBL を検証",
-        "dry-run-step": "ドライラン",
-        "final-import-step": "最終ステップ",
-        "comicvine-parsing-label": "Comic Vine シリーズのマッチングを使用",
-        "help-label": "{{common.help}}",
-        "cbl-repo": "コミュニティの <a href='https://github.com/DieselTech/CBL-ReadingLists' target='_blank' rel='noopener noreferrer'>repository</a> には、多くの読書リストが掲載されています。"
+        "title": "CBL インポーター",
+        "matched-count": "{{count}} 件一致しました",
+        "issues-count": "{{count}} 件の問題",
+        "skip-item": "スキップ",
+        "select-series": "シリーズを検索",
+        "pick-candidate": "正しいシリーズを選択してください",
+        "finalize": "すべてインポート",
+        "finalize-single": "インポート",
+        "previous-file": "前",
+        "next-file": "次",
+        "file-counter": "{{total}} 件中 {{current}} 件目",
+        "delete-rule": "{{common.delete}}",
+        "col-series": "リクエストされたシリーズ",
+        "col-vol-issue": "リクエストされた巻号",
+        "col-status": "状況",
+        "col-matched-series": "一致したシリーズ",
+        "col-matched-issue": "一致した号",
+        "col-action": "アクション",
+        "resolve": "解決",
+        "select-chapter": "該当する章を選択してください",
+        "edit-match": "一致するものを編集",
+        "cancel": "{{common.cancel}}",
+        "undo": "元に戻す",
+        "import-success": "{{count}} 件の読書リストが正常にインポートされました",
+        "processing": "処理中",
+        "new-list": "新着",
+        "update-list": "更新",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "unmatched-count": "{{count}} 件欠落",
+        "matched-items-header": "一致する項目",
+        "refresh": "更新",
+        "wiki": "Wiki"
     },
     "pdf-reader": {
         "loading-message": "読み込み中...",
@@ -1538,9 +1518,9 @@
         "even": "見開き (偶数)"
     },
     "infinite-scroller": {
-        "continuous-reading-prev-chapter-alt": "スクロールし前章へ",
+        "continuous-reading-prev-chapter-alt": "上にスクロールして前の章へ移動",
         "continuous-reading-prev-chapter": "前章",
-        "continuous-reading-next-chapter-alt": "スクロールし次章へ",
+        "continuous-reading-next-chapter-alt": "上にスクロールして次の章へ移動",
         "continuous-reading-next-chapter": "次章"
     },
     "manga-reader": {
@@ -1584,8 +1564,8 @@
         "create-new-tooltip": "{{reader-settings.create-new-tooltip}}",
         "off": "{{reader-settings.off}}",
         "page-offset-label": "ページオフセット (見開きの調整)",
-        "reading-profile-updated": "読書プロフィールを更新しました",
-        "reading-profile-promoted": "読書プロフィールを昇格しました",
+        "reading-profile-updated": "読書プロファイルを更新しました",
+        "reading-profile-promoted": "読書プロファイルを昇格しました",
         "width-override-label": "幅の上書き",
         "offset-only-double": "ページオフセットは、見開き表示でのみ使用できます"
     },
@@ -1616,7 +1596,7 @@
         "translator-label": "翻訳",
         "read-progress-label": "読書進捗",
         "unread": "未読",
-        "read": "読む",
+        "read": "読書済み",
         "in-progress": "進行状況",
         "rating-label": "評価",
         "age-rating-label": "{{metadata-fields.age-rating-title}}",
@@ -1661,7 +1641,6 @@
         "general-tab": "{{tabs.general-tab}}",
         "metadata-tab": "{{tabs.metadata-tab}}",
         "people-tab": "{{tabs.people-tab}}",
-        "web-links-tab": "{{tabs.weblink-tab}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "related-tab": "{{tabs.related-tab}}",
         "info-tab": "{{tabs.info-tab}}",
@@ -1726,7 +1705,9 @@
         "folder-path-tooltip": "すべてのシリーズファイルを含むライブラリルートからの最上位のパス",
         "lowest-folder-path-tooltip": "すべてのシリーズファイルを含むライブラリルートからの最下位のパス",
         "total-words-title": "総文字数",
-        "loose-leaf-volume": "個別の章"
+        "loose-leaf-volume": "個別の章",
+        "weblinks-tab": "{{tabs.weblink-tab}}",
+        "external-ids-tab": "{{tabs.external-ids-tab}}"
     },
     "edit-chapter-modal": {
         "close": "{{common.close}}",
@@ -1751,15 +1732,8 @@
         "age-rating-label": "{{edit-series-modal.age-rating-label}}",
         "web-link-description": "{{edit-series-modal.web-link-description}}",
         "web-link-label": "{{edit-series-modal.web-link-label}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "people-tab": "{{tabs.people-tab}}",
-        "weblink-tab": "{{tabs.weblink-tab}}",
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "tags-tab": "{{tabs.tags-tab}}",
         "size-label": "{{edit-series-modal.size-title}}",
         "links-label": "{{metadata-fields.links-title}}",
         "last-read-label": "{{sort-field-pipe.read-progress}}",
@@ -1777,7 +1751,8 @@
         "date-added-label": "追加日",
         "id-label": "ID",
         "read-time-label": "読書時間",
-        "files-label": "ファイル"
+        "files-label": "ファイル",
+        "external-ids-tab": "{{tabs.external-ids-tab}}"
     },
     "edit-volume-modal": {
         "close": "{{common.close}}",
@@ -1794,7 +1769,9 @@
         "id-label": "{{edit-chapter-modal.id-label}}",
         "files-label": "{{edit-chapter-modal.files-label}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "title": "編集"
+        "title": "編集",
+        "read-time-label": "{{edit-chapter-modal.read-time-label}}",
+        "external-ids-tab": "{{tabs.external-ids-tab}}"
     },
     "day-breakdown": {
         "title": "日別の内訳",
@@ -1847,7 +1824,8 @@
         "vols-and-chapters": "{{volCount}} 巻 / {{chpCount}} 章",
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
-        "provided-by-label": "提供:"
+        "provided-by-label": "提供:",
+        "story-and-art-label": "原作・作画"
     },
     "next-expected-card": {
         "title": "~{{date}}",
@@ -1883,8 +1861,6 @@
         "tags": "{{metadata-fields.tags-title}}",
         "people": "人",
         "genres": "{{metadata-fields.genres-title}}",
-        "stats-tab": "{{tabs.stats-tab}}",
-        "management-tab": "{{tabs.management-tab}}",
         "popular-person-title": "人気の {{role}}",
         "stats-title": "発見",
         "users": "ユーザー",
@@ -1940,11 +1916,7 @@
         "remove-rule": "行を削除"
     },
     "customize-dashboard-modal": {
-        "title-smart-filters": "スマートフィルター",
-        "dashboard": "ダッシュボード",
-        "sidenav": "サイドナビゲーション",
-        "external-sources": "外部ソース",
-        "smart-filters": "スマートフィルター",
+        "title-smart-filters": "{{tabs.smart-filters-tab}}",
         "description": "再配列、表示 / 非表示の切り替え、スマートフィルターや外部ソースをホームページまたはサイドナビゲーションにバインドすることで、Kavita のさまざまな要素をカスタマイズできます。"
     },
     "customize-dashboard-streams": {
@@ -1952,7 +1924,7 @@
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
-        "smart-filter-title": "{{customize-dashboard-modal.title-smart-filters}}"
+        "smart-filter-title": "{{tabs.smart-filters-tab}}"
     },
     "customize-sidenav-streams": {
         "no-data": "すべてのスマートフィルターはサイドナビゲーションに追加されたかまだ作成されていません。",
@@ -1960,8 +1932,8 @@
         "add": "{{common.add}}",
         "filter": "{{common.filter}}",
         "clear": "{{common.clear}}",
-        "smart-filters-title": "スマートフィルター",
-        "external-sources-title": "{{customize-dashboard-modal.external-sources}}",
+        "smart-filters-title": "{{tabs.smart-filters-tab}}",
+        "external-sources-title": "{{tabs.external-sources-tab}}",
         "reorder-when-filter-present": "フィルターが適用されている場合は、ドラッグ & ドロップで項目を並べ替えることはできません。{{customize-sidenav-streams.order-numbers-label}} を使用してください",
         "order-numbers-label": "{{reading-list-detail.order-numbers-label}}",
         "bulk-mode-label": "バルク モード"
@@ -1987,7 +1959,8 @@
         "edit-smart-filter": "{{name}} を編集",
         "name-label": "名前",
         "required-field": "スマートフィルターには名前が必要です",
-        "filter-name-unique": "スマートフィルター名は一意である必要があります"
+        "filter-name-unique": "スマートフィルター名は一意である必要があります",
+        "no-content": "このスマートフィルターはダッシュボードに結果を表示しません"
     },
     "edit-external-source-item": {
         "not-unique": "外部ソースはこのホストに存在します。 重複していないことを確認してください",
@@ -2136,7 +2109,7 @@
         "confirm-regen-covers": "表紙を更新すると、すべての表紙画像が再計算されます。これは負荷の高い操作です。代わりにスキャンを実行してもよろしいですか?",
         "confirm-delete-multiple-series": "{{count}} 個のシリーズを削除してもよろしいですか? ディスク上のファイルは変更されません。",
         "confirm-delete-series": "このシリーズを削除してもよろしいですか? ディスク上のファイルは変更されません。",
-        "alert-bad-theme": "テーマには無効または安全でないCSSが含まれています。これを修正するには、管理者に連絡してください。デフォルトでダークテーマに設定されます。",
+        "alert-bad-theme": "テーマに無効または安全でない CSS が含まれています。修正するには管理者にご連絡ください。ダークテーマがデフォルトで使用されます。",
         "confirm-library-delete": "{{name}} ライブラリを削除してもよろしいですか? この操作は元に戻せません。",
         "confirm-library-type-change": "ライブラリの種類を変更すると、異なる解析ルールで新たなスキャンが実行され、シリーズが再作成される可能性があります。そのため、進行状況やブックマークが失われる可能性があります。変更する前にバックアップを作成してください。続行してもよろしいですか?",
         "confirm-download-size": "{{entityType}} は {{size}}です｡続行しますか?",
@@ -2152,14 +2125,14 @@
         "confirm-delete-multiple-chapters": "{{count}} 章 / 巻を削除してもよろしいですか? ディスク上のファイルは変更されません。",
         "confirm-delete-multiple-volumes": "{{count}} 個のボリュームを削除してもよろしいですか? ディスク上のファイルは変更されません。",
         "reading-lists-deleted": "読書リストを削除しました",
-        "generate-colorscape-queued": "{{name}} の色空間を生成しました",
+        "generate-colorscape-queued": "{{name}} のカラースケープを生成しました",
         "series-added-want-to-read": "「後で読む」リストからシリーズを追加しました",
         "confirm-delete-chapter": "この章を削除してもよろしいですか? ディスク上のファイルは変更されません。",
         "confirm-delete-volume": "この巻を削除してもよろしいですか? ディスク上のファイルは変更されません。",
         "confirm-delete-auth-key": "この認証キーを削除してもよろしいですか?",
         "bulk-delete-libraries": "{{count}} 個のライブラリを削除してもよろしいですか?",
-        "series-bound-to-reading-profile": "シリーズは {{amount}} 件の読書プロフィールに関連付けられています",
-        "library-bound-to-reading-profile": "ライブラリは {{amount}} 件の読書プロフィールに関連付けられています",
+        "series-bound-to-reading-profile": "シリーズは {{amount}} 件の読書プロファイルに関連付けられています",
+        "library-bound-to-reading-profile": "ライブラリは {{amount}} 件の読書プロファイルに関連付けられています",
         "external-match-rate-error": "Kavita は {{seriesName}} を検索中にレート制限に到達しました。5 分後にもう一度お試しください。",
         "person-image-downloaded": "人物の画像がダウンロードされ、適用されました。",
         "bulk-covers": "複数のライブラリの表紙を更新すると、処理に時間がかかる場合があります。続行してもよろしいですか?",
@@ -2188,7 +2161,11 @@
         "confirm-force-delete-font": "このフォントは現在使用中です。強制的に削除しますか？削除すると、デフォルトのフォントに戻ります。",
         "font-in-use": "フォントは 1 人以上のユーザーによって使用されているため、削除できません。",
         "scrobble-gen-init": "過去の読書履歴と評価から Scrobble イベントを生成し、接続されたサービスと同期するジョブをキューに追加しました。",
-        "webtoon-override": "Webtoon を検知しました。Webtoon モードに切り替えます。"
+        "webtoon-override": "Webtoon を検知しました。Webtoon モードに切り替えます。",
+        "confirm-delete-collection": "コレクションを削除してもよろしいですか? 元に戻すことはできません。",
+        "confirm-delete-annotations": "注釈を削除してもよろしいですか? 元に戻すことはできません。",
+        "annotations-deleted": "注釈を削除しました",
+        "redownload-confirm": "{{title}} は以前 {{date}} にダウンロードされています。再ダウンロードしますか?"
     },
     "actionable": {
         "scan-library": "ライブラリのスキャン",
@@ -2223,7 +2200,7 @@
         "view-series-tooltip": "TODO",
         "add-to-reading-list-tooltip": "読書リストに追加します",
         "add-to-collection-tooltip": "コレクションにシリーズを追加します",
-        "delete-tooltip": "この決定を元に戻す方法はありません",
+        "delete-tooltip": "この操作を取り消す方法はありません",
         "import-cbl-tooltip": "CBL ファイルから読書リストを作成します",
         "download-tooltip": "端末にダウンロードします",
         "read-incognito-tooltip": "進捗状況を追跡せずに読みます",
@@ -2236,10 +2213,10 @@
         "refresh-covers-tooltip": "すべての表紙を再生成します",
         "add-to-want-to-read-tooltip": "シリーズを「後で読む」に追加します",
         "remove-from-want-to-read-tooltip": "シリーズを「後で読む」から削除します",
-        "reading-profiles": "読書プロフィール",
-        "set-reading-profile": "読書プロフィールを設定",
-        "generate-colorscape-tooltip": "ColorScape と不足している表紙を生成します",
-        "generate-colorscape": "色空間を生成",
+        "reading-profiles": "読書プロファイル",
+        "set-reading-profile": "読書プロファイルを設定",
+        "generate-colorscape-tooltip": "カラースケープと不足している表紙を生成します",
+        "generate-colorscape": "カラースケープを生成",
         "customize-tooltip": "TODO",
         "mark-visible-tooltip": "TODO",
         "mark-invisible-tooltip": "TODO",
@@ -2259,17 +2236,23 @@
         "promote": "昇格",
         "promote-tooltip": "項目をすべてのユーザーに表示します",
         "unpromote": "降格",
-        "set-reading-profile-tooltip": "このライブラリに読書プロフィールを関連付けます",
-        "clear-reading-profile": "読書プロフィールを削除",
-        "clear-reading-profile-tooltip": "このライブラリの読書プロフィールを削除します",
+        "set-reading-profile-tooltip": "このライブラリに読書プロファイルを関連付けます",
+        "clear-reading-profile": "読書プロファイルを削除",
+        "clear-reading-profile-tooltip": "このライブラリの読書プロファイルを削除します",
         "mark-as-unread-tooltip": "進捗状況を未読としてマークします",
         "analyze-files-tooltip": "ファイルの拡張子の種類とサイズを分析します",
         "settings-tooltip": "設定または詳細設定を表示します",
         "edit-tooltip": "設定または詳細設定を編集します",
         "mark-as-read-tooltip": "進捗状況を既読としてマークします",
         "reorder": "再配列",
-        "cleared-profile": "読書プロフィールを削除しました",
-        "remove-from-on-deck-tooltip": "最近読んでいる本からシリーズを表示しないようにします"
+        "cleared-profile": "読書プロファイルを削除しました",
+        "remove-from-on-deck-tooltip": "最近読んでいる本からシリーズを表示しないようにします",
+        "export-v1": "CBL v1",
+        "export-v1-tooltip": "CBL v1 (XML) を使用します",
+        "export-v2": "CBL v2",
+        "export-v2-tooltip": "CBL v2 (JSON) を使用します",
+        "mark-as-read-with-session": "読書済みにする",
+        "mark-as-read-with-session-tooltip": "進捗状況を読書済みとしてマークし、そのセッションを生成します"
     },
     "preferences": {
         "left-to-right": "左から右へ",
@@ -2283,7 +2266,7 @@
         "fit-to-screen": "スクリーンに合わせる",
         "no-split": "分割無し",
         "webtoon": "ウェブトゥーン",
-        "single": "単一",
+        "single": "単ページ",
         "double": "見開き",
         "double-manga": "見開き (マンガ)",
         "scroll": "スクロール",
@@ -2306,7 +2289,7 @@
         "split-left-to-right": "左から右に分割"
     },
     "validation": {
-        "required-field": "必須項目",
+        "required-field": "この項目は必須です",
         "valid-email": "これは有効な電子メールでなければなりません",
         "password-validation": "パスワードの長さは 6 文字以上 256 文字以下です",
         "year-validation": "これは 1000 を超える 4 桁の有効な年である必要があります",
@@ -2352,10 +2335,6 @@
         "issue-num": "号",
         "chapter-num": "章",
         "volume-num": "巻",
-        "issue-nums": "号",
-        "chapter-nums": "章",
-        "volume-nums": "巻",
-        "book-nums": "冊",
         "chapter-count": "{{num}} 章",
         "issue-num-shorthand": "#{{num}}",
         "volume-num-shorthand": "第 {{num}} 巻",
@@ -2366,8 +2345,7 @@
         "unknown": "不明",
         "confirm": "確認",
         "selected": "選択済み",
-        "libraries": "ライブラリ",
-        "roles": "役割"
+        "libraries": "ライブラリ"
     },
     "tabs": {
         "details-tab": "詳細",
@@ -2399,21 +2377,18 @@
         "annotations-tab": "注釈",
         "overview-tab": "概要",
         "management-tab": "管理",
-        "activity-tab": "アクティビティ"
-    },
-    "new-version-modal": {
-        "title": "Kavita が更新されました!",
-        "description": "Kavita の新しいバージョンが利用可能です。更新してアップデートしてください。",
-        "known-issues": "{{changelog.known-issues}}",
-        "theme": "{{changelog.theme}}",
-        "removed": "{{changelog.removed}}",
-        "api": "{{changelog.api}}",
-        "added": "{{changelog.added}}",
-        "developer": "{{changelog.developer}}",
-        "close": "{{common.close}}",
-        "refresh": "更新",
-        "fixed": "{{changelog.fixed}}",
-        "changed": "{{changelog.changed}}"
+        "activity-tab": "アクティビティ",
+        "external-ids-tab": "外部 ID",
+        "aliases-tab": "エイリアス",
+        "chapters-tab": "章",
+        "dashboard-tab": "ダッシュボード",
+        "sidenav-tab": "サイドナビゲーション",
+        "external-sources-tab": "外部ソース",
+        "image-reader-tab": "画像リーダー",
+        "book-reader-tab": "書籍リーダー",
+        "pdf-reader-tab": "PDF リーダー",
+        "bookmark-image-tab": "画像",
+        "bookmark-text-tab": "テキスト"
     },
     "changelog-update-item": {
         "known-issues": "既知の問題",
@@ -2510,8 +2485,6 @@
         "required": "{{validation.required-field}}"
     },
     "edit-person-modal": {
-        "general-tab": "{{edit-series-modal.general-tab}}",
-        "cover-image-tab": "{{edit-series-modal.cover-image-tab}}",
         "close": "{{common.close}}",
         "name-label": "{{edit-series-modal.name-label}}",
         "required-field": "{{validation.required-field}}",
@@ -2528,7 +2501,6 @@
         "download-coversdb": "CoversDB からダウンロード",
         "aliases-label": "エイリアスを編集",
         "anilist-id-label": "AniList ID",
-        "aliases-tab": "エイリアス",
         "mal-id-label": "MAL ID",
         "hardcover-id-label": "Hardcover ID",
         "asin-label": "ASIN",
@@ -2589,7 +2561,8 @@
         "reset-tooltip": "すべてのユーザーの外部 ID をリセットします。Kavita ユーザーと ID プロバイダー間のリンクをリセットするために使用してください",
         "reset-confirm": "すべてのユーザーの外部 ID をリセットしてもよろしいですか?",
         "reset-success": "すべてのユーザーの外部 ID がリセットされました。リンクするには再認証してください",
-        "auto-save-required": "重要な設定を変更しました。変更を保存するために自動保存します"
+        "auto-save-required": "重要な設定を変更しました。変更を保存するには手動で保存してください",
+        "checking-authority": "権限が有効かどうかを確認しています。しばらくお待ちください..."
     },
     "oidc": {
         "title": "OIDC Callback",
@@ -2607,17 +2580,12 @@
         "no-data": "{{typeahead.no-data}}"
     },
     "font-manager": {
-        "url": "URL",
         "add": "{{common.add}}",
         "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
         "upload": "{{cover-image-chooser.upload}}",
         "upload-continued": "フォントファイル",
         "delete": "{{common.delete}}",
-        "url-label": "URL",
-        "back": "戻る",
-        "load": "ロード",
         "description": "Kavita の EPUB リーダーにはいくつかのフォントが組み込まれていますが、ここで独自のフォントを追加できます。ファイルをアップロードするか、Google Fonts の URL を使用してください。詳細は <a href='{{wikiLink}}' target='_blank' rel='noreferrer noopener'>wiki</a> をご覧ください。",
-        "enter-an-url-pre-title": "{{url}} を入力",
         "preview-default": "ファイルまたは Google Fonts の URL から独自のフォントをアップロードします",
         "no-preview": "このフォントはプレビューできません。書籍のデフォルトスタイルが適用されます。",
         "brown-fox": "The quick brown fox jumps over the lazy dog",
@@ -2672,16 +2640,16 @@
         "delete": "削除",
         "view-title": "注釈を表示",
         "edit-title": "注釈を編集",
-        "create-title": "注釈を作成"
+        "create-title": "注釈を作成",
+        "read-more": "{{read-more.read-more}}",
+        "read-less": "{{read-more.read-less}}"
     },
     "view-bookmark-drawer": {
         "title": "ブックマーク",
         "close": "{{common.close}}",
         "no-data": "{{common.no-data}}",
         "page-num-label": "{{book-reader.page-num-label}}",
-        "load-bookmark": "ロード",
-        "image-header": "画像",
-        "text-header": "テキスト"
+        "load-bookmark": "ロード"
     },
     "view-toc-drawer": {
         "title": "目次",
@@ -2761,8 +2729,8 @@
         "filter-label": "{{common.filter}}",
         "clear": "{{common.clear}}",
         "loading": "{{common.loading}}",
-        "hidden": "{{amount}} 件のプロフィールが無効な状態のため非表示になっています",
-        "title": "読書プロフィールを設定",
+        "hidden": "{{amount}} 件のプロファイルが無効な状態のため非表示になっています",
+        "title": "読書プロファイルを設定",
         "no-data": "まだコレクションは作成されていません",
         "bound": "関連付け",
         "warning-duplicate": "選択したデバイスは重複しています。これは許可されていません"
@@ -2778,9 +2746,9 @@
         "not-sent-tooltip": "送信されませんでした"
     },
     "import-mappings": {
-        "prev": "{{import-cbl-modal.prev}}",
-        "import": "{{import-cbl-modal.import}}",
-        "next": "{{import-cbl-modal.next}}",
+        "prev": "{{import-cbl.prev}}",
+        "import": "{{import-cbl.import}}",
+        "next": "{{import-cbl.next}}",
         "save": "{{common.save}}",
         "import-step": "インポート",
         "fields-to-import": "設定",
@@ -2873,8 +2841,7 @@
         "pdf-theme-tooltip": "リーダーのカラーテーマ",
         "pdf-spread-mode-label": "見開き表示",
         "pdf-spread-mode-tooltip": "ページのレイアウト方法を選択します。単一ページ、または見開き (奇数 / 偶数ページ) から設定可能です",
-        "pdf-reader-settings-title": "PDF リーダー",
-        "confirm": "読書プロフィール {{name}} を削除してもよろしいですか?",
+        "confirm": "読書プロファイル {{name}} を削除してもよろしいですか?",
         "select-devices-for": "{{name}} のデバイスを設定する",
         "breakpoint-pipe-never": "{{breakpoint-pipe.never}}",
         "font-family-label": "フォントファミリー",
@@ -2892,9 +2859,8 @@
         "margin-book-label": "余白",
         "margin-book-tooltip": "画面の両端の余白の大きさを設定します。モバイルデバイスでは、この設定に関係なく 0 に設定されます。",
         "wiki-title": "Wiki をご覧ください。",
-        "profiles-title": "あなたの読書プロフィール",
+        "profiles-title": "あなたの読書プロファイル",
         "default-profile": "デフォルト",
-        "book-reader-settings-title": "書籍リーダー",
         "tap-to-paginate-label": "タップでページ移動",
         "show-screen-hints-label": "画面にヒントを表示",
         "show-screen-hints-tooltip": "ページ区切りの領域と方向を理解するのに役立つオーバーレイを表示します",
@@ -2907,14 +2873,13 @@
         "allow-auto-webtoon-reader-label": "自動 Webtoon リーダーモード",
         "allow-auto-webtoon-reader-tooltip": "ページが Webtoon のように見える場合は、Webtoon リーダーモードに切り替えてください。誤検出が発生する可能性があります。",
         "scaling-option-label": "スケーリングオプション",
-        "extra-tip": "シリーズやライブラリのアクションメニューから、または一括で読書プロフィールを割り当てます。リーダーで設定を変更すると、PDF を除いたそのシリーズの設定を記憶する非表示のプロフィールが作成されます。このプロフィールは、シリーズに独自の読書プロフィールを割り当てると削除されます。詳細については、",
-        "description": "すべてのシリーズを同じ方法で読めるとは限りません。ライブラリ / シリーズ / デバイスごとに異なる読書プロフィールを設定し、シリーズに戻るときにシームレスな体験を実現しましょう。",
-        "add-tooltip": "プロフィールの変更後、新しいプロフィールが保存されます",
+        "extra-tip": "シリーズやライブラリのアクションメニューから、または一括で読書プロファイルを割り当てます。リーダーで設定を変更すると、PDF を除いたそのシリーズの設定を記憶する非表示のプロファイルが作成されます。このプロファイルは、シリーズに独自の読書プロファイルを割り当てると削除されます。詳細については、",
+        "description": "すべてのシリーズを同じ方法で読めるとは限りません。ライブラリ / シリーズ / デバイスごとに異なる読書プロファイルを設定し、シリーズに戻るときにシームレスな体験を実現しましょう。",
+        "add-tooltip": "プロファイルの変更後、新しいプロファイルが保存されます",
         "make-default": "デフォルトとして設定",
-        "no-selected": "プロフィールが選択されていません",
-        "selection-tip": "リストからプロフィールを選択するか、右上で新しいプロフィールを作成します",
+        "no-selected": "プロファイルが選択されていません",
+        "selection-tip": "リストからプロファイルを選択するか、右上で新しいプロファイルを作成します",
         "set-devices": "デバイスの設定",
-        "image-reader-settings-title": "画像リーダー",
         "reading-direction-label": "読む方向",
         "reading-direction-tooltip": "ページ送りの方向を選択します。「右から左へ」は、画面の左側をクリックして次のページに進むことを意味します。",
         "background-color-label": "背景色",
@@ -2936,7 +2901,7 @@
         "disable-width-override-tooltip": "画面が指定のサイズ (ブレークポイント) 以上、または以下の場合は、幅の上書き設定を適用しません"
     },
     "manage-auth-keys": {
-        "auth-keys-title": "APIキーの管理",
+        "auth-keys-title": "認証キーの管理",
         "delete": "{{common.delete}}",
         "clients-opds-url-label": "{{user-preferences.clients-opds-url-label}}",
         "clients-opds-alert": "{{user-preferences.clients-opds-alert}}",
@@ -2952,7 +2917,8 @@
         "actions-label": "アクション",
         "rotate": "循環",
         "image-only": "画像",
-        "add-auth-key": "追加"
+        "add-auth-key": "追加",
+        "clients-opds-error": "キーの OPDS URL の読み込みに失敗しました: {{key}}"
     },
     "reread-modal": {
         "cancel": "{{common.cancel}}",
@@ -2987,7 +2953,7 @@
         "cancel": "{{common.cancel}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
-        "never": "決して",
+        "never": "無し",
         "name-label": "名前",
         "key-length-label": "キーの長さ",
         "expiration-label": "有効期限"
@@ -3078,10 +3044,6 @@
     "profile": {
         "title": "{{username}} さんのプロフィール",
         "stats-title": "{{username}} さんの {{libraryName}} における軌跡を振り返ってみましょう",
-        "overview-tab": "{{tabs.overview-tab}}",
-        "stats-tab": "{{tabs.stats-tab}}",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "activity-tab": "{{tabs.activity-tab}}",
         "total-reads-badge": "{{reads}} 回読書",
         "time-reading-label": "総読書時間:",
         "avg-reading-per-week-label": "週平均:",
@@ -3119,7 +3081,9 @@
         "info-alt": "詳細情報",
         "today": "今日",
         "yesterday": "昨日",
-        "pagination-label": "アクティビティの表示設定"
+        "pagination-label": "アクティビティの表示設定",
+        "num-more": "{{num}} 以上",
+        "generated-session-tooltip": "この読書セッションは推定に基づいて自動的に生成されました"
     },
     "user-stats-info-cards": {
         "pages-count": "{{num}} ページ",
@@ -3410,5 +3374,187 @@
     "profile-image": {
         "edit-image-alt": "画像を編集",
         "reset-image-alt": "画像をリセット"
+    },
+    "version-update-modal": {
+        "close": "{{common.close}}",
+        "out-of-date": {
+            "title": "遅れをとらないでください！",
+            "subtitle": "インストールが {{count}} バージョン以上古いようです!",
+            "description-1": "Kavita の最新バージョンを実行できるようにアップグレードすることを検討してください。",
+            "description-2": "更新方法については、<a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> をご覧ください。",
+            "description-3": "まだアップデートされていない具体的な理由がある場合は、ぜひ古いバージョンを使い続けている理由を教えて下さい! Discord で、アップグレードの妨げになっている要因をお聞かせください。"
+        },
+        "new-version": {
+            "title": "Kavita が更新されました!",
+            "description": "Kavita の新しいバージョンが利用可能です。更新してアップデートしてください。",
+            "refresh": "更新"
+        },
+        "update-notification": {
+            "title": "新しいアップデートが利用可能になりました!",
+            "help": "更新方法",
+            "download": "ダウンロード"
+        }
+    },
+    "title": {
+        "reading-list": "読書リスト",
+        "home": "ホーム",
+        "bookmarks": "ブックマーク",
+        "collections": "コレクション",
+        "browse-genres": "ジャンルを表示",
+        "browse-tags": "タグを表示",
+        "want-to-read": "後で読む",
+        "reading-lists": "読書リスト",
+        "settings": "設定",
+        "all-series": "すべてのシリーズ",
+        "profile": "{{username}} さんのプロフィール"
+    },
+    "download-queue-drawer": {
+        "title": "ダウンロード",
+        "cancel": "{{common.cancel}}",
+        "cancel-all": "すべてキャンセル",
+        "retry": "再試行",
+        "retry-all": "すべて再試行",
+        "clear": "消去",
+        "empty": "ダウンロードがありません",
+        "close": "{{common.close}}",
+        "paused-after-refresh": "{{ count }} 件のダウンロードが一時停止中 — 再開準備完了",
+        "resume": "再開",
+        "pause": "一時停止",
+        "paused": "一時停止中",
+        "clear-all": "すべて消去",
+        "failed-from-auth": "認証されていません。ブラウザーを再読み込みしてください",
+        "failed-interrupted": "ページの更新により中断されました",
+        "tab-downloading": "ダウンロード中",
+        "tab-completed": "完了",
+        "today": "今日",
+        "older": "古い",
+        "queued": "{{download-queue-status-pipe.queued}}",
+        "preparing": "{{download-queue-status-pipe.preparing}}",
+        "downloading": "{{download-queue-status-pipe.downloading}}",
+        "completed": "{{download-queue-status-pipe.completed}}",
+        "failed": "{{download-queue-status-pipe.failed}}",
+        "cancelled": "{{download-queue-status-pipe.cancelled}}"
+    },
+    "download-queue-item": {
+        "retry": "{{download-queue-drawer.retry}}",
+        "cancel": "{{common.cancel}}",
+        "remove": "除去"
+    },
+    "download-queue-status-pipe": {
+        "queued": "キューに登録",
+        "preparing": "準備中",
+        "downloading": "ダウンロード中",
+        "completed": "完了",
+        "failed": "失敗",
+        "cancelled": "取消"
+    },
+    "download-queue-widget": {
+        "title": "{{download-queue-drawer.title}}"
+    },
+    "account-settings": {
+        "oidc": "{{login.oidc}}",
+        "unlink-oidc": "OIDC リンクを削除",
+        "confirm-unlink": "OIDC リンクを削除してもよろしいですか?",
+        "confirm-unlink-extra": "現在 OIDC アカウントで認証されている場合、ログアウトされます。メール経由でいつでも再連携できます。"
+    },
+    "edit-external-metadata-form": {
+        "aniListId-label": "AniList ID",
+        "malId-label": "MAL ID",
+        "mangaBakaId-label": "MangaBaka ID",
+        "hardcoverId-label": "Hardcover ID",
+        "comicVineId-label": "Comic Vine ID",
+        "metronId-label": "Metron ID"
+    },
+    "cbl-match-tier-pipe": {
+        "remap-rule": "再マッピングルール",
+        "external-id": "外部 ID",
+        "exact-name": "正確な名前",
+        "comicvine-naming": "ComicVine の命名"
+    },
+    "cbl-import-reason-pipe": {
+        "chapter-missing": "章が欠落しています",
+        "volume-missing": "巻が欠落しています",
+        "series-missing": "シリーズが見つかりません",
+        "name-conflict": "名前が競合しています",
+        "all-series-missing": "すべてのシリーズが欠落しています",
+        "empty-file": "ファイルが空です",
+        "series-collision": "複数のシリーズが衝突しています",
+        "all-chapter-missing": "すべての章が欠落しています",
+        "success": "成功",
+        "invalid-file": "無効なファイル"
+    },
+    "cbl-manager": {
+        "browse-repo": "CBL を閲覧",
+        "description": "読書リストは、ファイル、URL からインポートするか、CBL リポジトリを参照することで作成できます。オンラインソースから作成されたリストは、バックグラウンドで自動的に更新されるか、必要に応じて更新されます。",
+        "url": "CBL への URL",
+        "preview-default": "インポート用に独自の CBL v1/v2 ファイルをアップロードしてください",
+        "enter-an-url-pre-title": "{{font-manager.enter-an-url-pre-title}}",
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
+        "upload-continued": "CBL ファイル",
+        "downloaded": "ダウンロード済み",
+        "url-label": "URL",
+        "load": "読み込み",
+        "back": "戻る",
+        "provider-url": "URL",
+        "provider-file": "ファイル",
+        "update-available": "更新が利用可能です",
+        "search-placeholder": "読書リストを検索...",
+        "filter-has-update": "更新があります",
+        "filter-all": "すべて",
+        "filter-local": "ローカル",
+        "no-results": "該当する読書リストはありません",
+        "add": "{{common.add}}",
+        "sync": "同期",
+        "delete": "{{common.delete}}",
+        "view-list": "読書リストを表示",
+        "last-synced": "最終同期 {{date}}",
+        "source": "ソース",
+        "not-authorized": "このコンテンツを操作する権限がありません"
+    },
+    "manage-remap-rules-modal": {
+        "close": "{{common.close}}",
+        "delete-rule": "{{common.delete}}",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "global": "グローバル",
+        "volume-target": "{{common.volume-num-shorthand}}"
+    },
+    "manage-remap-rules": {
+        "cbl-series-name-label": "CBL シリーズ名",
+        "cbl-series-name-placeholder": "CBL シリーズ名を入力してください...",
+        "kavita-series-label": "Kavita シリーズ",
+        "save": "{{common.save}}",
+        "cancel": "{{common.cancel}}",
+        "delete": "{{common.delete}}",
+        "promote": "{{actionable.promote}}",
+        "volume-num": "{{common.volume-num-shorthand}}",
+        "issue-num": "{{common.issue-num-shorthand}}",
+        "cbl-volume-placeholder": "例: 2016 年"
+    },
+    "browse-cbl-repo-modal": {
+        "loading": "{{common.loading}}",
+        "cancel": "{{common.cancel}}",
+        "close": "{{common.close}}"
+    },
+    "import-cbl": {
+        "close": "{{common.close}}",
+        "help-label": "{{common.help}}"
+    },
+    "authority-validation-result-pipe": {
+        "success": "権限は有効です",
+        "invalid-authority": "Kavita は OIDC 構成を読み込むことはできますが、発行者が一致しません",
+        "failure": "Kavita は OIDC 構成を読み込めません",
+        "not-applicable": "Kavita は設定されていないため、権限を検証できません",
+        "missing-https": "{{manage-oidc-connect.tls-required}}"
+    },
+    "file-drag-and-drop-upload": {
+        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
+        "upload": "{{cover-image-chooser.upload}}",
+        "enter-an-url-pre-title": "{{url}} を入力",
+        "url": "URL",
+        "url-label": "URL",
+        "back": "戻る",
+        "load": "読み込む"
     }
 }

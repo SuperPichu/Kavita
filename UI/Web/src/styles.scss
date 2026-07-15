@@ -19,6 +19,8 @@
 @use '../node_modules/@siemens/ngx-datatable/themes/bootstrap.css' as ngxDatatableBootstrap;
 @use '../node_modules/@siemens/ngx-datatable/assets/icons.css' as ngxDatatableIcons;
 
+@use '@angular/cdk/overlay-prebuilt.css' as cdkOverlay;
+
 
 // Import all the customized theme overrides
 @use './theme/components/input';
@@ -50,6 +52,7 @@
 @use './theme/components/typeahead';
 @use './theme/components/tooltip';
 @use './theme/components/stat-card';
+@use './theme/components/headers';
 
 @use './theme/utilities/headings';
 @use './theme/utilities/utilities';
@@ -102,9 +105,9 @@ app-root {
 
 ::-webkit-scrollbar-thumb {
   background-clip: padding-box;
-  border: 3px solid transparent;
-  border-radius: 8px;
-  min-height: 50px;
+  border: 0.1875rem solid transparent;
+  border-radius: 0.5rem;
+  min-height: 3.125rem;
 }
 
 body {
@@ -124,7 +127,32 @@ body {
 }
 
 .setting-section-break {
-  height: 1px;
+  height: 0.0625rem;
   background-color: var(--setting-break-color);
-  margin: 30px 0;
+  margin: 1.875rem 0;
+}
+
+.blur-text {
+  color: transparent;
+  text-shadow: 0 0 0.3125rem var(--body-text-color);
+}
+
+.dot-separator::before {
+  content: '•';
+}
+
+// Handle reduced motion
+@media (prefers-reduced-motion: reduce), (update: slow) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+// Handle disable animation
+.no-animations *, .no-animations *::before, .no-animations *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
 }

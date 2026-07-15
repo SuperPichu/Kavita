@@ -10,11 +10,12 @@ import {map} from "rxjs/operators";
 import {UtilityService} from "../../../shared/_services/utility.service";
 import {SettingItemComponent} from "../../../settings/_components/setting-item/setting-item.component";
 import {BadgeExpanderComponent} from "../../../shared/badge-expander/badge-expander.component";
-import {FilterField} from "../../../_models/metadata/v2/filter-field";
+import {SeriesFilterField} from "../../../_models/metadata/v2/series-filter-field";
 import {Observable, of} from "rxjs";
 import {Series} from "../../../_models/series";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {AsyncPipe} from "@angular/common";
+import {modalSaved} from "../../../_models/modal/modal-result";
 
 @Component({
   selector: 'app-merge-person-modal',
@@ -51,12 +52,12 @@ export class MergePersonModalComponent implements OnInit {
     }
 
     this.personService.mergePerson(this.person.id, this.mergee.id).subscribe(person => {
-      this.modal.close({success: true, person: person});
+      this.modal.close(modalSaved(person));
     })
   }
 
   close() {
-    this.modal.close({success: false, person: this.person});
+    this.modal.dismiss();
   }
 
   ngOnInit(): void {
@@ -91,7 +92,7 @@ export class MergePersonModalComponent implements OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef));
   }
 
-  protected readonly FilterField = FilterField;
+  protected readonly FilterField = SeriesFilterField;
 
   allNewAliases() {
     if (!this.mergee) return [];

@@ -5,12 +5,13 @@ import {
   DestroyRef,
   ElementRef,
   inject,
-  input, OnInit,
-  Renderer2
+  input,
+  OnInit
 } from '@angular/core';
 import {DOCUMENT} from "@angular/common";
 import {filter, fromEvent, merge, tap} from "rxjs";
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
+import {isMobileChromium} from "../../../_helpers/browser";
 
 interface Dimensions {
   width: number;
@@ -18,8 +19,8 @@ interface Dimensions {
 }
 
 export enum ResizeMode {
-  Width = "width",
-  Height = "height",
+  Width = 'width',
+  Height = 'height',
 }
 
 @Component({
@@ -34,7 +35,6 @@ export class OffCanvasResizeComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
   private readonly destroyRef = inject(DestroyRef);
   private readonly el = inject(ElementRef);
-  private readonly renderer = inject(Renderer2);
 
   /**
    * Minimum height of the canvas element in viewport
@@ -133,7 +133,13 @@ export class OffCanvasResizeComponent implements OnInit {
     const mouseUp$ = fromEvent(this.document, 'mouseup');
     const touchEnd$ = fromEvent<TouchEvent>(this.document, 'touchend');
 
-    merge(mouseUp$, touchEnd$).pipe(
+    // Additional events for mobile Chromium workaround
+    const additionalEvents$ = isMobileChromium() ? [
+      fromEvent<TouchEvent>(this.document, 'touchcancel'),
+      fromEvent<PointerEvent>(this.document, 'pointerup')
+    ] : [];
+
+    merge(mouseUp$, touchEnd$, ...additionalEvents$).pipe(
       takeUntilDestroyed(this.destroyRef),
       filter(() => this.isDragging),
       tap(() => {
@@ -145,7 +151,7 @@ export class OffCanvasResizeComponent implements OnInit {
     ).subscribe();
 
     const mouseDown$ = fromEvent<MouseEvent>(this.el.nativeElement, 'mousedown');
-    const touchStart$ = fromEvent<TouchEvent>(this.document, 'touchstart');
+    const touchStart$ = fromEvent<TouchEvent>(this.el.nativeElement, 'touchstart');
 
     merge(mouseDown$, touchStart$).pipe(
       takeUntilDestroyed(this.destroyRef),

@@ -1,0 +1,236 @@
+<ng-container *transloco="let t; prefix:'cbl-manager'">
+
+  <div class="position-relative">
+    @if (!accountService.hasReadOnlyRole()) {
+      <div class="position-absolute custom-position d-flex gap-2 align-items-center">
+        <button class="btn btn-outline-primary" [disabled]="selectedList() === undefined" (click)="selectedList.set(undefined)" [title]="t('add')">
+          <i class="fa fa-plus" aria-hidden="true"></i><span class="phone-hidden ms-1">{{t('add')}}</span>
+        </button>
+        <button class="btn btn-outline-primary" (click)="openBrowseModal()" [title]="t('browse-repo')">
+          <i class="fa fa-globe" aria-hidden="true"></i><span class="phone-hidden ms-1">{{t('browse-repo')}}</span>
+        </button>
+      </div>
+    }
+  </div>
+
+  <p class="ps-2">{{t('description')}}</p>
+
+
+  <div class="row g-0 theme-container">
+    <div class="col-lg-5 col-md-6 col-sm-12 scroller">
+      <div class="pe-2">
+        <div class="mb-2">
+          <input type="text" class="form-control form-control-sm" [placeholder]="t('search-placeholder')"
+                 [value]="searchTerm()" (input)="searchTerm.set($any($event.target).value)" />
+        </div>
+
+        <div class="d-flex align-items-center justify-content-between mb-2 filter-row">
+          <div class="form-check form-switch mb-0">
+            <input class="form-check-input" type="checkbox" id="hasUpdateFilter"
+                   [checked]="hasUpdateFilter()" (change)="hasUpdateFilter.set($any($event.target).checked)">
+            <label class="form-check-label" for="hasUpdateFilter">{{t('filter-has-update')}}</label>
+          </div>
+
+          <div class="btn-group btn-group-sm">
+            <button type="button" class="btn" [class.btn-primary]="providerFilter() === null"
+                    [class.btn-outline-primary]="providerFilter() !== null"
+                    (click)="setProviderFilter(null)">{{t('filter-all')}}</button>
+            <button type="button" class="btn" [class.btn-primary]="providerFilter() === ReadingListProvider.None"
+                    [class.btn-outline-primary]="providerFilter() !== ReadingListProvider.None"
+                    (click)="setProviderFilter(ReadingListProvider.None)">{{t('filter-local')}}</button>
+            <button type="button" class="btn" [class.btn-primary]="providerFilter() === ReadingListProvider.File"
+                    [class.btn-outline-primary]="providerFilter() !== ReadingListProvider.File"
+                    (click)="setProviderFilter(ReadingListProvider.File)">{{t('provider-file')}}</button>
+            <button type="button" class="btn" [class.btn-primary]="providerFilter() === ReadingListProvider.Url"
+                    [class.btn-outline-primary]="providerFilter() !== ReadingListProvider.Url"
+                    (click)="setProviderFilter(ReadingListProvider.Url)">{{t('provider-url')}}</button>
+          </div>
+        </div>
+
+        <div class="fw-bold section-header mb-1">{{t('downloaded')}}</div>
+
+        <ul class="list-group list-group-flush list-scroll">
+          @for (readingList of filteredLists(); track readingList.id) {
+            <ng-container [ngTemplateOutlet]="readingListOption" [ngTemplateOutletContext]="{ $implicit: readingList}" />
+          } @empty {
+            <li class="list-group-item text-muted">{{t('no-results')}}</li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="col-lg-7 col-md-6 col-sm-12 ps-3 ps-sm-3 ps-0 pt-3 pt-md-0 detail-panel"
+         [class.is-hidden-mobile]="!selectedList() && !showUploadFlow()">
+      <div class="card p-3">
+
+        @let selectedItem = selectedList();
+        @if (showUploadFlow()) {
+          <div class="row pb-4">
+            <div class="mx-auto">
+              <div class="d-flex justify-content-center">
+                <div class="d-flex justify-content-evenly">
+                  {{t('preview-default')}}
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          @if (files && files.length > 0) {
+            <app-loading [loading]="isUploadingCbl()" />
+          } @else if (!accountService.hasReadOnlyRole()) {
+            <app-file-drag-and-drop-upload
+              (dropped)="dropped($event)"
+              (urlSubmitted)="uploadFromUrl($event)"
+              [showUrlUpload]="true"
+              [uploadText]="t('upload-continued')"
+              [urlText]="t('url')"
+              [acceptableExtensions]="acceptableExtensions"
+            />
+          }
+        } @else if(selectedItem) {
+
+          <div class="d-flex gap-3">
+            <app-image class="detail-cover" [imageUrl]="imageService.getReadingListCoverImage(selectedItem.id)" />
+
+            <div class="flex-grow-1">
+              <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start gap-2">
+
+                <h4 class="mb-1">{{selectedItem.title}}</h4>
+
+                <div class="flex-shrink-0 ms-2">
+
+                  <div class="d-flex flex-row gap-2">
+                    @if (!accountService.hasReadOnlyRole()) {
+                      <button class="btn btn-outline-danger btn-sm" (click)="deleteList(selectedItem)">
+                        <i class="fa fa-trash-alt" aria-hidden="true"></i><span class="phone-hidden ms-1">{{t('delete')}}</span>
+                      </button>
+                    }
+                    @if (selectedItem.canSync) {
+
+                      <div class="btn-group">
+                        <button type="button" class="btn btn-primary" (click)="syncReadingList(selectedItem)">
+                          <span class="read-btn--text">{{t('sync')}}</span>
+                        </button>
+
+                        <div class="btn-group" ngbDropdown role="group">
+                          <button type="button" class="btn btn-primary dropdown-toggle-split" ngbDropdownToggle></button>
+                          <div class="dropdown-menu" ngbDropdownMenu>
+                            <button ngbDropdownItem (click)="manualSyncReadingList(selectedItem)">
+                              <span class="read-btn--text">{{t('sync-manual')}}</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-between align-items-start mt-1">
+                <div class="d-flex">
+                  <div class="mt-1" style="font-size: 0.9rem;">
+                    @if (selectedItem.ageRating) {
+                      <app-age-rating-image [rating]="selectedItem.ageRating"/>
+                    }
+                    @if (selectedItem.startingYear > 0) {
+                      @if (selectedItem.ageRating) {
+                        <span class="dot-separator mx-1"></span>
+                      }
+                      @let dateRange = getDateRangeLabel(selectedItem);
+                      @if (dateRange) {
+                        <span>{{dateRange}}</span>
+                      }
+                    }
+
+                    @let missingItems = getMissingCount(selectedItem);
+                    @if (missingItems > 0) {
+                      <span class="text-danger ms-2">
+                        <i class="fa-solid fa-exclamation-circle me-1" aria-hidden="true"></i>
+                        {{t('missing-count', {num: missingItems})}}
+                      </span>
+                    } @else {
+                      <span class="ms-2">{{t('item-count', {num: selectedItem.itemCount})}}</span>
+                    }
+                  </div>
+                </div>
+
+                @if(selectedItem.hasRemoteChange) {
+                  <div class="d-flex gap-2">
+                    <span class="pill p-1 me-1 update-available">{{t('update-available')}}</span>
+                  </div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <div class="d-flex">
+            <div class="mt-1">
+              @if (selectedItem.canSync) {
+                <div class="mt-3 text-muted" style="font-size: 0.8rem;">
+                  <div>{{t('last-synced', {date: (selectedItem.lastSyncedUtc | utcToLocalDate | timeAgo)})}}</div>
+                  <div>{{t('last-checked', {date: (selectedItem.lastSyncCheckUtc | utcToLocalDate | timeAgo)})}}</div>
+                  @if (selectedItem.canSync) {
+                    <div>
+                      <a [href]="(selectedItem.downloadUrl ?? selectedItem.sourcePath) | safeUrl" target="_blank" rel="noopener noreferrer">{{t('source')}}</a>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+
+          @if (selectedItem.summary) {
+            <div class="mt-3">
+              <app-read-more [text]="selectedItem.summary" />
+            </div>
+          }
+
+          <div class="mt-3">
+            <a class="btn btn-outline-primary btn-sm" [routerLink]="'/lists/' + selectedItem.id">
+              {{t('view-list')}} <i class="fa fa-arrow-right ms-1" aria-hidden="true"></i>
+            </a>
+          </div>
+
+        } @else {
+          <p>{{t('not-authorized')}}</p>
+        }
+      </div>
+    </div>
+  </div>
+
+
+  <ng-template #readingListOption let-item>
+    @if (item !== undefined) {
+      <li class="list-group-item d-flex justify-content-between align-items-start clickable mt-1"
+          [class.active]="selectedList() && selectedList()?.id === item.id"
+          (click)="selectList(item)">
+        <div class="ms-2 me-auto">
+          <div class="fw-bold">
+            <app-promoted-icon [promoted]="item.promoted" />
+            {{item.title}}
+            @let missingCount = getMissingCount(item);
+            @if (missingCount > 0) {
+              <span class="text-danger ms-1" [ngbTooltip]="t('missing-count', {num: missingCount})">
+              <i class="fa-solid fa-exclamation-circle me-1" aria-hidden="true"></i>
+            </span>
+            }
+          </div>
+
+          <span class="pill p-1 me-1">{{t('item-count', {num: item.itemCount})}}</span>
+
+
+          @if (item.canSync) {
+            <span class="pill p-1 me-1 provider">{{item.provider | readingListProvider}}</span>
+          }
+          @if (item.hasRemoteChange) {
+            <span class="pill p-1 me-1 update-available">{{t('update-available')}}</span>
+          }
+        </div>
+      </li>
+    }
+  </ng-template>
+
+
+</ng-container>

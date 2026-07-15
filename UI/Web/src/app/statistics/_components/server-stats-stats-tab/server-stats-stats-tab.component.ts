@@ -18,12 +18,13 @@ import {StatBucket} from "../../_models/stats/stat-bucket";
 import {Series} from "../../../_models/series";
 import {Person, PersonRole} from "../../../_models/metadata/person";
 import {FilterComparison} from "../../../_models/metadata/v2/filter-comparison";
-import {FilterField} from "../../../_models/metadata/v2/filter-field";
+import {SeriesFilterField} from "../../../_models/metadata/v2/series-filter-field";
 import {FilterCombination} from "../../../_models/metadata/v2/filter-combination";
 import {map} from "rxjs/operators";
 import {forkJoin, tap} from "rxjs";
-import {ReadingList} from "../../../_models/reading-list";
+import {ReadingList} from "../../../_models/reading-list/reading-list";
 import {PersonRolePipe} from "../../../_pipes/person-role.pipe";
+import {FilterEntityType} from "../../../_models/metadata/v2/filter-entity-type";
 
 @Component({
   selector: 'app-server-stats-stats-tab',
@@ -54,7 +55,7 @@ export class ServerStatsStatsTabComponent {
   private readonly cachePrefix = 'kavita-cache--encode-decade-';
 
 
-  userId = computed(() => this.accountService.currentUserSignal()?.id);
+  userId = computed(() => this.accountService.currentUser()?.id);
   readonly filter = signal<StatsFilter | undefined>(undefined);
   readonly year = signal<number>(new Date().getFullYear());
 
@@ -208,9 +209,10 @@ export class ServerStatsStatsTabComponent {
       // Fetch only uncached decades
       const encodeRequests = toFetch.map(([key, decade]) =>
         this.filterUtilities.encodeFilter({
+          entityType: FilterEntityType.Series,
           statements: [
-            { comparison: FilterComparison.GreaterThanEqual, field: FilterField.ReleaseYear, value: decade.rangeStart + '' },
-            { comparison: FilterComparison.LessThanEqual, field: FilterField.ReleaseYear, value: decade.rangeEnd + '' },
+            { comparison: FilterComparison.GreaterThanEqual, field: SeriesFilterField.ReleaseYear, value: decade.rangeStart + '' },
+            { comparison: FilterComparison.LessThanEqual, field: SeriesFilterField.ReleaseYear, value: decade.rangeEnd + '' },
           ],
           combination: FilterCombination.And,
           limitTo: 0,

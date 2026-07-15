@@ -11,12 +11,26 @@
 
 .content-quote {
   color: var(--drawer-text-color);
-  max-height: 320px;
-  overflow: hidden;
-  display: -webkit-box;
-  line-clamp: 2;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+
+  &.clamped {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+.quote-toggle {
+  font-size: 0.8rem;
+  cursor: pointer;
+  color: var(--primary-color);
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .annotation-meta {
@@ -24,7 +38,7 @@
 }
 
 .setting-section-break {
-  margin: 10px 0 !important;
+  margin: 0.625rem 0 !important;
 }
 
 .offcanvas-title-right {

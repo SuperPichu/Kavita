@@ -1,5 +1,5 @@
 import {HttpClient} from '@angular/common/http';
-import {DestroyRef, effect, inject, Injectable} from '@angular/core';
+import {effect, inject, Injectable, signal} from '@angular/core';
 import {DOCUMENT, Location} from '@angular/common';
 import {Router} from '@angular/router';
 import {environment} from 'src/environments/environment';
@@ -18,17 +18,21 @@ import {PersonalToC} from "../_models/readers/personal-toc";
 import {FilterV2} from "../_models/metadata/v2/filter-v2";
 import NoSleep from 'nosleep.js';
 import {Volume} from "../_models/volume";
-import {UtilityService} from "../shared/_services/utility.service";
 import {translate} from "@jsverse/transloco";
 import {ToastrService} from "ngx-toastr";
-import {FilterField} from "../_models/metadata/v2/filter-field";
-import {ModalService} from "./modal.service";
-import {catchError, map, Observable, of, switchMap, tap} from "rxjs";
+import {SeriesFilterField} from "../_models/metadata/v2/series-filter-field";
+import {ModalService, TypedModalRef} from "./modal.service";
+import {catchError, map, merge, Observable, of, switchMap, tap} from "rxjs";
 import {ListSelectModalComponent} from "../shared/_components/list-select-modal/list-select-modal.component";
 import {take, takeUntil} from "rxjs/operators";
 import {SeriesService} from "./series.service";
 import {Series} from "../_models/series";
 import {RereadPrompt} from "../_models/readers/reread-prompt";
+import {mediumModal} from "../_models/modal/modal-options";
+import {
+  KeyboardShortcut,
+  ShortcutsModalComponent
+} from "../reader-shared/_modals/shortcuts-modal/shortcuts-modal.component";
 
 enum RereadPromptResult {
   Cancel = 0,
@@ -47,8 +51,6 @@ const MS_IN_DAY = 1000 * 60 * 60 * 24;
 })
 export class ReaderService {
 
-  private readonly destroyRef = inject(DestroyRef);
-  private readonly utilityService = inject(UtilityService);
   private readonly router = inject(Router);
   private readonly location = inject(Location);
   private readonly accountService = inject(AccountService);
@@ -66,6 +68,10 @@ export class ReaderService {
 
 
   private noSleep: NoSleep = new NoSleep();
+  shortCutModalOpen = signal(false);
+  shortCutModalRef: TypedModalRef<ShortcutsModalComponent> | undefined;
+
+
 
   constructor() {
     effect(() => {
@@ -74,6 +80,24 @@ export class ReaderService {
         this.encodedKey = encodeURIComponent(apiKey);
       }
     })
+  }
+
+  openShortcutModal(shortcuts: KeyboardShortcut[]) {
+    if (this.shortCutModalOpen()) return;
+
+    this.shortCutModalOpen.set(true);
+    this.shortCutModalRef = this.modalService.open(ShortcutsModalComponent, mediumModal());
+    this.shortCutModalRef.setInput('shortcuts', shortcuts);
+
+    merge(this.shortCutModalRef.closed, this.shortCutModalRef.dismissed).subscribe(() => this.shortCutModalOpen.set(false));
+  }
+
+  closeShortCutModal() {
+    if (this.shortCutModalRef) {
+      this.shortCutModalRef.dismiss();
+      this.shortCutModalRef = undefined;
+    }
+    this.shortCutModalOpen.set(false);
   }
 
 
@@ -126,7 +150,7 @@ export class ReaderService {
     return this.httpClient.post(this.baseUrl + 'reader/unbookmark', {seriesId, volumeId, chapterId, page, imageNumber});
   }
 
-  getAllBookmarks(filter: FilterV2<FilterField> | undefined) {
+  getAllBookmarks(filter: FilterV2<SeriesFilterField> | undefined) {
     return this.httpClient.post<PageBookmark[]>(this.baseUrl + 'reader/all-bookmarks', filter);
   }
 
@@ -185,20 +209,24 @@ export class ReaderService {
     return this.httpClient.post(this.baseUrl + 'reader/progress', {libraryId, seriesId, volumeId, chapterId, pageNum: page, bookScrollId});
   }
 
-  markVolumeRead(seriesId: number, volumeId: number) {
-    return this.httpClient.post(this.baseUrl + 'reader/mark-volume-read', {seriesId, volumeId});
+  markChapterRead(seriesId: number, chapterId: number, generateReadingSession: boolean = false) {
+    return this.httpClient.post(this.baseUrl + 'reader/mark-chapter-read', {seriesId, chapterId, generateReadingSession});
   }
 
-  markMultipleRead(seriesId: number, volumeIds: Array<number>,  chapterIds?: Array<number>) {
-    return this.httpClient.post(this.baseUrl + 'reader/mark-multiple-read', {seriesId, volumeIds, chapterIds});
+  markVolumeRead(seriesId: number, volumeId: number, generateReadingSession: boolean = false) {
+    return this.httpClient.post(this.baseUrl + 'reader/mark-volume-read', {seriesId, volumeId, generateReadingSession});
+  }
+
+  markMultipleRead(seriesId: number, volumeIds: Array<number>,  chapterIds?: Array<number>, generateReadingSession: boolean = false) {
+    return this.httpClient.post(this.baseUrl + 'reader/mark-multiple-read', {seriesId, volumeIds, chapterIds, generateReadingSession});
   }
 
   markMultipleUnread(seriesId: number, volumeIds: Array<number>,  chapterIds?: Array<number>) {
     return this.httpClient.post(this.baseUrl + 'reader/mark-multiple-unread', {seriesId, volumeIds, chapterIds});
   }
 
-  markMultipleSeriesRead(seriesIds: Array<number>) {
-    return this.httpClient.post(this.baseUrl + 'reader/mark-multiple-series-read', {seriesIds});
+  markMultipleSeriesRead(seriesIds: Array<number>, generateReadingSession: boolean = false) {
+    return this.httpClient.post(this.baseUrl + 'reader/mark-multiple-series-read', {seriesIds, generateReadingSession});
   }
 
   markMultipleSeriesUnread(seriesIds: Array<number>) {
@@ -678,18 +706,16 @@ export class ReaderService {
     if (!prompt.shouldPrompt) return of({prompt: prompt, result: RereadPromptResult.Continue});
 
 
-    const [modal, component] = this.modalService.open(ListSelectModalComponent, {
-      centered: true,
-    });
+    const ref = this.modalService.open<ListSelectModalComponent<RereadPromptResult>>(ListSelectModalComponent, mediumModal());
 
-    component.showFooter.set(false);
-    component.title.set(translate('reread-modal.title'));
+    ref.setInput('showFooter', false);
+    ref.setInput('title', translate('reread-modal.title'));
 
     if (prompt.timePrompt) {
-      component.description.set(translate('reread-modal.description-time-passed',
-        { days: prompt.daysSinceLastRead, name: prompt.chapterOnReread.label }));
+      ref.setInput('description', translate('reread-modal.description-time-passed',
+        { days: prompt.daysSinceLastRead, name: prompt.chapterOnReread.label }))
     } else {
-      component.description.set(translate('reread-modal.description-full-read', { name: prompt.chapterOnReread.label }));
+      ref.setInput('description', translate('reread-modal.description-full-read', { name: prompt.chapterOnReread.label }))
     }
 
     const options = [
@@ -703,10 +729,10 @@ export class ReaderService {
 
     options.push({label: translate('reread-modal.cancel'), value: RereadPromptResult.Cancel});
 
-    component.inputItems.set(options);
+    ref.setInput('inputItems', options);
 
-    return modal.closed.pipe(
-      takeUntil(modal.dismissed),
+    return ref.closed.pipe(
+      takeUntil(ref.dismissed),
       take(1),
       map(res => ({prompt: prompt, result: res as RereadPromptResult})),
       catchError(() => of({prompt: prompt, result: RereadPromptResult.Cancel}))

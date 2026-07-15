@@ -1,4 +1,12 @@
 .main-container {
-  margin-top: 10px;
-  padding: 0 0 0 10px;
+  margin-top: 0.625rem;
+  padding: 0 0 0 0.625rem;
+}
+
+::ng-deep #card-detail-layout-items-container {
+  .card-detail-layout-item {
+    background-color: transparent !important;
+    max-width: 100%;
+    width: 100%;
+  }
 }

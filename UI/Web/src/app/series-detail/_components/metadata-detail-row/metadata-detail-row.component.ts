@@ -1,4 +1,4 @@
-import {ChangeDetectionStrategy, Component, computed, inject, input, Input} from '@angular/core';
+import {ChangeDetectionStrategy, Component, inject, input} from '@angular/core';
 import {AgeRatingImageComponent} from "../../../_single-module/age-rating-image/age-rating-image.component";
 import {CompactNumberPipe} from "../../../_pipes/compact-number.pipe";
 import {ReadTimeLeftPipe} from "../../../_pipes/read-time-left.pipe";
@@ -14,7 +14,7 @@ import {ImageComponent} from "../../../shared/image/image.component";
 import {ImageService} from "../../../_services/image.service";
 import {FilterUtilitiesService} from "../../../shared/_services/filter-utilities.service";
 import {FilterComparison} from "../../../_models/metadata/v2/filter-comparison";
-import {FilterField} from "../../../_models/metadata/v2/filter-field";
+import {SeriesFilterField} from "../../../_models/metadata/v2/series-filter-field";
 import {MangaFormat} from "../../../_models/manga-format";
 import {SeriesFormatComponent} from "../../../shared/series-format/series-format.component";
 import {BytesPipe} from "../../../_pipes/bytes.pipe";
@@ -54,17 +54,14 @@ export class MetadataDetailRowComponent {
   totalBytes = input<number | undefined>(undefined);
   totalReads = input(0);
 
-  hasDownloadRole = computed(() => {
-    const user = this.accountService.currentUserSignal();
-    return user && this.accountService.hasDownloadRole(user);
-  });
+  hasDownloadRole = this.accountService.hasDownloadRole;
 
-  openGeneric(queryParamName: FilterField, filter: string | number) {
-    if (queryParamName === FilterField.None) return;
+  openGeneric(queryParamName: SeriesFilterField, filter: string | number) {
+    if (queryParamName === SeriesFilterField.None) return;
     this.filterUtilityService.applyFilter(['all-series'], queryParamName, FilterComparison.Equal, `${filter}`).subscribe();
   }
 
   protected readonly LibraryType = LibraryType;
-  protected readonly FilterField = FilterField;
+  protected readonly FilterField = SeriesFilterField;
   protected readonly MangaFormat = MangaFormat;
 }

@@ -10,9 +10,11 @@ import {FormControl, FormGroup, FormsModule, ReactiveFormsModule} from "@angular
 import {SentenceCasePipe} from "../../../_pipes/sentence-case.pipe";
 import {SiteThemeProviderPipe} from "../../../_pipes/site-theme-provider.pipe";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
-import {animate, style, transition, trigger} from "@angular/animations";
 import {WikiLink} from "../../../_models/wiki";
 import {ToastrService} from "ngx-toastr";
+import {
+  FileDragAndDropUploadComponent
+} from "src/app/shared/file-drag-and-drop-upload/file-drag-and-drop-upload.component";
 
 @Component({
   selector: 'app-font-manager',
@@ -26,19 +28,12 @@ import {ToastrService} from "ngx-toastr";
     NgTemplateOutlet,
     TranslocoDirective,
     NgStyle,
+    FileDragAndDropUploadComponent,
   ],
   templateUrl: './font-manager.component.html',
   styleUrl: './font-manager.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  standalone: true,
-  animations: [
-    trigger('loadNewFontAnimation', [
-      transition('void => loaded', [
-        style({ backgroundColor: 'var(--primary-color)' }),
-        animate('2s', style({ backgroundColor: 'var(--list-group-item-bg-color)' }))
-      ])
-    ])
-  ],
+  standalone: true
 })
 export class FontManagerComponent implements OnInit {
   private readonly document = inject(DOCUMENT);
@@ -47,15 +42,9 @@ export class FontManagerComponent implements OnInit {
   private readonly toastr = inject(ToastrService);
   protected readonly fontService = inject(FontService);
 
-  protected readonly FontProvider = FontProvider;
-  protected readonly WikiLink = WikiLink.EpubFontManager;
-  protected readonly user = this.accountService.currentUserSignal;
-  protected readonly isReadOnly = computed(() => {
-    const u = this.accountService.currentUserSignal();
-    if (!u) return true;
 
-    return this.accountService.hasReadOnlyRole(u);
-  });
+  protected readonly user = this.accountService.currentUser;
+  protected readonly isReadOnly = this.accountService.hasReadOnlyRole;
 
   fonts = signal<EpubFont[]>([]);
   visibleFonts = computed(() => {
@@ -76,10 +65,9 @@ export class FontManagerComponent implements OnInit {
 
   selectedFont = signal<EpubFont | undefined>(undefined);
   isUploadingFont = signal(false);
-  uploadMode = signal<'file' | 'url' | 'all'>('all');
+  initialLoadComplete = signal(false);
 
   form: FormGroup = new FormGroup({
-    fontUrl: new FormControl('', []),
     filter: new FormControl(this.hideSystemFonts(), [])
   });
 
@@ -92,6 +80,7 @@ export class FontManagerComponent implements OnInit {
   }
 
   loadFonts() {
+    this.initialLoadComplete.set(false);
     this.fontService.getFonts().subscribe(fonts => {
       this.fonts.set(fonts);
 
@@ -99,6 +88,7 @@ export class FontManagerComponent implements OnInit {
       if (fonts.filter(f => f.provider != FontProvider.System).length > 0 && !this.hideSystemFonts()) {
         this.setHideSystemFontsFilter(true);
       }
+      setTimeout(() => this.initialLoadComplete.set(true), 100);
     });
   }
 
@@ -137,14 +127,10 @@ export class FontManagerComponent implements OnInit {
     this.isUploadingFont.set(true);
   }
 
-  uploadFromUrl() {
-    const url = this.form.get('fontUrl')?.value.trim();
-    if (!url || url === '') return;
-
+  uploadFromUrl(url: string) {
     this.isUploadingFont.set(true);
     this.fontService.uploadFromUrl(url).subscribe((f) => {
       this.addFont(f);
-      this.form.get('fontUrl')!.setValue('');
       this.isUploadingFont.set(false);
     });
   }
@@ -161,9 +147,7 @@ export class FontManagerComponent implements OnInit {
         return;
       }
 
-      const isAdmin = this.accountService.hasAdminRole(this.accountService.currentUserSignal()!);
-
-      if (!isAdmin) {
+      if (!this.accountService.hasAdminRole()) {
         this.toastr.info(translate('toasts.font-in-use'))
         return;
       }
@@ -203,12 +187,11 @@ export class FontManagerComponent implements OnInit {
   private addFont(font: EpubFont) {
     this.fonts.update(x => [...x, font]);
     this.loadedFonts.update(x => [...x, font]);
-    setTimeout(() => this.selectedFont.set(font), 100);
+    setTimeout(() => this.selectFont(font), 100);
   }
 
-  animationState(font: EpubFont) {
-    return this.loadedFonts().includes(font) ? 'loaded' : '';
-  }
 
   protected readonly FontService = FontService;
+  protected readonly FontProvider = FontProvider;
+  protected readonly WikiLink = WikiLink.EpubFontManager;
 }

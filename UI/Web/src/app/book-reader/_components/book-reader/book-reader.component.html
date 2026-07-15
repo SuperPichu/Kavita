@@ -7,7 +7,7 @@
       <a class="visually-hidden-focusable focus-visible" href="javascript:void(0);" (click)="moveFocus()">{{t('skip-header')}}</a>
       <ng-container [ngTemplateOutlet]="topActionBar"  [ngTemplateOutletContext]="{isTop: true}" />
       @if (page() !== undefined) {
-        <app-book-line-overlay [parent]="bookContainerElemRef"
+        <app-book-line-overlay [parent]="bookContainerElemRef()"
                                [libraryId]="libraryId"
                                [volumeId]="volumeId"
                                [chapterId]="chapterId"
@@ -32,7 +32,7 @@
     }
     <div #readingSection class="reading-section {{layoutMode() | columnLayoutClass}} {{writingStyle() | writingStyleClass}}"
          [ngStyle]="{'width': pageWidthForPagination()}"
-         [ngClass]="{'immersive' : immersiveMode() || !actionBarVisible()}" [@isLoading]="isLoading()" (click)="handleReaderClick($event)">
+         [ngClass]="{'immersive' : immersiveMode() || !actionBarVisible(), 'is-loading': isLoading()}" (click)="handleReaderClick($event)">
 
 
       <div #bookContainer class="book-container {{writingStyle() | writingStyleClass}}"
@@ -100,6 +100,11 @@
                 </button>
               }
 
+              <button class="btn btn-icon me-1" [ngbTooltip]="t('shortcuts-menu-alt')" (click)="openShortcutModal()">
+                <i class="fa-solid fa-clipboard-question" aria-hidden="true"></i>
+                <span class="visually-hidden">{{t('shortcuts-menu-alt')}}</span>
+              </button>
+
               <button class="btn btn-secondary btn-icon me-1" (click)="viewBookmarkImages()">
                 <i class="fa-solid fa-book-bookmark" aria-hidden="true"></i>
               </button>
@@ -145,10 +150,10 @@
             </span>
 
             <div class="d-none d-sm-block">
-              <span class="mx-1">•</span>
+              <span class="dot-separator mx-1"></span>
               {{t('completion-label', {percent: (virtualizedPageNum() / virtualizedMaxPages()) | percent})}}
               @if (readingTimeLeftResource.value(); as timeLeft) {
-                <span class="mx-1">•</span>
+                <span class="dot-separator mx-1"></span>
                 <span class="time-left">
                     <i class="fa-solid fa-clock" aria-hidden="true"></i>
                   {{timeLeft! | readTimeLeft:true }}

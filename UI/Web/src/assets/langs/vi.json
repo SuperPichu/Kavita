@@ -93,8 +93,6 @@
         "download": "{{changelog.download}}",
         "apply": "{{common.apply}}",
         "delete": "{{common.delete}}",
-        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
-        "upload": "{{cover-image-chooser.upload}}",
         "add": "{{common.add}}",
         "description": "Kavita có nhiều màu sắc, hãy tìm một bảng màu phù hợp với nhu cầu của bạn hoặc tự tạo một bảng màu và chia sẻ. Chủ đề có thể được áp dụng cho tài khoản của bạn hoặc áp dụng cho tất cả các tài khoản.",
         "set-default": "Đặt Làm Mặc Định",
@@ -252,7 +250,6 @@
         "colorist": "Người Tô Màu",
         "publisher": "Nhà Xuất Bản",
         "writer": "Tác Giả",
-        "other": "Khác",
         "imprint": "Đóng Dấu",
         "inker": "Vẽ Chính",
         "letterer": "Vẽ Thoại",
@@ -280,16 +277,7 @@
     },
     "all-filters": {
         "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
-        "create": "{{common.create}}",
         "title": "Tất Cả Bộ Lọc"
-    },
-    "out-of-date-modal": {
-        "close": "{{common.close}}",
-        "description-3": "Nếu có lý do cụ thể nào khiến bạn chưa cập nhật, chúng tôi rất muốn biết lý do khiến bạn vẫn sử dụng phiên bản cũ! Hãy ghé qua discord của chúng tôi và cho chúng tôi biết lý do khiến bạn không nâng cấp.",
-        "title": "Đừng tụt hậu!",
-        "subtitle": "Có vẻ như bản cài đặt của bạn chậm hơn {{count}} phiên bản!",
-        "description-1": "Vui lòng cân nhắc nâng cấp để bạn có thể chạy phiên bản Kavita mới nhất.",
-        "description-2": "Hãy tham khảo <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> của chúng tôi để biết hướng dẫn về cách cập nhật."
     },
     "invite-user": {
         "close": "{{common.close}}",
@@ -401,15 +389,6 @@
         "read": "{{common.read}}",
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "storyline-tab": "{{tabs.storyline-tab}}",
-        "books-tab": "{{tabs.books-tab}}",
-        "volumes-tab": "{{tabs.volumes-tab}}",
-        "specials-tab": "{{tabs.specials-tab}}",
-        "related-tab": "{{tabs.related-tab}}",
-        "details-tab": "{{tabs.details-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "recommendations-tab": "{{tabs.recommendations-tab}}",
         "no-pages": "{{toasts.no-pages}}",
         "writers-title": "{{metadata-fields.writers-title}}",
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
@@ -464,12 +443,6 @@
         "kavita-tooltip": "Xếp hạng của bạn + Tổng thể",
         "kavita-rating-title": "Xếp hạng của bạn"
     },
-    "update-notification-modal": {
-        "close": "{{common.close}}",
-        "help": "Hướng Dẫn Cập Nhật",
-        "title": "Đã có bản cập nhật mới!",
-        "download": "Tải Xuống"
-    },
     "side-nav-companion-bar": {
         "page-settings-title": "{{series-detail.page-settings-title}}",
         "open-filter-and-sort": "Mở Bộ Lọc và Sắp Xếp",
@@ -493,11 +466,6 @@
     },
     "library-settings-modal": {
         "close": "{{common.close}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "folder-tab": "{{tabs.folder-tab}}",
-        "cover-tab": "{{tabs.cover-tab}}",
-        "advanced-tab": "{{tabs.advanced-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
         "reset": "{{common.reset}}",
         "cancel": "{{common.cancel}}",
         "save": "{{common.save}}",
@@ -660,10 +628,8 @@
     },
     "entity-title": {
         "issue-num": "{{common.issue-hash-num}}",
-        "chapter": "{{common.chapter-num}}",
         "book-num": "{{common.book-num-shorthand}}",
         "special": "Đặc Biệt",
-        "vol-num": "{{user-scrobble-history.volume-num}}",
         "single-volume": "Tập Lẻ"
     },
     "manage-media-issues": {
@@ -827,7 +793,6 @@
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "required": "{{validation.required-field}}",
         "title": "Tác Vụ Định Kỳ",
         "description-header": "Mô Tả",
         "bust-cache-task": "Xóa Bộ Nhớ Đệm",
@@ -863,14 +828,8 @@
         "library-database-backup-tooltip": "Tần suất Kavita sao lưu cơ sở dữ liệu và các tệp liên quan khác.",
         "cleanup-label": "Dọn Dẹp",
         "cleanup-tooltip": "Tần suất Kavita sẽ chạy các tác vụ dọn dẹp. Tác vụ này có thể sẽ nặng và nên được thực hiện vào lúc nửa đêm trong hầu hết các trường hợp",
-        "daily": "Hàng ngày",
-        "weekly": "Hàng Tuần",
-        "custom": "Tùy Chỉnh",
-        "custom-label": "Lịch Trình Tùy Chỉnh (Cú Pháp Cron)",
-        "cron-notation": "Đây không phải là cú pháp Cron hợp lệ",
         "recurring-tasks-title": "{{title}}",
         "last-executed-header": "Thực Thi Lần Cuối",
-        "disabled": "Đã Tắt",
         "convert-media-task": "Chuyển đổi mã hóa của tệp Media",
         "check-for-updates-task-desc": "Kiểm tra xem có bản cập nhật ổn định mới nào không.",
         "sync-themes-task": "Đồng Bộ Chủ Đề",
@@ -905,10 +864,6 @@
         "save": "{{common.save}}",
         "close": "{{common.close}}",
         "cancel": "{{common.cancel}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "series-tab": "{{tabs.series-tab}}",
         "deselect-all": "{{common.deselect-all}}",
         "select-all": "{{common.select-all}}",
         "filter-label": "{{common.filter}}",
@@ -965,8 +920,7 @@
         "no-data": "Không có mục nào. Hãy thử thêm một series.",
         "sync-progress": "Series Đã Thu Thập: {{title}}",
         "last-sync": "Đồng Bộ Lần Cuối: {{date}}",
-        "no-data-filtered": "Không có mục nào khớp với bộ lọc hiện tại.",
-        "title-alt": "Kavita - Bộ Sưu Tập {{collectionName}}"
+        "no-data-filtered": "Không có mục nào khớp với bộ lọc hiện tại."
     },
     "all-collections": {
         "item-count": "{{common.item-count}}",
@@ -1073,8 +1027,6 @@
         "reading-list-label": "Danh Sách Đọc"
     },
     "edit-reading-list-modal": {
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "required-field": "{{validation.required-field}}",
@@ -1101,23 +1053,7 @@
     },
     "import-cbl-modal": {
         "close": "{{common.close}}",
-        "validate-no-issue-description": "Không có vấn đề nào với tệp CBL, nhấn nút Tiếp Theo.",
-        "next": "Tiếp Theo",
-        "import": "Nhập",
-        "validate-cbl-step": "Xác Thực CBL",
-        "import-step": "Nhập các CBL",
-        "validate-warning": "Có vấn đề với tệp CBL sẽ ngăn chặn việc nhập. Hãy sửa những vấn đề này rồi thử lại.",
-        "title": "Nhập CBL",
-        "dry-run-step": "Chạy Thử",
-        "final-import-step": "Bước Cuối Cùng",
-        "import-description": "Để bắt đầu, hãy nhập tệp .cbl. Kavita sẽ thực hiện nhiều lần kiểm tra trước khi nhập. Một số bước sẽ chặn việc tiếp tục do sự cố với tệp.",
-        "validate-description": "Tất cả các tệp đã được xác thực để xem có bất kỳ thao tác nào cần thực hiện trên danh sách hay không. Bất kỳ danh sách nào không thành công sẽ không chuyển sang bước tiếp theo. Sửa các tệp CBL và thử lại.",
-        "dry-run-description": "Đây là lần chạy thử và cho thấy điều gì sẽ xảy ra nếu bạn nhấn Tiếp theo và thực hiện việc Nhập. Tất cả các Lỗi sẽ không được Nhập.",
-        "prev": "Trước Đó",
-        "restart": "Bắt Đầu Lại",
-        "cbl-repo": "Bạn có thể tìm thấy nhiều danh sách đọc trên trang cộng đồng <a href='https://github.com/DieselTech/CBL-ReadingLists' target='_blank' rel='noopener noreferrer'>repo</a>.",
-        "comicvine-parsing-label": "Sử Dụng Các Series Comic Vine phù hợp",
-        "help-label": "{{common.help}}"
+        "title": "Nhập CBL"
     },
     "manga-reader": {
         "auto-close-menu-label": "{{user-preferences.auto-close-menu-label}}",
@@ -1207,7 +1143,6 @@
         "general-tab": "{{tabs.general-tab}}",
         "metadata-tab": "{{tabs.metadata-tab}}",
         "people-tab": "{{tabs.people-tab}}",
-        "web-links-tab": "{{tabs.weblink-tab}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "related-tab": "{{tabs.related-tab}}",
         "info-tab": "{{tabs.info-tab}}",
@@ -1297,15 +1232,8 @@
         "age-rating-label": "{{edit-series-modal.age-rating-label}}",
         "web-link-description": "{{edit-series-modal.web-link-description}}",
         "web-link-label": "{{edit-series-modal.web-link-label}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "people-tab": "{{tabs.people-tab}}",
-        "weblink-tab": "{{tabs.weblink-tab}}",
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "tags-tab": "{{tabs.tags-tab}}",
         "size-label": "{{edit-series-modal.size-title}}",
         "links-label": "{{metadata-fields.links-title}}",
         "last-read-label": "{{sort-field-pipe.read-progress}}",
@@ -1399,10 +1327,6 @@
         "popular-libraries-title": "Thư Viện Phổ Biến"
     },
     "customize-dashboard-modal": {
-        "dashboard": "Bảng Điều Khiển",
-        "sidenav": "Thanh Điều Hướng Bên",
-        "external-sources": "Nguồn bên ngoài",
-        "smart-filters": "Bộ lọc thông minh",
         "title-smart-filters": "Bộ Lọc Thông Minh"
     },
     "customize-dashboard-streams": {
@@ -1826,8 +1750,6 @@
         "required-field": "{{validations.required-field}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "save": "{{common.save}}",
-        "general-tab": "{{edit-series-modal.general-tab}}",
-        "cover-image-tab": "{{edit-series-modal.cover-image-tab}}",
         "mal-tooltip": "https://myanimelist.net/people/{MalId}/",
         "anilist-tooltip": "https://anilist.co/staff/{AniListId}/",
         "hardcover-tooltip": "https://hardcover.app/authors/{HardcoverId}",
@@ -2079,7 +2001,6 @@
         "cancel": "Hủy",
         "create": "Tạo Mới",
         "reset": "Đặt lại",
-        "volume-nums": "Tập",
         "edit": "Sửa",
         "reset-to-default": "Đặt lại về Mặc Định",
         "close": "Đóng",
@@ -2099,8 +2020,6 @@
         "read": "Đọc",
         "loading": "Đang tải…",
         "series-count": "{{num}} Series",
-        "issue-nums": "Vấn đề",
-        "chapter-nums": "Chương",
         "book-num": "Sách",
         "issue-num": "Vấn đề",
         "volume-num": "Tập",
@@ -2108,7 +2027,6 @@
         "book-num-shorthand": "Sách {{num}}",
         "issue-num-shorthand": "#{{num}}",
         "volume-num-shorthand": "Tập {{num}}",
-        "book-nums": "Sách",
         "select-all": "Chọn Tất Cả",
         "issue-hash-num": "Vấn đề #",
         "save": "Lưu lại",
@@ -2168,5 +2086,20 @@
         "count-header": "Đếm",
         "visualisation-label": "Hình Ảnh Hóa",
         "data-table-label": "Bảng Dữ Liệu"
+    },
+    "version-update-modal": {
+        "close": "{{common.close}}",
+        "out-of-date": {
+            "title": "Đừng tụt hậu!",
+            "subtitle": "Có vẻ như bản cài đặt của bạn chậm hơn {{count}} phiên bản!",
+            "description-1": "Vui lòng cân nhắc nâng cấp để bạn có thể chạy phiên bản Kavita mới nhất.",
+            "description-2": "Hãy tham khảo <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> của chúng tôi để biết hướng dẫn về cách cập nhật.",
+            "description-3": "Nếu có lý do cụ thể nào khiến bạn chưa cập nhật, chúng tôi rất muốn biết lý do khiến bạn vẫn sử dụng phiên bản cũ! Hãy ghé qua discord của chúng tôi và cho chúng tôi biết lý do khiến bạn không nâng cấp."
+        },
+        "update-notification": {
+            "title": "Đã có bản cập nhật mới!",
+            "help": "Hướng Dẫn Cập Nhật",
+            "download": "Tải Xuống"
+        }
     }
 }

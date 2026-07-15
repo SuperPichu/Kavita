@@ -134,8 +134,6 @@
         "applied": "Applicato",
         "updated-toastr": "L'impostazione predefinita del sito è stata aggiornata a {{name}}",
         "delete": "{{common.delete}}",
-        "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
-        "upload": "{{cover-image-chooser.upload}}",
         "add": "{{common.add}}",
         "description": "Kavita è disponibile nei miei colori, trova uno schema di colori che soddisfi le tue esigenze o creane uno tu stesso e condividilo. I temi possono essere applicati al tuo account o a tutti gli account.",
         "active-theme": "Attivo",
@@ -386,7 +384,6 @@
         "penciller": "Disegnatore",
         "publisher": "Casa Editrice",
         "writer": "Scrittore",
-        "other": "Altro",
         "imprint": "Impronta",
         "translator": "Traduttore",
         "team": "{{filter-field-pipe.team}}",
@@ -447,19 +444,10 @@
     },
     "all-filters": {
         "title": "Tutti i Filtri Intelligenti",
-        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}",
-        "create": "{{common.create}}"
+        "count": "{{count}} {{customize-dashboard-modal.title-smart-filters}}"
     },
     "announcements": {
         "title": "Annunci"
-    },
-    "out-of-date-modal": {
-        "title": "Non restare indietro!",
-        "close": "{{common.close}}",
-        "subtitle": "Sembra che la tua installazione sia più di {{count}} versioni indietro!",
-        "description-1": "Per favore, effettua un aggiornamento in modo da utilizzare la versione più recente di Kavita.",
-        "description-2": "Dai un'occhiata al nostro <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> per le istruzioni su come aggiornare.",
-        "description-3": "Se c'è un motivo specifico per cui non hai ancora aggiornato, ci piacerebbe sapere cosa ti spinge a restare su una versione obsoleta! Vieni a trovarci su Discord e facci sapere cosa sta bloccando il tuo percorso di aggiornamento."
     },
     "changelog": {
         "installed": "Installato",
@@ -612,15 +600,6 @@
         "remove-from-want-to-read": "{{actionable.remove-from-want-to-read}}",
         "add-to-want-to-read": "{{actionable.add-to-want-to-read}}",
         "edit-series-alt": "Modifica Informazioni",
-        "reviews-tab": "{{tabs.reviews-tab}}",
-        "storyline-tab": "{{tabs.storyline-tab}}",
-        "books-tab": "{{tabs.books-tab}}",
-        "volumes-tab": "{{tabs.volumes-tab}}",
-        "specials-tab": "{{tabs.specials-tab}}",
-        "related-tab": "{{tabs.related-tab}}",
-        "details-tab": "{{tabs.details-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "recommendations-tab": "{{tabs.recommendations-tab}}",
         "send-to": "File inviato per email a {{deviceName}}",
         "no-pages": "{{toasts.no-pages}}",
         "no-chapters": "Non ci sono capitoli in questo volume. Impossibile leggere.",
@@ -678,12 +657,6 @@
         "read-more": "Leggi di piu",
         "read-less": "Leggi meno"
     },
-    "update-notification-modal": {
-        "title": "Nuovo Aggiornamento Disponibile!",
-        "close": "{{common.close}}",
-        "help": "Come aggiornare",
-        "download": "Scaricamento"
-    },
     "side-nav-companion-bar": {
         "page-settings-title": "{{series-detail.page-settings-title}}",
         "open-filter-and-sort": "Apri Filtro e Ordinamento",
@@ -709,11 +682,6 @@
         "close": "{{common.close}}",
         "edit-title": "Modifica {{name}}",
         "add-title": "Aggiungi Libreria",
-        "general-tab": "{{tabs.general-tab}}",
-        "folder-tab": "{{tabs.folder-tab}}",
-        "cover-tab": "{{tabs.cover-tab}}",
-        "advanced-tab": "{{tabs.advanced-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
         "name-label": "Nome",
         "library-name-unique": "Il nome della Libreria deve essere univoco",
         "last-scanned-label": "Ultima scansione:",
@@ -896,10 +864,8 @@
     "entity-title": {
         "special": "Speciale",
         "issue-num": "{{common.issue-hash-num}}",
-        "chapter": "{{common.chapter-num}}",
         "book-num": "{{common.book-num-shorthand}}",
-        "single-volume": "Volume Singolo",
-        "vol-num": "{{user-scrobble-history.volume-num}}"
+        "single-volume": "Volume Singolo"
     },
     "external-series-card": {
         "open-external": "Apri Esternamente"
@@ -1101,16 +1067,9 @@
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "required": "{{validation.required-field}}",
-        "custom-label": "Pianificazione personalizzata (notazione Cron)",
-        "cron-notation": "Questa non è una notazione Cron valida",
         "recurring-tasks-title": "{{title}}",
         "last-executed-header": "Ultimo eseguito",
         "cron-header": "Cron",
-        "disabled": "Disabilitato",
-        "daily": "Giornaliero",
-        "weekly": "Settimanale",
-        "custom": "Personalizzato",
         "convert-media-task": "Converti i media nella codifica di destinazione",
         "convert-media-task-desc": "Esegue un'attività a lunga esecuzione che convertirà tutti i media gestiti da Kavita nella codifica di destinazione. Questo è lento (specialmente sui dispositivi ARM).",
         "bust-cache-task": "Cache Danneggiata",
@@ -1169,10 +1128,6 @@
         "save": "{{common.save}}",
         "close": "{{common.close}}",
         "cancel": "{{common.cancel}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
-        "series-tab": "{{tabs.series-tab}}",
         "name-label": "Nome",
         "name-validation": "Il Nome deve essere univoco",
         "promote-label": "Promuovi",
@@ -1231,7 +1186,6 @@
     "collection-detail": {
         "no-data": "Non ci sono articoli. Prova ad aggiungere una serie.",
         "no-data-filtered": "Nessun articolo corrisponde al filtro attuale.",
-        "title-alt": "Kavita - Collezione {{collectionName}}",
         "item-count": "{{common.item-count}}",
         "last-sync": "Ultima Sincronizzazione: {{date}}",
         "sync-progress": "Serie Raccolte: {{title}}"
@@ -1357,8 +1311,6 @@
     },
     "edit-reading-list-modal": {
         "title": "Modifica Lista Lettura: {{name}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "year-validation": "Deve essere maggiore di 1000, 0 o vuoto",
@@ -1384,23 +1336,7 @@
     },
     "import-cbl-modal": {
         "close": "{{common.close}}",
-        "title": "Importa CBL",
-        "import-description": "Per iniziare, importa un file .cbl. Kavita eseguirà più controlli prima dell'importazione. Alcuni passaggi bloccheranno l'avanzamento a causa di problemi con il file.",
-        "validate-description": "Tutti i file sono stati convalidati per vedere se ci sono operazioni da fare sulla lista. Tutte le liste che hanno fallito non passeranno alla fase successiva. Correggi i file CBL e riprova.",
-        "validate-warning": "Ci sono problemi con il CBL che impediscono l'importazione. Correggi questi problemi e riprova.",
-        "validate-no-issue-description": "Nessun problema riscontrato con CBL, premi Avanti.",
-        "dry-run-description": "Questa è una prova e mostra cosa accadrà se premi Avanti ed esegui l'importazione. Tutti gli errori non verranno importati.",
-        "prev": "Prec",
-        "import": "Importa",
-        "restart": "Riavvia",
-        "next": "Prossimo",
-        "import-step": "Importa CBL",
-        "validate-cbl-step": "Convalidare CBL",
-        "dry-run-step": "Fai una prova",
-        "final-import-step": "Passaggio Finale",
-        "comicvine-parsing-label": "Trova serie con ComicVine",
-        "help-label": "{{common.help}}",
-        "cbl-repo": "Puoi trovare molti elenchi di lettura nella community <a href='https://github.com/DieselTech/CBL-ReadingLists' target='_blank' rel='noopener noreferrer'>repo</a>."
+        "title": "Importa CBL"
     },
     "pdf-reader": {
         "loading-message": "Caricamento...",
@@ -1533,7 +1469,6 @@
         "general-tab": "{{tabs.general-tab}}",
         "metadata-tab": "{{tabs.metadata-tab}}",
         "people-tab": "{{tabs.people-tab}}",
-        "web-links-tab": "{{tabs.weblink-tab}}",
         "cover-image-tab": "{{tabs.cover-tab}}",
         "related-tab": "{{tabs.related-tab}}",
         "info-tab": "{{tabs.info-tab}}",
@@ -1622,15 +1557,8 @@
         "age-rating-label": "{{edit-series-modal.age-rating-label}}",
         "web-link-description": "{{edit-series-modal.web-link-description}}",
         "web-link-label": "{{edit-series-modal.web-link-label}}",
-        "general-tab": "{{tabs.general-tab}}",
-        "people-tab": "{{tabs.people-tab}}",
-        "weblink-tab": "{{tabs.weblink-tab}}",
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
-        "cover-image-tab": "{{tabs.cover-tab}}",
-        "tasks-tab": "{{tabs.tasks-tab}}",
-        "info-tab": "{{tabs.info-tab}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
-        "tags-tab": "{{tabs.tags-tab}}",
         "size-label": "{{edit-series-modal.size-title}}",
         "links-label": "{{metadata-fields.links-title}}",
         "last-read-label": "{{sort-field-pipe.read-progress}}",
@@ -1776,10 +1704,6 @@
     },
     "customize-dashboard-modal": {
         "title-smart-filters": "Filtri Intelligenti",
-        "dashboard": "Dashboard",
-        "sidenav": "Nav laterale",
-        "external-sources": "Fonti esterne",
-        "smart-filters": "Filtri Intelligenti",
         "description": "Puoi personalizzare diversi aspetti di Kavita riordinandoli, modificandone la visibilità e associando filtri intelligenti/fonti esterne alla home page o alla navigazione laterale."
     },
     "customize-dashboard-streams": {
@@ -2146,13 +2070,9 @@
         "issue-num": "Numero",
         "chapter-num": "Capitolo",
         "volume-num": "Volume",
-        "book-nums": "Libri",
         "issue-num-shorthand": "#{{num}}",
         "chapter-count": "{{num}} Capitoli",
-        "volume-nums": "Volumi",
         "no-data": "Nessun Dato",
-        "issue-nums": "Numeri",
-        "chapter-nums": "Capitoli",
         "chapter-num-shorthand": "Ch {{num}}",
         "volume-num-shorthand": "Vol {{num}}",
         "book-num-shorthand": "Libro {{num}}"
@@ -2187,20 +2107,6 @@
         "added": "Aggiunto",
         "feature-requests": "Richieste di funzionalità",
         "known-issues": "Problemi Noti"
-    },
-    "new-version-modal": {
-        "description": "È disponibile una nuova versione di Kavita. Aggiorna la pagina per applicarla.",
-        "added": "{{changelog.added}}",
-        "changed": "{{changelog.changed}}",
-        "theme": "{{changelog.theme}}",
-        "api": "{{changelog.api}}",
-        "close": "{{common.close}}",
-        "fixed": "{{changelog.fixed}}",
-        "removed": "{{changelog.removed}}",
-        "title": "Kavita è stato aggiornato!",
-        "developer": "{{changelog.developer}}",
-        "refresh": "Aggiorna",
-        "known-issues": "{{changelog.known-issues}}"
     },
     "manage-user-tokens": {
         "description": "Gli utenti che dispongono di token di scrobbling potrebbero doverli rinnovare occasionalmente. Kavita invierà loro automaticamente un'email se il sistema di posta è configurato e se hanno un'email valida.",
@@ -2289,7 +2195,6 @@
     },
     "edit-person-modal": {
         "title": "{{personName}} Dettagli",
-        "general-tab": "{{edit-series-modal.general-tab}}",
         "description-label": "Descrizione",
         "download-coversdb": "Scarica da CoversDB",
         "cover-image-description-extra": "In alternativa, se disponibile, è possibile scaricare una copertina da CoversDB.",
@@ -2298,7 +2203,6 @@
         "anilist-id-label": "AniList Id",
         "required-field": "{{validations.required-field}}",
         "save": "{{common.save}}",
-        "cover-image-tab": "{{edit-series-modal.cover-image-tab}}",
         "hardcover-id-label": "Id Copertina Rigida",
         "anilist-tooltip": "https://anilist.co/staff/{AniListId}/",
         "asin-label": "ASIN",
@@ -2373,6 +2277,67 @@
     "manage-oidc-connect": {
         "save-success": "Impostazioni OIDC aggiornate con successo",
         "notice": "Avviso",
-        "restart-required": "La modifica dell'Autorità o del ClientID richiede un riavvio manuale di Kavita."
+        "restart-required": "La modifica del Provide o delle impostazioni avanzate richiede un riavvio manuale di Kavita.",
+        "save": "{{common.save}}",
+        "reset-label": "Reset ids",
+        "auto-save-required": "Hai cambiato impostazioni critiche, salva per mentenerle",
+        "provider-title": "Fornitore",
+        "provider-tooltip": "Modifiche al Provider richiedono il salvattaggio manuale. Kavita deve essere configurato come client confidenziale e necessita di un URL di reindirizzamento. Maggiori informazione nella <a href='https://wiki.kavitareader.com/guides/admin-settings/open-id-connect/' target='_blank' rel='noreferrer noopener'>guida</a>.",
+        "behavior-title": "Comportamento",
+        "other-field-required": "{{validation.other-field-required}}",
+        "other-field-invalid": "{{validation.other-field-invalid}}",
+        "invalid-uri": "{{validation.invalid-uri}}",
+        "tls-required": "Il provider OIDC richiede tls (https)",
+        "manual-save-label": "Modifiche al provider richiedono un salvataggio manuale",
+        "authority-tooltip": "L'URL del provider OIDC, non include il percorso .well-known/openid-configuration",
+        "client-id-label": "Client ID",
+        "reset-tooltip": "Reimposta gli id esterni di tutti gli utenti; usa questa funzione per reimpostare i collegamenti tra gli utenti in Kavita e il tuo provider di identità",
+        "reset-confirm": "Vuoi davvero resettare gli id esterni per tutti gli utenti?",
+        "reset-success": "Id esterni resettati per tutti gli utenti, ri-autenticarsi per collegarsi",
+        "checking-authority": "Controllo validità dell'autorità, attendere...",
+        "authority-label": "Autorità",
+        "client-id-tooltip": "Il ClientID impostato nel tuo OIDC provider, non può essere vuoto",
+        "secret-label": "Client secret",
+        "secret-tooltip": "La chiave segreta generata dal tuo OIDC provider, non sarà mostrata dopo l'impostazione"
+    },
+    "version-update-modal": {
+        "close": "{{common.close}}",
+        "out-of-date": {
+            "title": "Non restare indietro!",
+            "subtitle": "Sembra che la tua installazione sia più di {{count}} versioni indietro!",
+            "description-1": "Per favore, effettua un aggiornamento in modo da utilizzare la versione più recente di Kavita.",
+            "description-2": "Dai un'occhiata al nostro <a href='https://wiki.kavitareader.com/guides/updating/' target='_blank' rel='noreferrer noopener'>wiki</a> per le istruzioni su come aggiornare.",
+            "description-3": "Se c'è un motivo specifico per cui non hai ancora aggiornato, ci piacerebbe sapere cosa ti spinge a restare su una versione obsoleta! Vieni a trovarci su Discord e facci sapere cosa sta bloccando il tuo percorso di aggiornamento."
+        },
+        "new-version": {
+            "title": "Kavita è stato aggiornato!",
+            "description": "È disponibile una nuova versione di Kavita. Aggiorna la pagina per applicarla.",
+            "refresh": "Aggiorna"
+        },
+        "update-notification": {
+            "title": "Nuovo Aggiornamento Disponibile!",
+            "help": "Come aggiornare",
+            "download": "Scaricamento"
+        }
+    },
+    "title": {
+        "bookmarks": "Segnalibri",
+        "browse-genres": "Sfoglia Generi",
+        "reading-list": "Liste di lettura",
+        "home": "Home",
+        "collections": "Collezioni",
+        "browse-tags": "Sfoglia tags",
+        "want-to-read": "Da leggere",
+        "reading-lists": "Liste di lettura",
+        "settings": "Impostazioni",
+        "all-series": "Tutte le serie",
+        "profile": "Profilo di {{username}}"
+    },
+    "authority-validation-result-pipe": {
+        "success": "Autorità valida",
+        "invalid-authority": "Kavita non riesce a caricare la configurazione OIDC, ma l'emittente non corrisponde",
+        "failure": "Kavita non riesce a caricare la configurazione OIDC",
+        "not-applicable": "Kavita non riesce a validare l'autorità perché non è configurata",
+        "missing-https": "{{manage-oidc-connect.tls-required}}"
     }
 }
