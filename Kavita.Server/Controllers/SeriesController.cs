@@ -8,6 +8,7 @@ using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
 using Kavita.API.Services.Plus;
+using Kavita.API.Services.SignalR;
 using Kavita.Common;
 using Kavita.Common.Extensions;
 using Kavita.Common.Helpers;
@@ -19,6 +20,8 @@ using Kavita.Models.DTOs.Filtering.v2.Requests;
 using Kavita.Models.DTOs.Metadata.Matching;
 using Kavita.Models.DTOs.Recommendation;
 using Kavita.Models.DTOs.SeriesDetail;
+using Kavita.Models.DTOs.SignalR;
+using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
 using Kavita.Models.Entities.MetadataMatching;
 using Kavita.Server.Attributes;
@@ -41,44 +44,11 @@ public class SeriesController(
     IEasyCachingProviderFactory cachingProviderFactory,
     ILocalizationService localizationService,
     IExternalMetadataService externalMetadataService,
-    IHostEnvironment environment)
+    IHostEnvironment environment,
+    IEventHub eventHub,
+    IMetadataService metadataService)
     : BaseApiController
 {
-    private readonly ILogger<SeriesController> _logger;
-    private readonly ITaskScheduler _taskScheduler;
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ISeriesService _seriesService;
-    private readonly ILicenseService _licenseService;
-    private readonly ILocalizationService _localizationService;
-    private readonly IExternalMetadataService _externalMetadataService;
-    private readonly IHostEnvironment _environment;
-    private readonly IEasyCachingProvider _externalSeriesCacheProvider;
-    private readonly IMetadataService _metadataService;
-    private readonly IEventHub _eventHub;
-    private readonly IEasyCachingProvider _matchSeriesCacheProvider;
-    private const string CacheKey = "externalSeriesData_";
-    private const string MatchSeriesCacheKey = "matchSeries_";
-
-
-    public SeriesController(ILogger<SeriesController> logger, ITaskScheduler taskScheduler, IUnitOfWork unitOfWork,
-        ISeriesService seriesService, ILicenseService licenseService,
-        IEasyCachingProviderFactory cachingProviderFactory, ILocalizationService localizationService,
-        IExternalMetadataService externalMetadataService, IMetadataService metadataService, IEventHub eventHub, IHostEnvironment environment)
-    {
-        _logger = logger;
-        _taskScheduler = taskScheduler;
-        _unitOfWork = unitOfWork;
-        _seriesService = seriesService;
-        _licenseService = licenseService;
-        _localizationService = localizationService;
-        _externalMetadataService = externalMetadataService;
-        _metadataService = metadataService;
-        _eventHub = eventHub;
-        _environment = environment;
-
-        _externalSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusExternalSeries);
-        _matchSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusMatchSeries);
-    }
 
     private readonly IEasyCachingProvider _externalSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusExternalSeries);
     private readonly IEasyCachingProvider _matchSeriesCacheProvider = cachingProviderFactory.GetCachingProvider(EasyCacheProfiles.KavitaPlusMatchSeries);
@@ -594,28 +564,6 @@ public class SeriesController(
         return Ok(await seriesService.GetEstimatedChapterCreationDate(seriesId, userId, ct));
     }
 
-    [HttpPost("chapter-metadata")]
-    public async Task<ActionResult<ChapterMetadataDto>> UpdateChapterMetadata(UpdateChapterMetadataDto updateChapterMetadataDto)
-    {
-        if (!await _seriesService.UpdateChapterMetadata(updateChapterMetadataDto))
-            return BadRequest(await _localizationService.Translate(User.GetUserId(), "update-metadata-fail"));
-
-        return Ok(await _localizationService.Translate(User.GetUserId(), "chapter-updated"));
-    }
-
-    [HttpGet("chapters")]
-    public async Task<ActionResult<IEnumerable<ChapterMetadataDto>>> GetAllChapters()
-    {
-        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (ChapterDto chapterDto in await _unitOfWork.ChapterRepository.GetChapterDtosAsync())
-        {
-            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapterDto.Id);
-            chapterMetadataDto.FilePath = chapterDto.Files.FirstOrDefault().FilePath;
-            chapterDtos.Add(chapterMetadataDto);
-        }
-        return Ok(chapterDtos);
-    }
-
     [AllowAnonymous]
     [HttpPost("by-url")]
     public async Task<ActionResult<Dictionary<string, bool>>> GetByUrl(SeriesByUrlDto seriesByUrlDto)
@@ -623,60 +571,36 @@ public class SeriesController(
         Dictionary<string, bool> results = new Dictionary<string, bool>();
         foreach (string url in seriesByUrlDto.Urls)
         {
-            bool found = await _unitOfWork.SeriesMetadataRepository.FindByUrl(url);
+            bool found = await unitOfWork.SeriesMetadataRepository.FindByUrl(url);
             results.Add(url, found);
         }
         return Ok(results);
     }
 
-    [HttpGet("url-missing")]
-    public async Task<ActionResult<IList<ChapterMetadataDto>>> GetMissingUrl()
-    {
-        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(s => s.Summary != "eh").AsEnumerable().Where(s => (s.WebLinks == null || s.WebLinks.Length == 0) && s.Summary != null && !s.Summary.StartsWith('#')))
-        {
-            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
-            chapterMetadataDto.FilePath = await _unitOfWork.DataContext.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
-            chapterDtos.Add(chapterMetadataDto);
-        }
-        return Ok(chapterDtos);
-    }
-
-    [HttpGet("all-url-missing")]
-    public async Task<ActionResult<IList<ChapterMetadataDto>>> GetAllMissingUrl()
-    {
-        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(s => s.WebLinks.Length == 0))
-        {
-            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id);
-            chapterMetadataDto.FilePath = await _unitOfWork.DataContext.MangaFile.Where(f => f.ChapterId == chapter.Id).Select(f => f.FilePath).FirstOrDefaultAsync();
-            chapterDtos.Add(chapterMetadataDto);
-        }
-        return Ok(chapterDtos);
-    }
 
     [HttpGet("url-search")]
-    public async Task<ActionResult<IList<ChapterMetadataDto>>> GetUrlSearch(string query)
+    public async Task<ActionResult<IList<ChapterDto>>> GetUrlSearch(string query)
     {
-        List<ChapterMetadataDto> chapterDtos = new List<ChapterMetadataDto>();
-        foreach (Chapter chapter in _unitOfWork.DataContext.Chapter.Where(c => c.WebLinks.Contains(query) || c.Summary.Contains(query)))
+        List<ChapterDto> chapterDtos = new List<ChapterDto>();
+        foreach (Chapter chapter in unitOfWork.DataContext.Chapter.Where(c => c.WebLinks.Contains(query) || c.Summary.Contains(query)))
         {
-            chapterDtos.Add(await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(chapter.Id));
+            ChapterDto chapterDto = await unitOfWork.ChapterRepository.GetChapterDtoAsync(chapter.Id, userId: UserId, ct: HttpContext.RequestAborted);
+            chapterDtos.Add(chapterDto);
         }
         return Ok(chapterDtos);
     }
 
     [AllowAnonymous]
     [HttpPost("by-file")]
-    public async Task<ActionResult<Dictionary<string, ChapterMetadataDto>>> GetByFile(SeriesByUrlDto seriesByUrlDto)
+    public async Task<ActionResult<Dictionary<string, ChapterDto>>> GetByFile(SeriesByUrlDto seriesByUrlDto)
     {
-        Dictionary<string, ChapterMetadataDto> results = new Dictionary<string, ChapterMetadataDto>();
+        Dictionary<string, ChapterDto> results = new Dictionary<string, ChapterDto>();
         foreach (string url in seriesByUrlDto.Urls)
         {
-            Chapter found = await _unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).Where(f => f.FilePath.Contains(url)).Select(f => f.Chapter).FirstOrDefaultAsync();
-            ChapterMetadataDto chapterMetadataDto = await _unitOfWork.ChapterRepository.GetChapterMetadataDtoAsync(found.Id);
-            chapterMetadataDto.SeriesName = found.Volume.Series.Name;
-            results.Add(url, chapterMetadataDto);
+            Chapter found = await unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).Where(f => f.FilePath.Contains(url)).Select(f => f.Chapter).FirstOrDefaultAsync();
+            ChapterDto chapterDto = await unitOfWork.ChapterRepository.GetChapterDtoAsync(found.Id, userId: UserId, ct: HttpContext.RequestAborted);
+            chapterDto.SeriesName = found.Volume.Series.Name;
+            results.Add(url, chapterDto);
         }
         return Ok(results);
     }
@@ -684,12 +608,12 @@ public class SeriesController(
     [HttpDelete("delete-file")]
     public async Task<ActionResult> DeleteFile(int fileId)
     {
-        MangaFile mangaFile = await _unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
-        _unitOfWork.DataContext.MangaFile.Remove(mangaFile);
-        await _unitOfWork.DataContext.SaveChangesAsync();
-        var serverSettings = await _unitOfWork.SettingsRepository.GetSettingsDtoAsync();
-        await _metadataService.GenerateCoversForSeries(serverSettings, mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
-        await _eventHub.SendMessageAsync(MessageFactory.ScanSeries,
+        MangaFile mangaFile = await unitOfWork.DataContext.MangaFile.Include(f => f.Chapter).ThenInclude(c => c.Volume).ThenInclude(v => v.Series).FirstOrDefaultAsync(f => f.Id == fileId);
+        unitOfWork.DataContext.MangaFile.Remove(mangaFile);
+        await unitOfWork.DataContext.SaveChangesAsync();
+        var serverSettings = await unitOfWork.SettingsRepository.GetSettingsDtoAsync();
+        await metadataService.GenerateCoversForSeries(serverSettings, mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId);
+        await eventHub.SendMessageAsync(MessageFactory.ScanSeries,
             MessageFactory.ScanSeriesEvent(mangaFile.Chapter.Volume.Series.LibraryId, mangaFile.Chapter.Volume.SeriesId, mangaFile.Chapter.Volume.Series.Name));
         return Ok();
     }

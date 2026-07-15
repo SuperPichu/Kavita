@@ -23,6 +23,7 @@ using Kavita.Models.DTOs.KavitaPlus.Metadata;
 using Kavita.Models.DTOs.SignalR;
 using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Metadata;
 using Kavita.Models.Entities.Person;
 using Kavita.Models.Metadata;
 using Kavita.Models.Parser;
@@ -356,7 +357,7 @@ public class ProcessSeries(
             // If a series has a TotalCount of 1 (or no total count) and there is only a Special, mark it as Complete
             series.Metadata.MaxCount = series.Metadata.TotalCount;
         }
-        else if ((maxChapter == Parser.Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) && maxVolume <= series.Metadata.TotalCount)
+        else if ((maxChapter == Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) && maxVolume <= series.Metadata.TotalCount)
         {
             series.Metadata.MaxCount = maxVolume;
         }
@@ -585,12 +586,6 @@ public class ProcessSeries(
     }
 
 
-
-    private async Task UpdateSeriesMetadataPeople(SeriesMetadata metadata, ICollection<SeriesMetadataPeople> metadataPeople,
-        IEnumerable<ChapterPeople> chapterPeople, PersonRole role)
-    {
-        await PersonHelper.UpdateSeriesMetadataPeopleAsync(metadata, metadataPeople, chapterPeople, role, unitOfWork);
-    }
 
     private void DeterminePublicationStatus(Series series, List<Chapter> chapters)
     {

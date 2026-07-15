@@ -1,5 +1,5 @@
 using Kavita.Models.Entities.Metadata;
-
+using System.Threading.Tasks;
 namespace Kavita.API.Repositories;
 
 public interface ISeriesMetadataRepository

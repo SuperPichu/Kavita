@@ -192,4 +192,5 @@ public class ChapterDto : IHasReadTimeEstimate, IHasCoverImage, IHasMetadataIds
     public string? ComicVineId { get; set; }
     public long MangaBakaId { get; set; }
     #endregion
+    public string? SeriesName { get; set; } = string.Empty;
 }

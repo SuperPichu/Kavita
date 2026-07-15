@@ -50,9 +50,9 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
 
     public async Task<IEnumerable<ChapterDto?>> GetChapterDtosAsync(ChapterIncludes includes = ChapterIncludes.Files)
     {
-        var chapter = await _context.Chapter
+        var chapter = await context.Chapter
             .Includes(includes)
-            .ProjectTo<ChapterDto>(_mapper.ConfigurationProvider)
+            .ProjectTo<ChapterDto>(mapper.ConfigurationProvider)
             .AsNoTracking()
             .AsSplitQuery()
             .ToListAsync();
@@ -115,7 +115,7 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
 
     public async Task<Chapter> GetChapterByIdAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.None)
     {
-        return await _context.Chapter
+        return await context.Chapter
             .Where(c => c.Id == chapterId)
             .Includes(includes)
             .SingleOrDefaultAsync();
@@ -471,10 +471,10 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
     }
     public Task<ChapterDto?> GetChapterByFilenameAsync(string filename, int userId)
     {
-        return _context.Chapter
+        return context.Chapter
             .Includes(ChapterIncludes.Files | ChapterIncludes.People)
             .Where(c => c.Files.Any(f => f.FilePath == filename))
-            .ProjectToWithProgress<Chapter, ChapterDto>(_mapper, userId)
+            .ProjectToWithProgress<Chapter, ChapterDto>(mapper, userId)
             .AsSplitQuery()
             .FirstOrDefaultAsync();
     }

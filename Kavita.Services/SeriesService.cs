@@ -7,6 +7,7 @@ using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
 using Kavita.API.Services.ReadingLists;
+using Kavita.API.Services.Scanner;
 using Kavita.API.Services.SignalR;
 using Kavita.Common;
 using Kavita.Common.Extensions;
@@ -43,32 +44,9 @@ public class SeriesService(
     ILogger<SeriesService> logger,
     ILocalizationService localizationService,
     IReadingListService readingListService,
-    IEntityNamingService namingService)
+    IEntityNamingService namingService, IProcessSeries processSeries)
     : ISeriesService
 {
-    Task<SeriesDetailDto> GetSeriesDetail(int seriesId, int userId);
-    Task<bool> UpdateChapterMetadata(UpdateChapterMetadataDto updateChapterMetadataDto);
-    Task<bool> UpdateSeriesMetadata(UpdateSeriesMetadataDto updateSeriesMetadataDto);
-    Task<bool> DeleteMultipleSeries(IList<int> seriesIds);
-    Task<bool> UpdateRelatedSeries(UpdateRelatedSeriesDto dto);
-    Task<RelatedSeriesDto> GetRelatedSeries(int userId, int seriesId);
-    Task<NextExpectedChapterDto> GetEstimatedChapterCreationDate(int seriesId, int userId);
-    Task<PagedList<SeriesDto>> GetCurrentlyReading(int userId, int requestingUserId, UserParams userParams);
-    Task<List<FilterStatementDto>> GetProfilePrivacyStatements(int userId, int requestingUserId);
-}
-
-public class SeriesService : ISeriesService
-{
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IEventHub _eventHub;
-    private readonly ITaskScheduler _taskScheduler;
-    private readonly ILogger<SeriesService> _logger;
-    private readonly ILocalizationService _localizationService;
-    private readonly IReadingListService _readingListService;
-    private readonly IEntityNamingService _namingService;
-
-    private readonly IProcessSeries _processSeries;
-
     private readonly NextExpectedChapterDto _emptyExpectedChapter = new NextExpectedChapterDto
     {
         ExpectedDate = null,
@@ -104,56 +82,48 @@ public class SeriesService : ISeriesService
         return minChapter;
     }
 
-    public async Task<bool> UpdateChapterMetadata(UpdateChapterMetadataDto updateChapterMetadataDto)
+    public async Task<bool> UpdateChapterMetadata(ChapterDto updateChapterMetadataDto)
     {
         try
         {
-            var chapterId = updateChapterMetadataDto.ChapterMetadata.ChapterId;
-            var chapter = await _unitOfWork.ChapterRepository.GetChapterByIdAsync(chapterId, ChapterIncludes.Volumes);
+            var chapter = await unitOfWork.ChapterRepository.GetChapterAsync(updateChapterMetadataDto.Id, ChapterIncludes.Volumes);
             if (chapter == null) return false;
 
-            if (chapter.AgeRating != updateChapterMetadataDto.ChapterMetadata.AgeRating)
+            if (chapter.AgeRating != updateChapterMetadataDto.AgeRating)
             {
-                chapter.AgeRating = updateChapterMetadataDto.ChapterMetadata.AgeRating;
+                chapter.AgeRating = updateChapterMetadataDto.AgeRating;
             }
 
-
-
-            if (string.IsNullOrEmpty(updateChapterMetadataDto.ChapterMetadata.Summary))
+            if (chapter.Summary != updateChapterMetadataDto.Summary.Trim())
             {
-                updateChapterMetadataDto.ChapterMetadata.Summary = string.Empty;
+                chapter.Summary = updateChapterMetadataDto?.Summary.Trim() ?? string.Empty;
             }
 
-            if (chapter.Summary != updateChapterMetadataDto.ChapterMetadata.Summary.Trim())
+            if (chapter.Language != updateChapterMetadataDto.Language)
             {
-                chapter.Summary = updateChapterMetadataDto.ChapterMetadata?.Summary.Trim() ?? string.Empty;
+                chapter.Language = updateChapterMetadataDto.Language ?? string.Empty;
             }
 
-            if (chapter.Language != updateChapterMetadataDto.ChapterMetadata?.Language)
-            {
-                chapter.Language = updateChapterMetadataDto.ChapterMetadata?.Language ?? string.Empty;
-            }
-
-            if (string.IsNullOrEmpty(updateChapterMetadataDto.ChapterMetadata?.WebLinks))
+            if (string.IsNullOrEmpty(updateChapterMetadataDto.WebLinks))
             {
                 chapter.WebLinks = string.Empty;
             }
             else
             {
-                chapter.WebLinks = string.Join(",", updateChapterMetadataDto.ChapterMetadata?.WebLinks
+                chapter.WebLinks = string.Join(",", updateChapterMetadataDto.WebLinks
                     .Split(",")
                     .Where(s => !string.IsNullOrEmpty(s))
                     .Select(s => s.Trim())!
                 );
             }
 
-            if (updateChapterMetadataDto.ChapterMetadata?.Tags != null && updateChapterMetadataDto.ChapterMetadata.Tags.Any())
+            if (updateChapterMetadataDto.Tags != null && updateChapterMetadataDto.Tags.Any())
             {
-                var allTags = (await _unitOfWork.TagRepository
-                    .GetAllTagsByNameAsync(updateChapterMetadataDto.ChapterMetadata.Tags.Select(t => Parser.Normalize(t.Title))))
+                var allTags = (await unitOfWork.TagRepository
+                    .GetAllTagsByNameAsync(updateChapterMetadataDto.Tags.Select(t => Parser.Normalize(t.Title))))
                     .ToList();
                 chapter.Tags ??= new List<Tag>();
-                TagHelper.UpdateTagList(updateChapterMetadataDto.ChapterMetadata?.Tags, chapter, allTags, tag =>
+                TagHelper.UpdateTagList(updateChapterMetadataDto.Tags, chapter, allTags, tag =>
                 {
                     chapter.Tags.Add(tag);
                 }, () => { });
@@ -161,30 +131,30 @@ public class SeriesService : ISeriesService
 
 
 
-            if (!_unitOfWork.HasChanges())
+            if (!unitOfWork.HasChanges())
             {
                 return true;
             }
 
-            await _unitOfWork.CommitAsync();
-            var series = await _unitOfWork.SeriesRepository.GetFullSeriesForSeriesIdAsync(chapter.Volume.SeriesId);
-            var settings = await _unitOfWork.SettingsRepository.GetMetadataSettingDto();
+            await unitOfWork.CommitAsync();
+            var series = await unitOfWork.SeriesRepository.GetFullSeriesForSeriesIdAsync(chapter.Volume.SeriesId);
+            var settings = await unitOfWork.SettingsRepository.GetMetadataSettingDto();
             // Trigger code to cleanup tags, collections, people, etc
             try
             {
-                await _taskScheduler.CleanupDbEntries();
+                await taskScheduler.CleanupDbEntries();
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "There was an issue cleaning up DB entries. This may happen if Komf is spamming updates. Nightly cleanup will work");
+                logger.LogError(ex, "There was an issue cleaning up DB entries. This may happen if Komf is spamming updates. Nightly cleanup will work");
             }
 
             return true;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "There was an exception when updating metadata");
-            await _unitOfWork.RollbackAsync();
+            logger.LogError(ex, "There was an exception when updating metadata");
+            await unitOfWork.RollbackAsync();
         }
 
         return false;

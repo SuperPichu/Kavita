@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Kavita.API.Database;
 using Kavita.Common.Extensions;
 using Kavita.Models.Builders;
+using Kavita.Models.DTOs;
 using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
 using Kavita.Models.Entities.Metadata;
@@ -226,7 +227,7 @@ public static class PersonHelper
         return modification;
     }
 
-    public static bool HasAnyPeople(ChapterMetadataDto? chapterMetadata)
+    public static bool HasAnyPeople(ChapterDto? chapterMetadata)
     {
         if (chapterMetadata == null) return false;
         return chapterMetadata.Writers.Any() ||

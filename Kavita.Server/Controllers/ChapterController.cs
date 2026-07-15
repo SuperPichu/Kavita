@@ -29,26 +29,10 @@ public class ChapterController(
     IUnitOfWork unitOfWork,
     ILocalizationService localizationService,
     IEventHub eventHub,
+    ITaskScheduler taskScheduler,
     ILogger<ChapterController> logger)
     : BaseApiController
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly ILocalizationService _localizationService;
-    private readonly IEventHub _eventHub;
-    private readonly ILogger<ChapterController> _logger;
-    private readonly IMapper _mapper;
-    private readonly ITaskScheduler _taskScheduler;
-
-    public ChapterController(IUnitOfWork unitOfWork, ILocalizationService localizationService, IEventHub eventHub, ILogger<ChapterController> logger,
-        IMapper mapper, ITaskScheduler taskScheduler)
-    {
-        _unitOfWork = unitOfWork;
-        _localizationService = localizationService;
-        _eventHub = eventHub;
-        _logger = logger;
-        _mapper = mapper;
-        _taskScheduler = taskScheduler;
-    }
 
     /// <summary>
     /// Gets a single chapter
@@ -59,7 +43,7 @@ public class ChapterController(
     [ChapterAccess]
     public async Task<ActionResult<ChapterDto>> GetChapter(int chapterId)
     {
-        var chapter = await unitOfWork.ChapterRepository.GetChapterDtoAsync(chapterId, UserId);
+        var chapter = await unitOfWork.ChapterRepository.GetChapterDtoAsync(chapterId, userId: UserId);
 
         return Ok(chapter);
     }
@@ -72,7 +56,7 @@ public class ChapterController(
     [HttpGet("by-filename")]
     public async Task<ActionResult<ChapterDto>> GetChapter([FromQuery] string filename)
     {
-        var chapter = await _unitOfWork.ChapterRepository.GetChapterByFilenameAsync(filename, UserId);
+        var chapter = await unitOfWork.ChapterRepository.GetChapterByFilenameAsync(filename, UserId);
 
         return Ok(chapter);
     }
@@ -219,7 +203,7 @@ public class ChapterController(
     [Authorize(Policy = PolicyGroups.AdminPolicy)]
     public async Task<ActionResult> UpdateChapterMetadata(UpdateChapterDto dto)
     {
-        var chapter = await _unitOfWork.ChapterRepository.GetChapterAsync(dto.Id,
+        var chapter = await unitOfWork.ChapterRepository.GetChapterAsync(dto.Id,
             ChapterIncludes.People | ChapterIncludes.Genres | ChapterIncludes.Tags | ChapterIncludes.Volumes, HttpContext.RequestAborted);
         if (chapter == null)
             return BadRequest(await localizationService.TranslateAsync(UserId, "chapter-doesnt-exist"));
@@ -429,10 +413,10 @@ public class ChapterController(
         #endregion
 
 
-        _unitOfWork.ChapterRepository.Update(chapter);
-        var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(chapter.Volume.SeriesId);
-        await _taskScheduler.ScanSeries(series.LibraryId, chapter.Volume.SeriesId, true);
-        if (!_unitOfWork.HasChanges())
+        unitOfWork.ChapterRepository.Update(chapter);
+        var series = await unitOfWork.SeriesRepository.GetSeriesByIdAsync(chapter.Volume.SeriesId);
+        await taskScheduler.ScanSeries(series.LibraryId, chapter.Volume.SeriesId, true);
+        if (!unitOfWork.HasChanges())
         {
             return Ok();
         }

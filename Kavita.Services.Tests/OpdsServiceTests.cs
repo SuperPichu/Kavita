@@ -6,6 +6,7 @@ using Kavita.API.Database;
 using Kavita.API.Errors;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
+using Kavita.API.Services.Helpers;
 using Kavita.API.Services.Plus;
 using Kavita.API.Services.Reading;
 using Kavita.API.Services.ReadingLists;
@@ -32,7 +33,6 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit.Abstractions;
-using API.Services.Tasks.Scanner;
 
 namespace Kavita.Services.Tests;
 

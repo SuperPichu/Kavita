@@ -3,6 +3,8 @@ using System.IO.Abstractions;
 using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
+using Kavita.API.Services.Helpers;
+using Kavita.API.Services.Plus;
 using Kavita.API.Services.Reading;
 using Kavita.API.Services.ReadingLists;
 using Kavita.API.Services.SignalR;
@@ -56,6 +58,16 @@ public class SeriesServiceTests(ITestOutputHelper outputHelper) : AbstractDbTest
 
         var locService = new LocalizationService(ds, new MockHostingEnvironment(),
             Substitute.For<IMemoryCache>(), Substitute.For<IUnitOfWork>(), Substitute.For<IUserContext>());
+        var processSeries = new ProcessSeries(
+            unitOfWork,
+            Substitute.For<ILogger<ProcessSeries>>(),
+            Substitute.For<IEventHub>(),
+            ds,
+            Substitute.For<ICacheHelper>(),
+            Substitute.For<IReadingItemService>(),
+            Substitute.For<IFileService>(),
+            Substitute.For<IReadingListService>(),
+            Substitute.For<IExternalMetadataService>());
 
         return new SeriesService(unitOfWork, Substitute.For<IEventHub>(),
             Substitute.For<ITaskScheduler>(), Substitute.For<ILogger<SeriesService>>(), locService,

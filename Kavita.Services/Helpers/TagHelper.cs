@@ -4,6 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Kavita.API.Database;
 using Kavita.Common.Extensions;
+using Kavita.Models.Builders;
+using Kavita.Models.DTOs.Metadata;
+using Kavita.Models.Entities;
 using Kavita.Models.Entities.Interfaces;
 using Microsoft.EntityFrameworkCore;
 

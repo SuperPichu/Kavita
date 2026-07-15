@@ -68,4 +68,6 @@ public interface IChapterRepository
     /// Fetches chapters that have a non-empty AlternateSeries field from the specified libraries
     /// </summary>
     Task<IList<Chapter>> GetChaptersByAlternateSeriesAsync(IList<string> normalizedNames, IList<int> libraryIds, CancellationToken ct = default);
+
+    public Task<ChapterDto?> GetChapterByFilenameAsync(string filename, int userId);
 }
