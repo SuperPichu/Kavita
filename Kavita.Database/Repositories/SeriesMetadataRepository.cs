@@ -11,4 +11,10 @@ public class SeriesMetadataRepository(DataContext context) : ISeriesMetadataRepo
     {
         context.SeriesMetadata.Update(seriesMetadata);
     }
+
+    public async Task<bool> FindByUrl(string url)
+    {
+        SeriesMetadata existing = await _context.SeriesMetadata.FirstOrDefaultAsync(sm => sm.WebLinks.Contains(url));
+        return existing != null;
+    }
 }

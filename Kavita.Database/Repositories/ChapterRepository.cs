@@ -48,6 +48,18 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
             .ToListAsync(ct);
     }
 
+    public async Task<IEnumerable<ChapterDto?>> GetChapterDtosAsync(ChapterIncludes includes = ChapterIncludes.Files)
+    {
+        var chapter = await _context.Chapter
+            .Includes(includes)
+            .ProjectTo<ChapterDto>(_mapper.ConfigurationProvider)
+            .AsNoTracking()
+            .AsSplitQuery()
+            .ToListAsync();
+
+        return chapter;
+    }
+
     /// <summary>
     /// Populates a partial IChapterInfoDto
     /// </summary>
@@ -99,6 +111,14 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
             .SingleOrDefaultAsync(ct);
 
         return chapterInfo;
+    }
+
+    public async Task<Chapter> GetChapterByIdAsync(int chapterId, ChapterIncludes includes = ChapterIncludes.None)
+    {
+        return await _context.Chapter
+            .Where(c => c.Id == chapterId)
+            .Includes(includes)
+            .SingleOrDefaultAsync();
     }
 
     public Task<int> GetChapterTotalPagesAsync(int chapterId, CancellationToken ct = default)
@@ -194,7 +214,7 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
     {
         var extension = format.GetExtension();
         return await context.Chapter
-            .Where(c => !string.IsNullOrEmpty(c.CoverImage)  && !c.CoverImage.EndsWith(extension))
+            .Where(c => !string.IsNullOrEmpty(c.CoverImage) && !c.CoverImage.EndsWith(extension))
             .ToListAsync(ct);
     }
 
@@ -277,8 +297,8 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
             return 0;
         }
 
-        var avg = ratings.Average(r => (int?) r.Rating);
-        return avg.HasValue ? (int) (avg.Value * 20) : 0;
+        var avg = ratings.Average(r => (int?)r.Rating);
+        return avg.HasValue ? (int)(avg.Value * 20) : 0;
     }
 
     public async Task<IList<UserReviewDto>> GetExternalChapterReviewDtos(int chapterId, CancellationToken ct = default)
@@ -448,5 +468,14 @@ public class ChapterRepository(DataContext context, IMapper mapper) : IChapterRe
         return chapters
             .Where(c => normalizedSet.Contains(c.AlternateSeries.ToNormalized()))
             .ToList();
+    }
+    public Task<ChapterDto?> GetChapterByFilenameAsync(string filename, int userId)
+    {
+        return _context.Chapter
+            .Includes(ChapterIncludes.Files | ChapterIncludes.People)
+            .Where(c => c.Files.Any(f => f.FilePath == filename))
+            .ProjectToWithProgress<Chapter, ChapterDto>(_mapper, userId)
+            .AsSplitQuery()
+            .FirstOrDefaultAsync();
     }
 }
