@@ -91,7 +91,8 @@ public class SeriesServiceTests(ITestOutputHelper outputHelper) : AbstractDbTest
             SideStories = new List<int>(),
             SpinOffs = new List<int>(),
             Editions = new List<int>(),
-            Annuals = new List<int>()
+            Annuals = new List<int>(),
+            Cameos = new List<int>(),
         };
     }
 
@@ -1294,6 +1295,63 @@ public class SeriesServiceTests(ITestOutputHelper outputHelper) : AbstractDbTest
         var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
         Assert.NotNull(firstChapter);
         Assert.Equal(1, firstChapter.MinNumber);
+    }
+
+    [Fact]
+    public void GetFirstChapterForMetadata_ChapterOne_HasPriority()
+    {
+        var file = new MangaFileBuilder("Test.cbz", MangaFormat.Archive, 1).Build();
+
+        var series = new SeriesBuilder("Test")
+            .WithVolume(new VolumeBuilder(Parser.LooseLeafVolume)
+                .WithChapter(new ChapterBuilder("0.5").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("1").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("2").WithPages(1).WithFile(file).Build())
+                .Build())
+            .Build();
+        series.Library = new LibraryBuilder("Test LIb", LibraryType.Book).Build();
+
+        var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
+        Assert.NotNull(firstChapter);
+        Assert.Equal(1, firstChapter.MinNumber);
+    }
+
+    [Fact]
+    public void GetFirstChapterForMetadata_NonPrequelsGetPriority()
+    {
+        var file = new MangaFileBuilder("Test.cbz", MangaFormat.Archive, 1).Build();
+
+        var series = new SeriesBuilder("Test")
+            .WithVolume(new VolumeBuilder(Parser.LooseLeafVolume)
+                .WithChapter(new ChapterBuilder("0.5").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("2").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("3").WithPages(1).WithFile(file).Build())
+                .Build())
+            .Build();
+        series.Library = new LibraryBuilder("Test LIb", LibraryType.Book).Build();
+
+        var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
+        Assert.NotNull(firstChapter);
+        Assert.Equal(2, firstChapter.MinNumber);
+    }
+
+    [Fact]
+    public void GetFirstChapterForMetadata_DoFallbackToPrequels()
+    {
+        var file = new MangaFileBuilder("Test.cbz", MangaFormat.Archive, 1).Build();
+
+        var series = new SeriesBuilder("Test")
+            .WithVolume(new VolumeBuilder(Parser.LooseLeafVolume)
+                .WithChapter(new ChapterBuilder("0.5").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("0.6").WithPages(1).WithFile(file).Build())
+                .WithChapter(new ChapterBuilder("0.7").WithPages(1).WithFile(file).Build())
+                .Build())
+            .Build();
+        series.Library = new LibraryBuilder("Test LIb", LibraryType.Book).Build();
+
+        var firstChapter = SeriesService.GetFirstChapterForMetadata(series);
+        Assert.NotNull(firstChapter);
+        Assert.Equal(0.5, firstChapter.MinNumber, precision: 2);
     }
 
     #endregion

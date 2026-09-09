@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Hangfire;
+using Hangfire.Storage;
 using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
@@ -44,7 +45,6 @@ public class TaskScheduler : ITaskScheduler
     private readonly IStatsService _statsService;
     private readonly IVersionUpdaterService _versionUpdaterService;
     private readonly IWordCountAnalyzerService _wordCountAnalyzerService;
-    private readonly IStatisticService _statisticService;
     private readonly IMediaConversionService _mediaConversionService;
     private readonly IScrobblingService _scrobblingService;
     private readonly ILicenseService _licenseService;
@@ -79,6 +79,7 @@ public class TaskScheduler : ITaskScheduler
     public const string AuthKeyExpirationId = TaskSchedulerConstants.AuthKeyExpirationId;
     public const string EnsureSideNavId = TaskSchedulerConstants.EnsureSideNavId;
     public const string FlushUserActiveTaskId = TaskSchedulerConstants.FlushUserActiveTaskId;
+    public const string PurgeKavitaPlusAuditLogsId = TaskSchedulerConstants.PurgeKavitaPlusAuditLogsId;
 
     private const int BaseRetryDelay = 60; // 1-minute
 
@@ -101,7 +102,7 @@ public class TaskScheduler : ITaskScheduler
     public TaskScheduler(ICacheService cacheService, ILogger<TaskScheduler> logger, IScannerService scannerService,
         IUnitOfWork unitOfWork, IMetadataService metadataService, IBackupService backupService,
         ICleanupService cleanupService, IStatsService statsService, IVersionUpdaterService versionUpdaterService,
-        IWordCountAnalyzerService wordCountAnalyzerService, IStatisticService statisticService,
+        IWordCountAnalyzerService wordCountAnalyzerService,
         IMediaConversionService mediaConversionService, IScrobblingService scrobblingService, ILicenseService licenseService,
         IExternalMetadataService externalMetadataService, ISmartCollectionSyncService smartCollectionSyncService,
         IWantToReadSyncService wantToReadSyncService, IEventHub eventHub, IEmailService emailService,
@@ -117,7 +118,6 @@ public class TaskScheduler : ITaskScheduler
         _statsService = statsService;
         _versionUpdaterService = versionUpdaterService;
         _wordCountAnalyzerService = wordCountAnalyzerService;
-        _statisticService = statisticService;
         _mediaConversionService = mediaConversionService;
         _scrobblingService = scrobblingService;
         _licenseService = licenseService;
@@ -243,19 +243,16 @@ public class TaskScheduler : ITaskScheduler
             service => service.FlushAsync(CancellationToken.None),
             "*/5 * * * *", RecurringJobOptions);
 
-        BackgroundJob.Enqueue(() => ScheduleKavitaPlusTasks(CancellationToken.None));
     }
 
-    private static bool IsInvalidCronSetting(string setting)
+    private static bool IsInvalidCronSetting(string? setting)
     {
         return setting == null || (!NonCronOptions.Contains(setting) && !CronHelper.IsValidCron(setting));
     }
 
     public async Task ScheduleKavitaPlusTasks(CancellationToken cancellationToken = default)
     {
-        // KavitaPlus based (needs license check)
-        var license = (await _unitOfWork.SettingsRepository.GetSettingAsync(ServerSettingKey.LicenseKey, cancellationToken)).Value;
-        if (string.IsNullOrEmpty(license) || !await _licenseService.HasActiveSubscription(license, cancellationToken))
+        if (!await _licenseService.HasActiveLicense(false, cancellationToken))
         {
             return;
         }
@@ -268,11 +265,15 @@ public class TaskScheduler : ITaskScheduler
 
         // Get the License Info (and cache it) on first load. This will internally cache the Github releases for the Version Service
         BackgroundJob.Enqueue(() => _licenseService.GetLicenseInfo(true, CancellationToken.None));  // Kick this off first to cache it then let it refresh every 9 hours (8 hour cache)
+
+        // Spread out license checks for the backend
+        var randomKPlusLicenseCheck = Rnd.Next(0, 60);
         RecurringJob.AddOrUpdate(LicenseCheckId, () => _licenseService.GetLicenseInfo(false, CancellationToken.None),
-            LicenseService.Cron, RecurringJobOptions);
+            $"{randomKPlusLicenseCheck} */9 * * *", RecurringJobOptions);
 
         // KavitaPlus Scrobbling (every hour) - randomise minutes to spread requests out for K+
         var randomMinute = Rnd.Next(0, 60);
+        _logger.LogDebug("Scheduling KavitaPlus Scrobbling Task every hour @ {Minute}m", randomMinute);
         RecurringJob.AddOrUpdate(ProcessScrobblingEventsId,
             () => _scrobblingService.ProcessUpdatesSinceLastSync(CancellationToken.None),
             Cron.Hourly(randomMinute), RecurringJobOptions);
@@ -295,6 +296,18 @@ public class TaskScheduler : ITaskScheduler
         RecurringJob.AddOrUpdate(KavitaPlusWantToReadSyncId,
             () => _wantToReadSyncService.Sync(CancellationToken.None),
             Cron.Weekly(DayOfWeekHelper.Random()), RecurringJobOptions);
+
+        RecurringJob.AddOrUpdate<IKavitaPlusAuditService>(PurgeKavitaPlusAuditLogsId,
+            service => service.PurgeOldLogsAsync(CancellationToken.None),
+            Cron.Daily, RecurringJobOptions);
+
+        RecurringJob.AddOrUpdate<IScrobblingService>(TaskSchedulerConstants.CreateReadStatusTransitionRuleEventsId,
+            service => service.RunReadStatusTransitionRules(CancellationToken.None),
+            Cron.Daily, RecurringJobOptions);
+
+        RecurringJob.AddOrUpdate<IOAuthService>(TaskSchedulerConstants.RefreshConnectedTokensId,
+            service => service.RefreshTokens(CancellationToken.None),
+            Cron.Daily, RecurringJobOptions);
     }
 
 
@@ -310,6 +323,8 @@ public class TaskScheduler : ITaskScheduler
         RecurringJob.RemoveIfExists(KavitaPlusDataRefreshId);
         RecurringJob.RemoveIfExists(KavitaPlusStackSyncId);
         RecurringJob.RemoveIfExists(KavitaPlusWantToReadSyncId);
+        RecurringJob.RemoveIfExists(PurgeKavitaPlusAuditLogsId);
+        RecurringJob.RemoveIfExists(TaskSchedulerConstants.CreateReadStatusTransitionRuleEventsId);
     }
 
     #region StatsTasks
@@ -468,11 +483,6 @@ public class TaskScheduler : ITaskScheduler
         BackgroundJob.ContinueJobWith(jobId, () => _cleanupService.CleanupCacheDirectory());
     }
 
-    public void TurnOnScrobbling(int userId = 0)
-    {
-        BackgroundJob.Enqueue(() => _scrobblingService.CreateEventsFromExistingHistory(userId));
-    }
-
     public void CleanupChapters(int[] chapterIds)
     {
         BackgroundJob.Enqueue(() => _cacheService.CleanupChapters(chapterIds));
@@ -519,9 +529,16 @@ public class TaskScheduler : ITaskScheduler
         {
             // BUG: This can end up triggering a ton of scan series calls (but i haven't seen in practice)
             var series = await _unitOfWork.SeriesRepository.GetSeriesByIdAsync(seriesId, SeriesIncludes.None);
+            if (series == null)
+            {
+                _logger.LogWarning("Series {SeriesId} not found, but a scan was requested. This should not happen", seriesId);
+                return;
+            }
+
             _logger.LogInformation("A Scan is already running, rescheduling ScanSeries in 10 minutes");
-            await _eventHub.SendMessageAsync(MessageFactory.Info, MessageFactory.InfoEvent($"Scan series task delayed: {series!.Name}",
+            await _eventHub.SendMessageAsync(MessageFactory.Info, MessageFactory.InfoEvent($"Scan series task delayed: {series.Name}",
                 $"A scan was ongoing during processing of the scan series task. Task has been rescheduled for 10 minutes: {DateTime.Now.AddMinutes(10)}"));
+
             BackgroundJob.Schedule(() => ScanSeries(libraryId, seriesId, forceUpdate), TimeSpan.FromMinutes(10));
             return;
         }
@@ -775,5 +792,40 @@ public class TaskScheduler : ITaskScheduler
 
         var runningJobs = JobStorage.Current.GetMonitoringApi().ProcessingJobs(0, int.MaxValue);
         return runningJobs.Exists(j => classNames.Contains(j.Value.Job.Method.DeclaringType?.Name));
+    }
+
+    public static bool IsMethodRunningOrEnqueued(string methodName, string queue = DefaultQueue)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+
+        var monitoring = JobStorage.Current.GetMonitoringApi();
+
+        var processing = monitoring.ProcessingJobs(0, 100);
+        if (processing.Any(j => j.Value.Job?.Method.Name == methodName))
+        {
+            return true;
+        }
+
+        var enqueued = monitoring.EnqueuedJobs(queue, 0, 100);
+        if (enqueued.Any(j => j.Value.Job?.Method.Name == methodName))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns Utc DateTime of next run of a given Job Id
+    /// </summary>
+    /// <param name="jobId"></param>
+    /// <returns></returns>
+    public static DateTime? GetNextRun(string jobId)
+    {
+        using var connection = JobStorage.Current.GetConnection();
+        var job = connection.GetRecurringJobs()
+            .FirstOrDefault(j => j.Id == jobId);
+
+        return job?.NextExecution;
     }
 }

@@ -8,14 +8,17 @@ using Kavita.API.Database;
 using Kavita.API.Errors;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
+using Kavita.API.Services.Plus;
 using Kavita.Common;
 using Kavita.Models;
 using Kavita.Models.Builders;
 using Kavita.Models.Constants;
+using Kavita.Models.DTOs.KavitaPlus.Scrobble;
 using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
 using Kavita.Models.Entities.User;
 using Kavita.Models.Extensions;
+using Kavita.Services.Plus;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -182,7 +185,7 @@ public partial class AccountService(
         }
     }
 
-    public async Task<IEnumerable<IdentityError>> UpdateRolesForUser(AppUser user, IList<string> roles,
+    public async Task<(IEnumerable<IdentityError>, bool)> UpdateRolesForUser(AppUser user, IList<string> roles,
         CancellationToken ct = default)
     {
         var existingRoles = await userManager.GetRolesAsync(user);
@@ -195,13 +198,15 @@ public partial class AccountService(
         if (existingRoles.Except(roles).Any() || roles.Except(existingRoles).Any())
         {
             var roleResult = await userManager.RemoveFromRolesAsync(user, existingRoles);
-            if (!roleResult.Succeeded) return roleResult.Errors;
+            if (!roleResult.Succeeded) return (roleResult.Errors, false);
 
             roleResult = await userManager.AddToRolesAsync(user, roles);
-            if (!roleResult.Succeeded) return roleResult.Errors;
+            if (!roleResult.Succeeded) return (roleResult.Errors, false);
+
+            return ([], true);
         }
 
-        return [];
+        return ([], false);
     }
 
     public async Task SeedUser(AppUser user, CancellationToken ct = default)
@@ -209,6 +214,7 @@ public partial class AccountService(
         AddDefaultStreamsToUser(user, ct);
         AddDefaultHighlightSlotsToUser(user);
         AddAuthKeys(user);
+        AddScrobbleProvidersToUser(user);
         await AddDefaultReadingProfileToUser(user, ct); // Commits
     }
 
@@ -261,6 +267,25 @@ public partial class AccountService(
         unitOfWork.AppUserReadingProfileRepository.Add(profile);
 
         await unitOfWork.CommitAsync(ct);
+    }
+
+    public static void AddScrobbleProvidersToUser(AppUser user)
+    {
+        foreach (var provider in KavitaPlusConfiguration.AllInUseScrobbleProviders)
+        {
+            user.ScrobbleProviders[provider] = new AppUserScrobbleProvider
+            {
+                Provider = provider,
+                Settings = new ScrobbleProviderSettingsDto()
+                {
+
+                    ProgressScrobbling = true,
+                    RatingScrobbling = true,
+                    WantToReadSync = true,
+                    AllLibraries = true
+                }
+            };
+        }
     }
 
     [GeneratedRegex(@"^[a-zA-Z0-9\-._@+/]*$")]

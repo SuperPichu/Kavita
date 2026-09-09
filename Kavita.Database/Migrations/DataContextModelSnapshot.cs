@@ -18,7 +18,7 @@ namespace Kavita.Database.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "10.0.6");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
 
             modelBuilder.Entity("AppUserCollectionSeries", b =>
                 {
@@ -170,6 +170,9 @@ namespace Kavita.Database.Migrations
                     b.Property<float>("AvgHoursToRead")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("CbrId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("CharacterLocked")
                         .HasColumnType("INTEGER");
 
@@ -249,7 +252,7 @@ namespace Kavita.Database.Migrations
                     b.Property<long>("MalId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("MangaBakaId")
+                    b.Property<int>("MangaBakaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("MaxHoursToRead")
@@ -504,6 +507,9 @@ namespace Kavita.Database.Migrations
                     b.Property<DateTime>("CreatedUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Family")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("FileName")
                         .HasColumnType("TEXT");
 
@@ -521,6 +527,12 @@ namespace Kavita.Database.Migrations
 
                     b.Property<int>("Provider")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Style")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Weight")
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -569,6 +581,70 @@ namespace Kavita.Database.Migrations
                     b.ToTable("Genre");
                 });
 
+            modelBuilder.Entity("Kavita.Models.Entities.History.KavitaPlusAuditLog", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Category")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("ErrorMessage")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EventType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("HasRetried")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Payload")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("ScrobbleErrorId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SeriesId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("SubjectId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SubjectType")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedUtc")
+                        .HasDatabaseName("IX_KavitaPlusAuditLog_CreatedUtc");
+
+                    b.HasIndex("ScrobbleErrorId");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_KavitaPlusAuditLog_UserId");
+
+                    b.HasIndex("Category", "CreatedUtc")
+                        .HasDatabaseName("IX_KavitaPlusAuditLog_Category_CreatedUtc");
+
+                    b.HasIndex("SeriesId", "CreatedUtc")
+                        .HasDatabaseName("IX_KavitaPlusAuditLog_SeriesId_CreatedUtc");
+
+                    b.HasIndex("SubjectType", "SubjectId")
+                        .HasDatabaseName("IX_KavitaPlusAuditLog_SubjectType_SubjectId");
+
+                    b.ToTable("KavitaPlusAuditLogs");
+                });
+
             modelBuilder.Entity("Kavita.Models.Entities.History.ManualMigrationHistory", b =>
                 {
                     b.Property<int>("Id")
@@ -587,6 +663,55 @@ namespace Kavita.Database.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ManualMigrationHistory");
+                });
+
+            modelBuilder.Entity("Kavita.Models.Entities.History.ScrobbleRuleHistory", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("AppUserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Provider")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("RuleHash")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("RuleKind")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long?>("ScrobbleEventId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SeriesId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("ScrobbleEventId");
+
+                    b.HasIndex("SeriesId");
+
+                    b.HasIndex("AppUserId", "SeriesId")
+                        .HasDatabaseName("IX_ScrobbleRuleHistory_AppUserId_SeriesId");
+
+                    b.HasIndex("AppUserId", "Provider", "RuleKind", "SeriesId", "ChapterId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_ScrobbleRuleHistory_User_Provider_Rule_Series_Chapter");
+
+                    b.ToTable("ScrobbleRuleHistory");
                 });
 
             modelBuilder.Entity("Kavita.Models.Entities.Library", b =>
@@ -652,6 +777,9 @@ namespace Kavita.Database.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("ManageReadingLists")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MetadataProvider")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
@@ -845,19 +973,34 @@ namespace Kavita.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("AgeRating")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("AniListId")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("CoverUrl")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("HardCoverId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<long?>("MalId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("MangaBakaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("MetadataProvider")
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Provider")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("RecommendationSource")
                         .HasColumnType("INTEGER");
 
                     b.Property<int?>("SeriesId")
@@ -943,10 +1086,31 @@ namespace Kavita.Database.Migrations
                     b.Property<int>("CbrId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("GoogleBooksId")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("HardcoverId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("LastModified")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("LastModifiedUtc")
+                        .HasColumnType("TEXT");
+
                     b.Property<long>("MalId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<long>("MangabakaId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Provider")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("SeriesId")
@@ -1200,6 +1364,11 @@ namespace Kavita.Database.Migrations
                     b.Property<string>("Blacklist")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("EnableAgeRating")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
                     b.Property<bool>("EnableChapterCoverImage")
                         .HasColumnType("INTEGER");
 
@@ -1229,6 +1398,9 @@ namespace Kavita.Database.Migrations
                     b.Property<bool>("EnableLocalizedName")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("EnableName")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("EnablePeople")
                         .HasColumnType("INTEGER");
 
@@ -1247,13 +1419,37 @@ namespace Kavita.Database.Migrations
                     b.Property<bool>("EnableTags")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("EnableVolumeCoverImage")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("Enabled")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("ExternalAgeRatingMappings")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int?>("FilterAboveWeight")
+                        .HasColumnType("INTEGER");
+
                     b.Property<bool>("FirstLastPeopleNaming")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("GlobalLocalizedNameLanguages")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("ja-Latn");
+
+                    b.Property<string>("GlobalNameLanguages")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("en");
+
+                    b.Property<string>("LibraryLanguageTitleOverrides")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("{}");
 
                     b.Property<string>("Overrides")
                         .HasColumnType("TEXT");
@@ -1849,6 +2045,9 @@ namespace Kavita.Database.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Comment")
                         .HasColumnType("TEXT");
 
@@ -1881,6 +2080,8 @@ namespace Kavita.Database.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ChapterId");
+
                     b.HasIndex("ScrobbleEventId1");
 
                     b.HasIndex("SeriesId");
@@ -1900,6 +2101,9 @@ namespace Kavita.Database.Migrations
                     b.Property<int>("AppUserId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("ChapterNumber")
                         .HasColumnType("INTEGER");
 
@@ -1913,6 +2117,12 @@ namespace Kavita.Database.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Format")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("HardcoverId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsBackFill")
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsErrored")
@@ -1933,11 +2143,20 @@ namespace Kavita.Database.Migrations
                     b.Property<long?>("MalId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<long?>("MangabakaId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime?>("ProcessDateUtc")
                         .HasColumnType("TEXT");
 
+                    b.Property<float?>("Progress")
+                        .HasColumnType("REAL");
+
                     b.Property<float?>("Rating")
                         .HasColumnType("REAL");
+
+                    b.Property<int?>("ReadStatus")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("ReviewBody")
                         .HasColumnType("TEXT");
@@ -1945,10 +2164,19 @@ namespace Kavita.Database.Migrations
                     b.Property<string>("ReviewTitle")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("RuleHashSnapshot")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ScrobbleEventType")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("ScrobbleProvider")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int>("SeriesId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("TransitionRuleKind")
                         .HasColumnType("INTEGER");
 
                     b.Property<float?>("VolumeNumber")
@@ -1957,6 +2185,8 @@ namespace Kavita.Database.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AppUserId");
+
+                    b.HasIndex("ChapterId");
 
                     b.HasIndex("LibraryId");
 
@@ -2010,6 +2240,9 @@ namespace Kavita.Database.Migrations
                     b.Property<float>("AvgHoursToRead")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("CbrId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ComicVineId")
                         .HasColumnType("TEXT");
 
@@ -2038,6 +2271,9 @@ namespace Kavita.Database.Migrations
                         .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsBlacklisted")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsStandAlone")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime>("LastChapterAdded")
@@ -2073,10 +2309,16 @@ namespace Kavita.Database.Migrations
                     b.Property<long>("MalId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("MangaBakaId")
+                    b.Property<string>("MangaBakaEditionId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("MangaBakaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("MaxHoursToRead")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("MetadataProviderOverride")
                         .HasColumnType("INTEGER");
 
                     b.Property<long>("MetronId")
@@ -2088,10 +2330,16 @@ namespace Kavita.Database.Migrations
                     b.Property<string>("Name")
                         .HasColumnType("TEXT");
 
+                    b.Property<bool>("NameLocked")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("NormalizedLocalizedName")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("NormalizedName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NormalizedOriginalName")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("OriginalName")
@@ -2120,8 +2368,14 @@ namespace Kavita.Database.Migrations
                     b.HasIndex("LibraryId")
                         .HasDatabaseName("IX_Series_LibraryId");
 
-                    b.HasIndex("NormalizedName")
-                        .HasDatabaseName("IX_Series_NormalizedName");
+                    b.HasIndex("LibraryId", "Format", "NormalizedLocalizedName")
+                        .HasDatabaseName("IX_Series_LibraryId_Format_NormalizedLocalizedName");
+
+                    b.HasIndex("LibraryId", "Format", "NormalizedName")
+                        .HasDatabaseName("IX_Series_LibraryId_Format_NormalizedName");
+
+                    b.HasIndex("LibraryId", "Format", "NormalizedOriginalName")
+                        .HasDatabaseName("IX_Series_LibraryId_Format_NormalizedOriginalName");
 
                     b.ToTable("Series");
                 });
@@ -2383,6 +2637,12 @@ namespace Kavita.Database.Migrations
 
                     b.Property<DateTime>("ScrobbleEventGenerationRan")
                         .HasColumnType("TEXT");
+
+                    b.Property<string>("ScrobbleProviders")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("{}");
 
                     b.Property<string>("SecondaryColor")
                         .HasColumnType("TEXT");
@@ -3387,6 +3647,9 @@ namespace Kavita.Database.Migrations
                     b.Property<float>("AvgHoursToRead")
                         .HasColumnType("REAL");
 
+                    b.Property<int>("CbrId")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("ComicVineId")
                         .HasColumnType("TEXT");
 
@@ -3405,6 +3668,11 @@ namespace Kavita.Database.Migrations
                     b.Property<int>("HardcoverId")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("KPlusOverrides")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("[]");
+
                     b.Property<DateTime>("LastModified")
                         .HasColumnType("TEXT");
 
@@ -3417,7 +3685,7 @@ namespace Kavita.Database.Migrations
                     b.Property<long>("MalId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<long>("MangaBakaId")
+                    b.Property<int>("MangaBakaId")
                         .HasColumnType("INTEGER");
 
                     b.Property<int>("MaxHoursToRead")
@@ -3741,6 +4009,56 @@ namespace Kavita.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("Library");
+                });
+
+            modelBuilder.Entity("Kavita.Models.Entities.History.KavitaPlusAuditLog", b =>
+                {
+                    b.HasOne("Kavita.Models.Entities.Scrobble.ScrobbleError", "ScrobbleError")
+                        .WithMany()
+                        .HasForeignKey("ScrobbleErrorId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Kavita.Models.Entities.User.AppUser", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.Navigation("ScrobbleError");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Kavita.Models.Entities.History.ScrobbleRuleHistory", b =>
+                {
+                    b.HasOne("Kavita.Models.Entities.User.AppUser", "AppUser")
+                        .WithMany()
+                        .HasForeignKey("AppUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Kavita.Models.Entities.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.Cascade);
+
+                    b.HasOne("Kavita.Models.Entities.Scrobble.ScrobbleEvent", "ScrobbleEvent")
+                        .WithMany()
+                        .HasForeignKey("ScrobbleEventId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Kavita.Models.Entities.Series", "Series")
+                        .WithMany()
+                        .HasForeignKey("SeriesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("AppUser");
+
+                    b.Navigation("Chapter");
+
+                    b.Navigation("ScrobbleEvent");
+
+                    b.Navigation("Series");
                 });
 
             modelBuilder.Entity("Kavita.Models.Entities.LibraryExcludePattern", b =>
@@ -4101,6 +4419,10 @@ namespace Kavita.Database.Migrations
 
             modelBuilder.Entity("Kavita.Models.Entities.Scrobble.ScrobbleError", b =>
                 {
+                    b.HasOne("Kavita.Models.Entities.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId");
+
                     b.HasOne("Kavita.Models.Entities.Scrobble.ScrobbleEvent", "ScrobbleEvent")
                         .WithMany()
                         .HasForeignKey("ScrobbleEventId1");
@@ -4110,6 +4432,8 @@ namespace Kavita.Database.Migrations
                         .HasForeignKey("SeriesId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Chapter");
 
                     b.Navigation("ScrobbleEvent");
 
@@ -4124,6 +4448,10 @@ namespace Kavita.Database.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Kavita.Models.Entities.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId");
+
                     b.HasOne("Kavita.Models.Entities.Library", "Library")
                         .WithMany()
                         .HasForeignKey("LibraryId")
@@ -4137,6 +4465,8 @@ namespace Kavita.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("AppUser");
+
+                    b.Navigation("Chapter");
 
                     b.Navigation("Library");
 

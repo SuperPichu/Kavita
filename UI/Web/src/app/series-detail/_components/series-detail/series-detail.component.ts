@@ -28,33 +28,14 @@ import {
   NgbNavItem,
   NgbNavLink,
   NgbNavOutlet,
+  NgbPopover,
   NgbTooltip
 } from '@ng-bootstrap/ng-bootstrap';
-import {ToastrService} from 'ngx-toastr';
+import {DrawerService} from '../../../_services/drawer.service';
+import {KavitaplusDrawerComponent} from '../kavitaplus-drawer/kavitaplus-drawer.component';
+import {KavitaplusTooltipComponent} from '../kavitaplus-tooltip/kavitaplus-tooltip.component';
+import {ToastrService} from '@openng/ngx-toastr';
 import {catchError, debounceTime, EMPTY, of, ReplaySubject, tap} from 'rxjs';
-import {BulkSelectionService} from 'src/app/cards/bulk-selection.service';
-import {EditSeriesModalComponent} from 'src/app/cards/_modals/edit-series-modal/edit-series-modal.component';
-import {UtilityService} from 'src/app/shared/_services/utility.service';
-import {Chapter, LooseLeafOrDefaultNumber, SpecialVolumeNumber} from 'src/app/_models/chapter';
-import {ScanSeriesEvent} from 'src/app/_models/events/scan-series-event';
-import {SeriesRemovedEvent} from 'src/app/_models/events/series-removed-event';
-import {LibraryType} from 'src/app/_models/library/library';
-import {ReadingList} from 'src/app/_models/reading-list/reading-list';
-import {Series} from 'src/app/_models/series';
-import {RelatedSeries} from 'src/app/_models/series-detail/related-series';
-import {RelationKind} from 'src/app/_models/series-detail/relation-kind';
-import {SeriesMetadata} from 'src/app/_models/metadata/series-metadata';
-import {Volume} from 'src/app/_models/volume';
-import {AccountService} from 'src/app/_services/account.service';
-import {ActionFactoryService} from 'src/app/_services/action-factory.service';
-import {ActionService} from 'src/app/_services/action.service';
-import {ImageService} from 'src/app/_services/image.service';
-import {EVENTS, MessageHubService} from 'src/app/_services/message-hub.service';
-import {NavService} from 'src/app/_services/nav.service';
-import {ReaderService} from 'src/app/_services/reader.service';
-import {ReadingListService} from 'src/app/_services/reading-list.service';
-import {ScrollService} from 'src/app/_services/scroll.service';
-import {SeriesService} from 'src/app/_services/series.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {UserReview} from "../../../_models/user-review";
 import {ExternalSeriesCardComponent} from '../../../cards/external-series-card/external-series-card.component';
@@ -116,14 +97,40 @@ import {patchEntitySignal, patchSignalArray} from "../../../../libs/patch";
 import {ModalService} from "../../../_services/modal.service";
 import {getResolvedData, getWritableResolvedData} from "../../../../libs/route-util";
 import {ExternalSeries} from "../../../_models/series-detail/external-series";
+import {RecommendedSeries} from "../../../_models/series-detail/recommended-series";
 import {Tabs} from "../../../_models/tabs";
 import {TabTitlePipe} from "../../../_pipes/tab-title.pipe";
 import {EntityTitleService} from "../../../_services/entity-title.service";
-import {ReadingHistoryItem} from "src/app/_models/stats/reading-history-item";
-import {StatisticsService} from "src/app/_services/statistics.service";
-import {Pagination} from "src/app/_models/pagination";
-import {ReadingHistoryViewerComponent} from "src/app/shared/reading-history-viewer/reading-history-viewer.component";
 import {SeriesUpdateEvent} from "../../../_models/events/series-update-event";
+import {finalize} from "rxjs/operators";
+import {ExternalMetadataUpdateEvent} from "../../../_models/events/external-metadata-update-event";
+import {SeriesService} from "../../../_services/series.service";
+import {AccountService} from "../../../_services/account.service";
+import {ActionFactoryService} from "../../../_services/action-factory.service";
+import {ActionService} from "../../../_services/action.service";
+import {EVENTS, MessageHubService} from "../../../_services/message-hub.service";
+import {ReadingListService} from "../../../_services/reading-list.service";
+import {ScrollService} from "../../../_services/scroll.service";
+import {BulkSelectionService} from "../../../cards/bulk-selection.service";
+import {UtilityService} from "../../../shared/_services/utility.service";
+import {ImageService} from "../../../_services/image.service";
+import {NavService} from "../../../_services/nav.service";
+import {ReaderService} from "../../../_services/reader.service";
+import {Volume} from "../../../_models/volume";
+import {Chapter, LooseLeafOrDefaultNumber, SpecialVolumeNumber} from "../../../_models/chapter";
+import {LibraryType} from "../../../_models/library/library";
+import {SeriesMetadata} from "../../../_models/metadata/series-metadata";
+import {ReadingList} from "../../../_models/reading-list/reading-list";
+import {SeriesRemovedEvent} from "../../../_models/events/series-removed-event";
+import {ScanSeriesEvent} from "../../../_models/events/scan-series-event";
+import {RelatedSeries} from "../../../_models/series-detail/related-series";
+import {RelationKind} from "../../../_models/series-detail/relation-kind";
+import {EditSeriesModalComponent} from "../../../cards/_modals/edit-series-modal/edit-series-modal.component";
+import {ReadingHistoryViewerComponent} from "../../../shared/reading-history-viewer/reading-history-viewer.component";
+import {StatisticsService} from "../../../_services/statistics.service";
+import {ReadingHistoryItem} from "../../../_models/stats/reading-history-item";
+import {Pagination} from "../../../_models/pagination";
+import {Series} from "../../../_models/series";
 
 interface StoryLineItem {
   chapter?: ChapterCardEntity;
@@ -141,7 +148,7 @@ const READING_HISTORY_PAGE_SIZE = 10;
   imports: [CardActionablesComponent, ReactiveFormsModule, NgStyle,
     NgbTooltip, NgbDropdown, NgbDropdownToggle, NgbDropdownMenu,
     NgbDropdownItem, BulkOperationsComponent,
-    NgbNav, NgbNavItem, NgbNavLink, NgbNavContent, VirtualScrollerModule, SeriesCardComponent, ExternalSeriesCardComponent, NgbNavOutlet,
+    NgbNav, NgbNavItem, NgbNavLink, NgbNavContent, VirtualScrollerModule, SeriesCardComponent, ExternalSeriesCardComponent, NgbNavOutlet, NgbPopover, KavitaplusTooltipComponent,
     TranslocoDirective, NgTemplateOutlet, NextExpectedCardComponent,
     NgClass, DetailsTabComponent, DefaultValuePipe, ExternalRatingComponent, ReadMoreComponent, RouterLink, BadgeExpanderComponent,
     PublicationStatusPipe, MetadataDetailRowComponent, DownloadButtonComponent, RelatedTabComponent, CoverImageComponent, ReviewsComponent,
@@ -181,6 +188,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
   protected readonly breakpointService = inject(BreakpointService);
   private readonly entityTitleService = inject(EntityTitleService);
   private readonly statisticsService = inject(StatisticsService);
+  private readonly drawerService = inject(DrawerService);
 
   readonly scrollingBlock = viewChild<ElementRef<HTMLDivElement>>('scrollingBlock');
 
@@ -251,7 +259,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
 
   libraryAllowsScrobbling  = signal<boolean>(false);
   isScrobbling = signal<boolean>(true);
-  showScrobbleControls = computed(() => this.licenseService.hasValidLicense() && this.libraryAllowsScrobbling());
+  showScrobbleControls = computed(() => this.licenseService.hasActiveLicense() && this.libraryAllowsScrobbling());
 
   currentlyReadingChapter = signal<Chapter | null>(null);
   continueReadingTitle = computed(() => {
@@ -327,7 +335,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
   unreadCount = signal(0);
   totalCount = signal(0);
   seriesActions = computed(() => {
-    const hasLicense = this.licenseService.hasValidLicense();
+    const hasLicense = this.licenseService.hasActiveLicense();
     let actions = this.actionFactoryService.getSeriesActions()
       .filter(action => action.action !== Action.Edit);
     if (!hasLicense) {
@@ -435,8 +443,17 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
   /**
    * Recommended Series
    */
-  combinedRecs = signal<Array<Series | ExternalSeries>>([]);
+  combinedRecs = signal<Array<RecommendedSeries | ExternalSeries>>([]);
   hasRecommendations = computed(() => this.combinedRecs().length > 0);
+
+  /** Narrows a recommendation item to an owned series (null when it is an external series) */
+  asRecommendedSeries(item: RecommendedSeries | ExternalSeries): RecommendedSeries | null {
+    return 'series' in item ? item : null;
+  }
+
+  asExternalSeries(item: RecommendedSeries | ExternalSeries): ExternalSeries {
+    return item as ExternalSeries;
+  }
 
   showChapterTab = computed(() => this.chapters().length > 0);
   annotations = signal<Annotation[]>([]);
@@ -519,7 +536,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
         }
       } else if (event.event === EVENTS.CoverUpdate) {
         const coverUpdateEvent = event.payload as CoverUpdateEvent;
-        if (coverUpdateEvent.id === this.seriesId()) {
+        if (coverUpdateEvent.id === this.seriesId() && coverUpdateEvent.entityType === 'series') {
           this.themeService.refreshColorScape('series', this.seriesId()).subscribe();
         }
       } else if (event.event === EVENTS.ChapterRemoved) {
@@ -534,6 +551,10 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
       } else if (event.event === EVENTS.SeriesUpdated) {
         if ((event.payload as SeriesUpdateEvent).id === this.seriesId()) {
           this.loadPageSource.next(false);
+        }
+      } else if (event.event === EVENTS.ExternalMetadataUpdate) {
+        if ((event.payload as ExternalMetadataUpdateEvent).seriesId === this.seriesId()) {
+          this.loadPageSource.next(true);
         }
       }
     });
@@ -708,6 +729,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
         ...relations.parent.map(item => this.createRelatedSeries(item, RelationKind.Parent)),
         ...relations.editions.map(item => this.createRelatedSeries(item, RelationKind.Edition)),
         ...relations.annuals.map(item => this.createRelatedSeries(item, RelationKind.Annual)),
+        ...relations.cameos.map(item => this.createRelatedSeries(item, RelationKind.Cameo)),
       ]);
     });
   }
@@ -817,29 +839,25 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
   loadPlusMetadata(seriesId: number, libraryType: LibraryType) {
     this.isLoadingExtra.set(true);
 
-    this.metadataService.getSeriesMetadataFromPlus(seriesId, libraryType).subscribe(data => {
-      if (data === null) {
-        this.isLoadingExtra.set(false);
-        return;
-      }
+    this.metadataService.getSeriesMetadataFromPlus(seriesId, libraryType).pipe(
+      tap(data => {
+        if (data === null) {
+          return;
+        }
 
-      // Reviews
-      this.reviews.set(data.reviews.filter(r => !r.isExternal));
-      this.plusReviews.set(data.reviews.filter(r => r.isExternal));
+        this.reviews.set(data.reviews.filter(r => !r.isExternal));
+        this.plusReviews.set(data.reviews.filter(r => r.isExternal));
 
-      if (data.ratings) {
-        this.ratings.set([...data.ratings]);
-      }
+        if (data.ratings) {
+          this.ratings.set([...data.ratings]);
+        }
 
-
-      // Recommendations
-      if (data.recommendations) {
-        this.combinedRecs.set([...data.recommendations.ownedSeries, ...data.recommendations.externalSeries]);
-      }
-
-
-      this.isLoadingExtra.set(false);
-    });
+        if (data.recommendations) {
+          this.combinedRecs.set([...data.recommendations.ownedSeries, ...data.recommendations.externalSeries]);
+        }
+      }),
+      finalize(() => this.isLoadingExtra.set(false)),
+    ).subscribe();
   }
 
   setContinuePoint() {
@@ -915,6 +933,11 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
     this.isScrobbling.update(x => !x);
   }
 
+  openKavitaPlusDrawer() {
+    const ref = this.drawerService.open(KavitaplusDrawerComponent, { position: 'end', panelClass: 'kplus-offcanvas' });
+    ref.setInput('seriesId', this.seriesId());
+  }
+
   switchTabsToDetail() {
     this.activeTabId = Tabs.Details;
     this.cdRef.markForCheck();
@@ -949,6 +972,7 @@ class SeriesDetailComponent implements OnInit, AfterViewInit {
   protected readonly encodeURIComponent = encodeURIComponent;
   protected readonly Breakpoint = Breakpoint;
   protected readonly READING_HISTORY_PAGE_SIZE = READING_HISTORY_PAGE_SIZE;
+  protected readonly PublicationStatus = PublicationStatus;
 }
 
 export default SeriesDetailComponent

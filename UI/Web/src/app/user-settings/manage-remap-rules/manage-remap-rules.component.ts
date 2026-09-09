@@ -1,23 +1,26 @@
-import {ChangeDetectionStrategy, Component, computed, inject, OnInit, signal} from '@angular/core';
+import {ChangeDetectionStrategy, Component, computed, DestroyRef, inject, OnInit, signal} from '@angular/core';
+import {takeUntilDestroyed} from '@angular/core/rxjs-interop';
 import {CblService} from '../../_services/cbl.service';
 import {AccountService} from '../../_services/account.service';
 import {ConfirmService} from '../../shared/confirm.service';
-import {ToastrService} from 'ngx-toastr';
+import {ToastrService} from '@openng/ngx-toastr';
 import {RemapRule} from '../../_models/reading-list/cbl/remap-rule';
 import {translate, TranslocoDirective} from '@jsverse/transloco';
 import {NgxDatatableModule} from '@siemens/ngx-datatable';
 import {ResponsiveTableComponent} from '../../shared/_components/responsive-table/responsive-table.component';
-import {DatePipe} from '@angular/common';
 import {DefaultValuePipe} from '../../_pipes/default-value.pipe';
 import {CblRemapRuleChapterTitlePipe} from '../../_pipes/cbl-remap-rule-chapter-title.pipe';
 import {EditRemapRuleComponent} from './edit-remap-rule/edit-remap-rule.component';
+import {LoadingComponent} from "../../shared/loading/loading.component";
+import {EmptyStateComponent} from "../../shared/_components/empty-state/empty-state.component";
+import {UtcToLocalTimePipe} from "../../_pipes/utc-to-local-time.pipe";
 
 @Component({
   selector: 'app-manage-remap-rules',
   templateUrl: './manage-remap-rules.component.html',
   styleUrls: ['./manage-remap-rules.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslocoDirective, NgxDatatableModule, ResponsiveTableComponent, DatePipe, DefaultValuePipe, CblRemapRuleChapterTitlePipe, EditRemapRuleComponent]
+  imports: [TranslocoDirective, NgxDatatableModule, ResponsiveTableComponent, DefaultValuePipe, CblRemapRuleChapterTitlePipe, EditRemapRuleComponent, LoadingComponent, EmptyStateComponent, UtcToLocalTimePipe]
 })
 export class ManageRemapRulesComponent implements OnInit {
 
@@ -25,8 +28,10 @@ export class ManageRemapRulesComponent implements OnInit {
   private readonly accountService = inject(AccountService);
   private readonly confirmService = inject(ConfirmService);
   private readonly toastr = inject(ToastrService);
+  private readonly destroyRef = inject(DestroyRef);
 
   rules = signal<RemapRule[]>([]);
+  protected readonly isLoading = signal(true);
   isAdmin = this.accountService.hasAdminRole;
   isReadOnly = this.accountService.hasReadOnlyRole;
   currentUserId = computed(() => this.accountService.currentUser()?.id ?? 0);
@@ -54,8 +59,12 @@ export class ManageRemapRulesComponent implements OnInit {
   }
 
   loadRules() {
+    this.isLoading.set(true);
     const obs = this.isAdmin() ? this.cblService.getAllRemapRules() : this.cblService.getRemapRules();
-    obs.subscribe(rules => this.rules.set(rules));
+    obs.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(rules => {
+      this.rules.set(rules);
+      this.isLoading.set(false);
+    });
   }
 
   openCreateForm() {

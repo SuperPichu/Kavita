@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Kavita.API.Services;
 using Kavita.API.Services.SignalR;
@@ -22,7 +24,7 @@ namespace Kavita.Services.Scanner;
 /// Responsible for taking parsed info from ReadingItemService and DirectoryService and combining them to emit DB work
 /// on a series by series.
 /// </summary>
-public class ParseScannedFiles
+public partial class ParseScannedFiles
 {
     private readonly ILogger _logger;
     private readonly IDirectoryService _directoryService;
@@ -779,17 +781,38 @@ public class ParseScannedFiles
         }
         else
         {
-            // Process files in parallel
-            var tasks = files.Select(file => Task.Run(() =>
-                _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type, library.EnableMetadata)));
+            // Process files in parallel, but bound the concurrency so that a folder with
+            // many files cannot flood the ThreadPool and starve request handling (the web UI
+            // and health checks become unresponsive during scans otherwise).
+            // Matches the scanner's existing parallelism convention (see ScannerService).
+            var maxConcurrency = Math.Max(1, Environment.ProcessorCount / 2);
+            using var throttler = new SemaphoreSlim(maxConcurrency);
 
+            var tasks = files.Select(async file =>
+            {
+                await throttler.WaitAsync();
+
+                try
+                {
+                    // Task.Run keeps the synchronous parser work off the enumerating thread
+                    // while the semaphore bounds how many parses run at once.
+                    return await Task.Run(() =>
+                        _readingItemService.ParseFile(file, normalizedFolder, result.LibraryRoot, library.Type, library.EnableMetadata));
+                }
+                finally
+                {
+                    throttler.Release();
+                }
+            });
+
+            // Task.WhenAll preserves input (file) order, which downstream series mapping relies on
             var infos = await Task.WhenAll(tasks);
             result.ParserInfos = infos.Where(info => info != null).ToList()!;
         }
     }
 
 
-    private static void UpdateSortOrder(ConcurrentDictionary<ParsedSeries, List<ParserInfo>> scannedSeries, ParsedSeries series)
+    public static void UpdateSortOrder(ConcurrentDictionary<ParsedSeries, List<ParserInfo>> scannedSeries, ParsedSeries series)
     {
         // Set the Sort order per Volume
         var volumes = scannedSeries[series].GroupBy(info => info.Volumes);
@@ -831,43 +854,92 @@ public class ParseScannedFiles
                 continue;
             }
 
-            // Ensure chapters are sorted numerically when possible, otherwise push unparseable to the end
             chapters = infos
-                .OrderBy(info => float.TryParse(info.Chapters, NumberStyles.Any, CultureInfo.InvariantCulture, out var val) ? val : float.MaxValue)
+                .OrderBy(GetSortKey)
+                .ThenBy(info => info.Chapters, StringComparer.OrdinalIgnoreCase)
                 .ToList();
 
             counter = 0f;
-            var prevIssue = string.Empty;
+            float? prevBase = null;
+
             foreach (var chapter in chapters)
             {
-                // Use MinNumber in case there is a range, as otherwise sort order will cause it to be processed last
-                var chapterNum =
-                    $"{Parser.MinNumberFromRange(chapter.Chapters).ToString(CultureInfo.InvariantCulture)}";
+                var chapterNum = Parser.IsRange(chapter.Chapters) ?
+                    $"{Parser.MinNumberFromRange(chapter.Chapters).ToString(CultureInfo.InvariantCulture)}"
+                    : chapter.Chapters;
+
                 if (float.TryParse(chapterNum, NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedChapter))
                 {
-                    // Parsed successfully, use the numeric value
                     counter = parsedChapter;
-                    chapter.IssueOrder = counter;
-
-                    // Increment for next chapter (unless the next has a similar value, then add 0.1)
-                    if (!string.IsNullOrEmpty(prevIssue) && float.TryParse(prevIssue, NumberStyles.Any, CultureInfo.InvariantCulture, out var prevIssueFloat) && parsedChapter.Is(prevIssueFloat))
+                    if (prevBase.HasValue && parsedChapter.Is(prevBase.Value))
                     {
-                        counter += 0.1f; // bump if same value as the previous issue
+                        counter += 0.1f;
                     }
-                    prevIssue = $"{parsedChapter.ToString(CultureInfo.InvariantCulture)}";
+                    chapter.IssueOrder = counter;
+                    prevBase = parsedChapter;
                 }
                 else
                 {
-                    // Unparsed chapters: use the current counter and bump for the next
-                    if (!string.IsNullOrEmpty(prevIssue) && prevIssue == counter.ToString(CultureInfo.InvariantCulture))
+                    // Pull out the leading numeric part, e.g. "15.UH" -> 15, "15.BEY" -> 15
+                    var currentBase = ParseLeadingFloat(chapter.Chapters);
+
+                    if (currentBase.HasValue && prevBase.HasValue && currentBase.Value.Is(prevBase.Value))
                     {
-                        counter += 0.1f; // bump if same value as the previous issue
+                        // Same base number as the previous entry -> keep bumping within the group
+                        counter += 0.1f;
                     }
+                    else if (currentBase.HasValue)
+                    {
+                        counter = currentBase.Value;
+                    }
+                    else
+                    {
+                        counter++;
+                    }
+
                     chapter.IssueOrder = counter;
-                    counter++;
-                    prevIssue = chapter.Chapters;
+                    prevBase = currentBase ?? prevBase;
                 }
             }
         }
+
+        return;
+
+        // Ensure chapters are sorted numerically when possible. For entries that don't parse
+        // cleanly as a float, fall back to their leading numeric prefix (e.g. "15.HU" -> 15)
+        // so they stay adjacent to their numeric siblings instead of being pushed to the end.
+        // Only entries with no numeric component at all fall back to float.MaxValue.
+        float GetSortKey(ParserInfo info)
+        {
+            var chapterNum = Parser.IsRange(info.Chapters)
+                ? Parser.MinNumberFromRange(info.Chapters).ToString(CultureInfo.InvariantCulture)
+                : info.Chapters;
+
+            if (float.TryParse(chapterNum, NumberStyles.Any, CultureInfo.InvariantCulture, out var val))
+            {
+                return val;
+            }
+
+            // Items parsed from leader should always be behind items without ('1' before '1 (A Story)').
+            // Offset them slightly
+            var leading = ParseLeadingFloat(info.Chapters);
+            return leading.HasValue ? leading.Value + 0.0001f : float.MaxValue;
+        }
+
+        float? ParseLeadingFloat(string input)
+        {
+            var leadingMatch = LeadingFloatRegex().Match(input);
+            if (!leadingMatch.Success) return null;
+
+            if (float.TryParse(leadingMatch.Value, NumberStyles.Any, CultureInfo.InvariantCulture, out var lb))
+            {
+                return lb;
+            }
+
+            return null;
+        }
     }
+
+    [GeneratedRegex(@"^\d+(\.\d+)?")]
+    private static partial Regex LeadingFloatRegex();
 }

@@ -53,40 +53,26 @@ public class FontController(
 
         if (font.Provider == FontProvider.System) return BadRequest("System provided fonts are not loaded by API");
 
+        if (!IsPathWithinDirectory(directoryService.EpubFontDirectory, font.FileName)) return NotFound();
+
         var path = Path.Join(directoryService.EpubFontDirectory, font.FileName);
 
         return CachedFile(path);
     }
 
     /// <summary>
-    /// Removes a font from the system
+    /// Removes a font family from the system. The family is validated for in-use server side and only removed when
+    /// it is not selected by a user, or when an admin forces the deletion.
     /// </summary>
-    /// <param name="fontId"></param>
-    /// <param name="force">If the font is in use by other users and an admin wants it deleted, they must confirm to force delete it. This is prompted in the UI.</param>
-    /// <returns></returns>
+    /// <param name="fontId">Any file within the family to delete</param>
+    /// <param name="force">If the family is in use and an admin wants it deleted, they must confirm to force delete it. This is prompted in the UI.</param>
+    /// <returns>The result of the deletion. When <see cref="FontDeleteResultDto.InUse"/> is true and it was not deleted, the UI prompts an admin to force.</returns>
     [HttpDelete]
     [DisallowRole(PolicyConstants.ReadOnlyRole)]
-    public async Task<IActionResult> DeleteFont(int fontId, bool force = false)
+    public async Task<ActionResult<FontDeleteResultDto>> DeleteFont(int fontId, bool force = false)
     {
         var forceDelete = User.IsInRole(PolicyConstants.AdminRole) && force;
-        var fontInUse = await fontService.IsFontInUse(fontId);
-        if (!fontInUse || forceDelete)
-        {
-            await fontService.Delete(fontId);
-        }
-
-        return Ok();
-    }
-
-    /// <summary>
-    /// Returns if the given font is in use by any other user. System provided fonts will always return true.
-    /// </summary>
-    /// <param name="fontId"></param>
-    /// <returns></returns>
-    [HttpGet("in-use")]
-    public async Task<ActionResult<bool>> IsFontInUse(int fontId)
-    {
-        return Ok(await fontService.IsFontInUse(fontId));
+        return Ok(await fontService.DeleteFamily(fontId, forceDelete));
     }
 
     /// <summary>
@@ -100,23 +86,22 @@ public class FontController(
     {
         if (!_fontFileExtensionRegex.IsMatch(Path.GetExtension(formFile.FileName))) return BadRequest("Invalid file");
 
-        if (formFile.FileName.Contains("..")) return BadRequest("Invalid file");
+        if (!IsPathWithinDirectory(directoryService.TempDirectory, formFile.FileName)) return BadRequest("Invalid file");
 
 
-        var tempFile = await UploadToTemp(formFile);
+        var tempFile = await UploadToTempAsync(formFile);
         var font = await fontService.CreateFontFromFileAsync(tempFile);
         return Ok(mapper.Map<EpubFontDto>(font));
     }
 
     [HttpPost("upload-by-url")]
     [DisallowRole(PolicyConstants.ReadOnlyRole)]
-    public async Task<ActionResult> UploadFontByUrl([FromQuery]string url)
+    public async Task<ActionResult<EpubFontDto[]>> UploadFontByUrl([FromQuery] string url)
     {
-        // Validate url
         try
         {
-            var font = await fontService.CreateFontFromUrl(url);
-            return Ok(mapper.Map<EpubFontDto>(font));
+            var fonts = await fontService.CreateFontsFromUrl(url);
+            return Ok(mapper.Map<EpubFontDto[]>(fonts));
         }
         catch (KavitaException ex)
         {
@@ -124,14 +109,4 @@ public class FontController(
         }
     }
 
-    private async Task<string> UploadToTemp(IFormFile file)
-    {
-        var outputFile = Path.Join(directoryService.TempDirectory, file.FileName);
-
-        await using var stream = System.IO.File.Create(outputFile);
-        await file.CopyToAsync(stream);
-        stream.Close();
-
-        return outputFile;
-    }
 }

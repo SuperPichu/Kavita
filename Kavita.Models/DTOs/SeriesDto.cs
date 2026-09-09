@@ -1,6 +1,7 @@
 ﻿using System;
 using Kavita.Models.Entities.Enums;
 using Kavita.Models.Entities.Interfaces;
+using System.ComponentModel.DataAnnotations;
 
 namespace Kavita.Models.DTOs;
 #nullable enable
@@ -58,6 +59,7 @@ public sealed record SeriesDto : IHasReadTimeEstimate, IHasCoverImage, IHasMetad
 
 
     /// <inheritdoc cref="API.Entities.Series.Format"/>
+    [EnumDataType(typeof(MangaFormat))]
     public MangaFormat Format { get; set; }
     /// <inheritdoc cref="API.Entities.Series.Created"/>
     public DateTime Created { get; set; }
@@ -66,6 +68,8 @@ public sealed record SeriesDto : IHasReadTimeEstimate, IHasCoverImage, IHasMetad
     public bool SortNameLocked { get; set; }
     /// <inheritdoc cref="API.Entities.Series.LocalizedNameLocked"/>
     public bool LocalizedNameLocked { get; set; }
+    /// <inheritdoc cref="API.Entities.Series.NameLocked"/>
+    public bool NameLocked { get; set; }
     /// <inheritdoc cref="API.Entities.Series.WordCount"/>
     public long WordCount { get; set; }
 
@@ -89,6 +93,11 @@ public sealed record SeriesDto : IHasReadTimeEstimate, IHasCoverImage, IHasMetad
     public bool DontMatch { get; set; }
     /// <inheritdoc cref="API.Entities.Series.IsBlacklisted"/>
     public bool IsBlacklisted { get; set; }
+    /// <inheritdoc cref="Kavita.Models.Entities.Series.IsStandAlone"/>
+    public bool IsStandAlone { get; set; }
+    /// <inheritdoc cref="Kavita.Models.Entities.Series.MetadataProviderOverride"/>
+    [EnumDataType(typeof(MetadataProvider))]
+    public MetadataProvider? MetadataProviderOverride { get; set; }
     #endregion
 
     #region ColorScape
@@ -106,7 +115,10 @@ public sealed record SeriesDto : IHasReadTimeEstimate, IHasCoverImage, IHasMetad
     public int HardcoverId { get; set; }
     public long MetronId { get; set; }
     public string? ComicVineId { get; set; }
-    public long MangaBakaId { get; set; }
+    public int MangaBakaId { get; set; }
+    public string MangaBakaEditionId { get; set; } = string.Empty;
+    public int CbrId { get; set; }
+
     #endregion
 
     public void ResetColorScape()

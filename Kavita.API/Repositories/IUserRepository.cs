@@ -73,7 +73,6 @@ public interface IUserRepository
     Task<IEnumerable<AppUser>> GetAllUsersAsync(AppUserIncludes includeFlags = AppUserIncludes.None, bool track = true, CancellationToken ct = default);
     Task<AppUser?> GetUserByConfirmationToken(string token, CancellationToken ct = default);
     Task<AppUser> GetDefaultAdminUser(AppUserIncludes includes = AppUserIncludes.None, CancellationToken ct = default);
-    Task<IEnumerable<UserTokenInfo>> GetUserTokenInfo(CancellationToken ct = default);
     Task<AppUser?> GetUserByDeviceEmail(string deviceEmail, CancellationToken ct = default);
     Task<AppUser?> GetByOidcId(string? oidcId, AppUserIncludes includes = AppUserIncludes.None, CancellationToken ct = default);
     #endregion
@@ -84,7 +83,9 @@ public interface IUserRepository
     Task<IList<UserReviewDto>> GetUserRatingDtosForSeriesAsync(int seriesId, int userId, CancellationToken ct = default);
     Task<IList<UserReviewDto>> GetUserRatingDtosForChapterAsync(int chapterId, int userId, CancellationToken ct = default);
     Task<IEnumerable<AppUserRating>> GetSeriesWithRatings(int userId, CancellationToken ct = default);
+    Task<List<AppUserChapterRating>> GetChaptersWithRatings(int userId, CancellationToken ct = default);
     Task<IEnumerable<AppUserRating>> GetSeriesWithReviews(int userId, CancellationToken ct = default);
+    Task<List<AppUserChapterRating>> GetChaptersWithReviews(int userId, CancellationToken ct = default);
     Task<IList<UserReviewExtendedDto>> GetAllReviewsForUser(int userId, int requestingUserId, string? query = null, float? ratingFilter = null, CancellationToken ct = default);
     #endregion
 
@@ -96,13 +97,12 @@ public interface IUserRepository
     Task<IEnumerable<AppUserBookmark>> GetAllBookmarksAsync(CancellationToken ct = default);
     Task<AppUserBookmark?> GetBookmarkForPage(int page, int chapterId, int imageOffset, int userId, CancellationToken ct = default);
     Task<AppUserBookmark?> GetBookmarkAsync(int bookmarkId, CancellationToken ct = default);
-    Task<IList<AppUserBookmark>> GetAllBookmarksByIds(IList<int> bookmarkIds, CancellationToken ct = default);
+    Task<IList<AppUserBookmark>> GetAllBookmarksByIds(int seriesId, IList<int> bookmarkIds, CancellationToken ct = default);
     #endregion
 
     #region Preferences & Settings
     Task<AppUserPreferences?> GetPreferencesAsync(string username, CancellationToken ct = default);
     Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByThemeAsync(int themeId, CancellationToken ct = default);
-    Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByFontAsync(string fontName, CancellationToken ct = default);
     Task<string> GetLocale(int userId, CancellationToken ct = default);
     Task<AppUserSocialPreferences> GetSocialPreferencesForUser(int userId, CancellationToken ct = default);
     Task<AppUserPreferences> GetPreferencesForUser(int userId, CancellationToken ct = default);

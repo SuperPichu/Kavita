@@ -1,4 +1,5 @@
 import {FileTypeGroup} from "./file-type-group.enum";
+import {MetadataProvider} from "../kavitaplus/metadata-provider.enum";
 
 export enum LibraryType {
     Manga = 0,
@@ -13,8 +14,6 @@ export enum LibraryType {
 }
 
 export const allLibraryTypes = [LibraryType.Manga, LibraryType.ComicVine, LibraryType.Comic, LibraryType.Book, LibraryType.LightNovel, LibraryType.Images];
-export const allKavitaPlusMetadataApplicableTypes = [LibraryType.Manga, LibraryType.LightNovel, LibraryType.ComicVine, LibraryType.Comic];
-export const allKavitaPlusScrobbleEligibleTypes = [LibraryType.Manga, LibraryType.LightNovel];
 
 export interface LiteLibrary {
   id: number;
@@ -42,6 +41,7 @@ export interface Library extends LiteLibrary{
     collapseSeriesRelationships: boolean;
     inheritWebLinksFromFirstChapter: boolean;
     defaultLanguage: string;
+    metadataProvider: MetadataProvider;
     libraryFileTypes: Array<FileTypeGroup>;
     excludePatterns: Array<string>;
 }

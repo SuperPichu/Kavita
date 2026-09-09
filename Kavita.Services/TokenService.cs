@@ -31,6 +31,11 @@ public class TokenService(
     private static readonly SemaphoreSlim RefreshTokenLock = new(1, 1);
 
     private const string RefreshTokenName = "RefreshToken";
+    /// <summary>
+    /// Name of the dedicated token provider used for refresh tokens. Kept separate from the Default provider so the
+    /// refresh token can have a long lifespan without inflating password-reset/email-confirmation token lifespans.
+    /// </summary>
+    public const string RefreshTokenProviderName = "RefreshTokenProvider";
     private readonly SymmetricSecurityKey _key = new(Encoding.UTF8.GetBytes(config.Value.TokenKey));
 
     public async Task<string> CreateToken(AppUser user, CancellationToken ct = default)
@@ -48,7 +53,7 @@ public class TokenService(
         var tokenDescriptor = new SecurityTokenDescriptor()
         {
             Subject = new ClaimsIdentity(claims),
-            Expires = DateTime.UtcNow.AddDays(10),
+            Expires = DateTime.UtcNow.AddDays(3),
             SigningCredentials = credentials
         };
 
@@ -60,47 +65,62 @@ public class TokenService(
 
     public async Task<string> CreateRefreshToken(AppUser user, CancellationToken ct = default)
     {
-        await userManager.RemoveAuthenticationTokenAsync(user, TokenOptions.DefaultProvider, RefreshTokenName);
-        var refreshToken = await userManager.GenerateUserTokenAsync(user, TokenOptions.DefaultProvider, RefreshTokenName);
-        await userManager.SetAuthenticationTokenAsync(user, TokenOptions.DefaultProvider, RefreshTokenName, refreshToken);
-        return refreshToken;
+        await RefreshTokenLock.WaitAsync(ct);
+        try
+        {
+            await userManager.RemoveAuthenticationTokenAsync(user, RefreshTokenProviderName, RefreshTokenName);
+            var refreshToken = await userManager.GenerateUserTokenAsync(user, RefreshTokenProviderName, RefreshTokenName);
+            await userManager.SetAuthenticationTokenAsync(user, RefreshTokenProviderName, RefreshTokenName, refreshToken);
+            return refreshToken;
+        }
+        finally
+        {
+            RefreshTokenLock.Release();
+        }
     }
 
     public async Task<TokenRequestDto?> ValidateRefreshToken(TokenRequestDto request, CancellationToken ct = default)
     {
-        await RefreshTokenLock.WaitAsync(ct);
-
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var tokenContent = tokenHandler.ReadJwtToken(request.Token);
-            var username = tokenContent.Claims.FirstOrDefault(q => q.Type == JwtRegisteredClaimNames.Name)?.Value;
-            if (string.IsNullOrEmpty(username))
+            var tokenValidationParams = new TokenValidationParameters()
             {
-                logger.LogDebug("[RefreshToken] failed to validate due to not finding user in RefreshToken");
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = _key,
+                ValidateIssuer = false,
+                ValidateAudience = false,
+                ValidateLifetime = false, // JWT may be expired
+                ValidIssuer = "Kavita",
+                NameClaimType = JwtRegisteredClaimNames.Name,
+                RoleClaimType = "role"
+            };
+
+            var principal = tokenHandler.ValidateToken(request.Token, tokenValidationParams, out _);
+            var userId = principal.Claims.FirstOrDefault(q => q.Type == NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userId))
+            {
+                logger.LogDebug("[RefreshToken] JWT did not include a valid userId");
                 return null;
             }
 
-            var user = await userManager.FindByNameAsync(username);
+            var user = await userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 logger.LogDebug("[RefreshToken] failed to validate due to not finding user in DB");
                 return null;
             }
 
-            var validated = await userManager.VerifyUserTokenAsync(user, TokenOptions.DefaultProvider,
+            var validated = await userManager.VerifyUserTokenAsync(user, RefreshTokenProviderName,
                 RefreshTokenName, request.RefreshToken);
-            if (!validated && tokenContent.ValidTo <= DateTime.UtcNow.Add(TimeSpan.FromHours(1)))
+            if (!validated)
             {
                 logger.LogDebug("[RefreshToken] failed to validate due to invalid refresh token");
                 return null;
             }
 
-            // Remove the old refresh token first
-            await userManager.RemoveAuthenticationTokenAsync(user,
-                TokenOptions.DefaultProvider,
-                RefreshTokenName);
-
+            // CreateRefreshToken removes the old refresh token and writes the new one under RefreshTokenLock.
             return new TokenRequestDto()
             {
                 Token = await CreateToken(user, ct),
@@ -118,10 +138,6 @@ public class TokenService(
             // Handle other exceptions
             logger.LogError(ex, "Failed to validate refresh token");
             return null;
-        }
-        finally
-        {
-            RefreshTokenLock.Release();
         }
     }
 

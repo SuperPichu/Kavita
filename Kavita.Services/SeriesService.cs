@@ -66,17 +66,29 @@ public class SeriesService(
             .OrderBy(v => v.MinNumber);
         var minVolumeNumber = sortedVolumes.MinBy(v => v.MinNumber);
 
-
         var allChapters = series.Volumes
             .SelectMany(v => v.Chapters.OrderBy(c => c.MinNumber, ChapterSortComparerDefaultLast.Default))
             .ToList();
-        var minChapter = allChapters
-            .FirstOrDefault();
+
+        var minChapter = allChapters.FirstOrDefault();
 
         if (minVolumeNumber != null && minChapter != null &&
             (minChapter.MinNumber >= minVolumeNumber.MinNumber || minChapter.MinNumber.Is(Parser.DefaultChapterNumber)))
         {
-            return minVolumeNumber.Chapters.MinBy(c => c.MinNumber, ChapterSortComparerDefaultLast.Default);
+            allChapters = minVolumeNumber.Chapters.OrderBy(c => c.MinNumber, ChapterSortComparerDefaultLast.Default).ToList();
+            minChapter = allChapters.FirstOrDefault();
+        }
+
+        var chapterOne = allChapters.OneOrDefault(c => c.MinNumber.Is(1));
+        if (chapterOne != null)
+        {
+            return chapterOne;
+        }
+
+        var nonPrequelChapter = allChapters.FirstOrDefault(c => c.MinNumber >= 1);
+        if (nonPrequelChapter != null)
+        {
+            return nonPrequelChapter;
         }
 
         return minChapter;
@@ -233,10 +245,20 @@ public class SeriesService(
                     series.Metadata.Genres, allGenres, genre =>
                     {
                         series.Metadata.Genres.Add(genre);
-                    }, () => series.Metadata.GenresLocked = true);
+                    }, () =>
+                    {
+                        series.Metadata.GenresLocked = true;
+                        series.Metadata.KPlusOverrides.Remove(MetadataSettingField.Genres);
+                    });
             }
             else
             {
+                if (series.Metadata.Genres.Count > 0)
+                {
+                    series.Metadata.GenresLocked = true;
+                    series.Metadata.KPlusOverrides.Remove(MetadataSettingField.Genres);
+                }
+
                 series.Metadata.Genres = [];
             }
 
@@ -251,10 +273,19 @@ public class SeriesService(
                     series.Metadata.Tags, allTags, tag =>
                     {
                         series.Metadata.Tags.Add(tag);
-                    }, () => series.Metadata.TagsLocked = true);
+                    }, () =>
+                    {
+                        series.Metadata.TagsLocked = true;
+                        series.Metadata.KPlusOverrides.Remove(MetadataSettingField.Tags);
+                    });
             }
             else
             {
+                if (series.Metadata.Tags.Count > 0)
+                {
+                    series.Metadata.TagsLocked = true;
+                    series.Metadata.KPlusOverrides.Remove(MetadataSettingField.Tags);
+                }
                 series.Metadata.Tags = [];
             }
 
@@ -455,6 +486,10 @@ public class SeriesService(
                 {
                     p.AniListId = personDto.AniListId;
                 }
+                if (!string.IsNullOrEmpty(personDto.HardcoverId)  && p.HardcoverId != personDto.HardcoverId)
+                {
+                    p.HardcoverId = personDto.HardcoverId;
+                }
                 p.Description = string.IsNullOrEmpty(p.Description) ? personDto.Description : p.Description;
                 continue; // If we ever want to update metadata for existing people, we'd do it here
             }
@@ -465,11 +500,11 @@ public class SeriesService(
                 Name = personDto.Name,
                 NormalizedName = normalizedPersonName,
                 AniListId = personDto.AniListId,
+                MalId =  personDto.MalId,
+                HardcoverId = personDto.HardcoverId,
                 Description = personDto.Description,
                 Asin = personDto.Asin,
                 CoverImage = personDto.CoverImage,
-                MalId = personDto.MalId,
-                HardcoverId = personDto.HardcoverId,
             };
 
             peopleToAdd.Add(newPerson);
@@ -494,6 +529,11 @@ public class SeriesService(
         var peopleToRemove = metadataPeople
             .Where(mp => mp.Role == role && peopleToAdd.TrueForAll(p => p.NormalizedName != mp.Person.NormalizedName))
             .ToList();
+
+        if (peopleToRemove.Count != 0 || peopleToAdd.Count != 0)
+        {
+            metadata.KPlusOverrides.Remove(MetadataSettingField.People);
+        }
 
         foreach (var personToRemove in peopleToRemove)
         {
@@ -662,6 +702,7 @@ public class SeriesService(
             StorylineChapters = storylineChapters,
             TotalCount = chapters.Count,
             UnreadCount = chapters.Count(c => c.Pages > 0 && c.PagesRead < c.Pages),
+            LibraryType = libraryType,
             // default: See if we can get the ContinueFrom here
         };
     }
@@ -710,6 +751,7 @@ public class SeriesService(
         UpdateRelationForKind(dto.Doujinshis, series.Relations.Where(r => r.RelationKind == RelationKind.Doujinshi).ToList(), series, RelationKind.Doujinshi);
         UpdateRelationForKind(dto.Editions, series.Relations.Where(r => r.RelationKind == RelationKind.Edition).ToList(), series, RelationKind.Edition);
         UpdateRelationForKind(dto.Annuals, series.Relations.Where(r => r.RelationKind == RelationKind.Annual).ToList(), series, RelationKind.Annual);
+        UpdateRelationForKind(dto.Cameos, series.Relations.Where(r => r.RelationKind == RelationKind.Cameo).ToList(), series, RelationKind.Cameo);
 
         await UpdatePrequelSequelRelations(dto.Prequels, series, RelationKind.Prequel);
         await UpdatePrequelSequelRelations(dto.Sequels, series, RelationKind.Sequel);

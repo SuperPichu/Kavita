@@ -9,9 +9,15 @@ const URLS = {
   aniListId: 'https://anilist.co/manga/{id}/',
   malId: 'https://myanimelist.net/manga/{id}/',
   mangaBakaId: 'https://mangabaka.org/{id}',
-  hardcoverId: null,
+  hardcoverId: 'https://hardcover.app/id/series/{id}',
   comicVineId: null,
   metronId: null,
+  cbrId: null,
+}
+
+const INDIVIDUAL_URLS = {
+  ...URLS,
+  hardcoverId: 'https://hardcover.app/id/book/{id}',
 }
 
 @Component({
@@ -31,12 +37,20 @@ export class ExternalMetadataDetailComponent {
   /** Extra id to show in this section for details-tab */
   isbn = input<string | null>(null);
 
+  /**
+   * Assume ids link to individual works instead of series where applicable
+   */
+  individualWork = input<boolean>(false);
+
   metadata = computed(() => {
     const e = this.entity();
+    const urls = this.individualWork() ? INDIVIDUAL_URLS : URLS;
+
     return (Object.keys(HAS_METADATA_DEFAULTS) as (keyof IHasMetadataIds)[]).map(key => {
       const rawValue = e[key];
       const value = rawValue === 0 || rawValue == null ? null : rawValue;
-      const urlTemplate = URLS[key];
+
+      const urlTemplate = urls[key];
       const linkUrl = urlTemplate && value != null ? urlTemplate.replace('{id}', String(value)) : null;
 
       return { key, value, linkUrl };

@@ -26,6 +26,19 @@ public static class RestrictByAgeExtensions
         return q;
     }
 
+    public static IQueryable<Volume> RestrictAgainstAgeRestriction(this IQueryable<Volume> queryable, AgeRestriction restriction)
+    {
+        if (restriction.AgeRating == AgeRating.NotApplicable) return queryable;
+        var q = queryable.Where(v => v.Series.Metadata.AgeRating <= restriction.AgeRating);
+
+        if (!restriction.IncludeUnknowns)
+        {
+            return q.Where(v => v.Series.Metadata.AgeRating != AgeRating.Unknown);
+        }
+
+        return q;
+    }
+
     public static IQueryable<SeriesMetadataPeople> RestrictAgainstAgeRestriction(this IQueryable<SeriesMetadataPeople> queryable, AgeRestriction restriction)
     {
         if (restriction.AgeRating == AgeRating.NotApplicable) return queryable;
@@ -146,6 +159,19 @@ public static class RestrictByAgeExtensions
         if (!restriction.IncludeUnknowns)
         {
             return q.Where(rl => rl.AgeRating != AgeRating.Unknown);
+        }
+
+        return q;
+    }
+
+    public static IQueryable<ReadingListItem> RestrictAgainstAgeRestriction(this IQueryable<ReadingListItem> queryable, AgeRestriction restriction)
+    {
+        if (restriction.AgeRating == AgeRating.NotApplicable) return queryable;
+        var q = queryable.Where(rl => rl.Series.Metadata.AgeRating <= restriction.AgeRating);
+
+        if (!restriction.IncludeUnknowns)
+        {
+            return q.Where(rl => rl.Series.Metadata.AgeRating != AgeRating.Unknown);
         }
 
         return q;

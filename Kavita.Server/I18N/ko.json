@@ -277,5 +277,15 @@
     "email.username-change.title": "사용자 이름 변경 업데이트",
     "email.username-change.description": "계정의 사용자 이름이 {{InvitingUser}}님의 Kavita 인스턴스에서 업데이트되었습니다. 사용자 측에서 필요한 조치는 없습니다.",
     "cbl-import-download-from-url": "URL에서 파일을 다운로드할 수 없습니다",
-    "cbl-import-validation-types": ".cbl과 .json 파일만 허용됩니다"
+    "cbl-import-validation-types": ".cbl과 .json 파일만 허용됩니다",
+    "scrobble-provider-not-setup": "읽기 동기화 제공자 {0}이(가) 설정되지 않았습니다",
+    "unable-to-cancel-k+": "오류로 인해 Kavita+ 구독을 취소할 수 없습니다. Kavita+ 지원 측에 문의하십시오",
+    "unable-to-renew-k+": "오류로 인해 Kavita+ 구독을 갱신할 수 없습니다. Kavita+ 지원 측에 문의하십시오",
+    "series-name-exists": "같은 이름의 시리즈가 이미 이 라이브러리에 있습니다",
+    "mappings-re-run-in-progress": "메타데이터 재실행 매핑 요청이 현재 처리 중입니다. 대기열 완료까지 기다려 주십시오",
+    "mappings-re-run-no-libraries-selected": "요청에는 최소한 1개의 라이브러리가 포함되어야 합니다",
+    "mappings-re-run-libraries-overlap": "ExcludedLibraries와 IncludedLibraries는 동일한 라이브러리를 포함할 수 없습니다",
+    "series-name-orphans-files": "이 이름을 변경하면 현재 이 시리즈에 병합되어 있는 파일들이 분리됩니다",
+    "series-localized-name-exists": "이 라이브러리의 다른 시리즈에서 사용하는 이름입니다",
+    "series-localized-name-orphans-files": "이 번역명을 변경하면 현재 이 시리즈에 병합되어 있는 파일들이 분리됩니다"
 }

@@ -65,7 +65,7 @@ public partial class VersionUpdaterService : IVersionUpdaterService
     private const string GithubBranchCommitsUrl = "https://api.github.com/repos/Kareadita/Kavita/commits?sha=develop";
 #pragma warning restore S1075
 
-    [GeneratedRegex(@"^\n*(.*?)\n+#{1,2}\s", RegexOptions.Singleline)]
+    [GeneratedRegex(@"^\n*([\s\S]*?)\n+^#\s(Added|Fixed|Changed|Theme|API|Removed)", RegexOptions.Multiline | RegexOptions.Compiled)]
     private static partial Regex BlogPartRegex();
     private readonly string _cacheFilePath;
     /// <summary>
@@ -84,12 +84,15 @@ public partial class VersionUpdaterService : IVersionUpdaterService
         _logger = logger;
         _eventHub = eventHub;
 
-        _cacheFilePath = Path.Combine(directoryService.LongTermCacheDirectory, "github_releases_cache.json");
-        _cacheLatestReleaseFilePath = Path.Combine(directoryService.LongTermCacheDirectory, "github_latest_release_cache.json");
-        _cacheNightlyInfoFilePath = Path.Combine(directoryService.LongTermCacheDirectory, "github_nightly_cache.json");
-        _cacheCommitsFilePath = Path.Combine(directoryService.LongTermCacheDirectory, "github_commits_cache.json");
+        var updateScopePath = Path.Combine(directoryService.LongTermCacheDirectory, "update");
+        directoryService.ExistOrCreate(updateScopePath);
 
-        _cachePrInfoDirectory = Path.Combine(directoryService.LongTermCacheDirectory, "pr_cache");
+        _cacheFilePath = Path.Combine(updateScopePath, "github_releases_cache.json");
+        _cacheLatestReleaseFilePath = Path.Combine(updateScopePath, "github_latest_release_cache.json");
+        _cacheNightlyInfoFilePath = Path.Combine(updateScopePath, "github_nightly_cache.json");
+        _cacheCommitsFilePath = Path.Combine(updateScopePath, "github_commits_cache.json");
+
+        _cachePrInfoDirectory = Path.Combine(updateScopePath, "pr_cache");
         directoryService.ExistOrCreate(_cachePrInfoDirectory);
 
         FlurlConfiguration.ConfigureClientForUrl(GithubLatestReleasesUrl);
@@ -341,7 +344,7 @@ public partial class VersionUpdaterService : IVersionUpdaterService
         }
 
         // If we're on a nightly build, enrich the information
-        if (updateDtos.Count != 0) // && BuildInfo.Version > new Version(updateDtos[0].UpdateVersion)
+        if (updateDtos.Count != 0)
         {
             await EnrichWithNightlyInfo(updateDtos);
         }
@@ -437,6 +440,7 @@ public partial class VersionUpdaterService : IVersionUpdaterService
             await File.WriteAllTextAsync(tempPath, json);
 
             // Atomic replace - handles file in use scenarios
+            // TODO: BUG: This can sometimes throw an System.UnauthorizedAccessException: Access to the path is denied.
             File.Move(tempPath, _cacheFilePath, overwrite: true);
         }
         catch (Exception ex)

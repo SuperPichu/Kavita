@@ -1,4 +1,4 @@
-import {Component, computed, inject, OnInit, signal, viewChild} from '@angular/core';
+import {Component, computed, inject, OnInit, signal, viewChild, ChangeDetectionStrategy} from '@angular/core';
 import {translate, TranslocoDirective, TranslocoPipe} from "@jsverse/transloco";
 import {StepTrackerComponent, TimelineStep} from "../../reading-list/_components/step-tracker/step-tracker.component";
 import {WikiLink} from "../../_models/wiki";
@@ -19,7 +19,7 @@ import {
   ManageMetadataMappingsComponent,
   MetadataMappingsExport
 } from "../manage-metadata-mappings/manage-metadata-mappings.component";
-import {ToastrService} from "ngx-toastr";
+import {ToastrService} from '@openng/ngx-toastr';
 import {LoadingComponent} from "../../shared/loading/loading.component";
 import {SettingSwitchComponent} from "../../settings/_components/setting-switch/setting-switch.component";
 import {SettingItemComponent} from "../../settings/_components/setting-item/setting-item.component";
@@ -68,6 +68,7 @@ enum Step {
     ManageMetadataMappingsComponent,
   ],
   templateUrl: './import-mappings.component.html',
+  changeDetection: ChangeDetectionStrategy.Eager,
   styleUrl: './import-mappings.component.scss'
 })
 export class ImportMappingsComponent implements OnInit {
@@ -116,6 +117,10 @@ export class ImportMappingsComponent implements OnInit {
   isFileSelected = toSignal(this.uploadForm.get('files')!.valueChanges
     .pipe(map((files) => !!files && files.length == 1)), {initialValue: false});
 
+  isImportSettingsFormValid = toSignal(this.importSettingsForm.valueChanges.pipe(
+    map(() => this.importSettingsForm.valid),
+  ), { initialValue: false });
+
   nextButtonLabel = computed(() => {
     switch(this.currentStepIndex()) {
       case Step.Configure:
@@ -136,7 +141,7 @@ export class ImportMappingsComponent implements OnInit {
       case Step.Configure:
         return true;
       case Step.Conflicts:
-        return this.importSettingsForm.valid;
+        return this.isImportSettingsFormValid();
       default:
         return false;
     }
@@ -195,7 +200,7 @@ export class ImportMappingsComponent implements OnInit {
 
     this.settingsService.updateMetadataSettings(newSettings).subscribe({
       next: () => {
-        const fragment = this.licenseService.hasValidLicense()
+        const fragment = this.licenseService.hasActiveLicense()
           ? SettingsTabId.Metadata : SettingsTabId.ManageMetadata;
 
         this.router.navigate(['settings'], { fragment: fragment });

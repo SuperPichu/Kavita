@@ -174,13 +174,15 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
     /// <summary>
     /// Returns all Bookmarks for a given set of Ids
     /// </summary>
+    /// <param name="seriesId"></param>
     /// <param name="bookmarkIds"></param>
     /// <param name="ct"></param>
     /// <returns></returns>
-    public async Task<IList<AppUserBookmark>> GetAllBookmarksByIds(IList<int> bookmarkIds, CancellationToken ct = default)
+    public async Task<IList<AppUserBookmark>> GetAllBookmarksByIds(int seriesId, IList<int> bookmarkIds,
+        CancellationToken ct = default)
     {
         return await context.AppUserBookmark
-            .Where(b => bookmarkIds.Contains(b.Id))
+            .Where(b => bookmarkIds.Contains(b.Id) && b.SeriesId == seriesId)
             .OrderBy(b => b.Created)
             .ToListAsync(ct);
     }
@@ -199,14 +201,6 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
         return await context.AppUserPreferences
             .Include(p => p.Theme)
             .Where(p => p.Theme.Id == themeId)
-            .AsSplitQuery()
-            .ToListAsync(ct);
-    }
-
-    public async Task<IEnumerable<AppUserPreferences>> GetAllPreferencesByFontAsync(string fontName, CancellationToken ct = default)
-    {
-        return await context.AppUserPreferences
-            .Where(p => p.BookReaderFontFamily == fontName)
             .AsSplitQuery()
             .ToListAsync(ct);
     }
@@ -318,12 +312,26 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
             .ToListAsync(ct);
     }
 
+    public Task<List<AppUserChapterRating>> GetChaptersWithRatings(int userId, CancellationToken ct = default)
+    {
+        return context.AppUserChapterRating
+            .Where(cr => cr.AppUserId == userId && cr.Rating > 0)
+            .ToListAsync(ct);
+    }
+
     public async Task<IEnumerable<AppUserRating>> GetSeriesWithReviews(int userId, CancellationToken ct = default)
     {
         return await context.AppUserRating
             .Where(u => u.AppUserId == userId && !string.IsNullOrEmpty(u.Review))
             .Include(u => u.Series)
             .AsSplitQuery()
+            .ToListAsync(ct);
+    }
+
+    public Task<List<AppUserChapterRating>> GetChaptersWithReviews(int userId, CancellationToken ct = default)
+    {
+        return context.AppUserChapterRating
+            .Where(cr => cr.AppUserId == userId && !string.IsNullOrEmpty(cr.Review))
             .ToListAsync(ct);
     }
 
@@ -341,6 +349,7 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
             .ProjectTo<ScrobbleHoldDto>(mapper.ConfigurationProvider)
             .ToListAsync(ct);
     }
+
 
     public async Task<string> GetLocale(int userId, CancellationToken ct = default)
     {
@@ -477,31 +486,6 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
         return await context.AppUserSideNavStream
             .Where(d => streamIds.Contains(d.Id))
             .ToListAsync(ct);
-    }
-
-    public async Task<IEnumerable<UserTokenInfo>> GetUserTokenInfo(CancellationToken ct = default)
-    {
-        var users = await context.AppUser
-            .Select(u => new
-            {
-                u.Id,
-                u.UserName,
-                u.AniListAccessToken, // JWT Token
-                u.MalAccessToken // JWT Token
-            })
-            .ToListAsync(ct);
-
-        var userTokenInfos = users.Select(user => new UserTokenInfo
-        {
-            UserId = user.Id,
-            Username = user.UserName,
-            IsAniListTokenSet = !string.IsNullOrEmpty(user.AniListAccessToken),
-            AniListValidUntilUtc = JwtHelper.GetTokenExpiry(user.AniListAccessToken),
-            IsAniListTokenValid = JwtHelper.IsTokenValid(user.AniListAccessToken),
-            IsMalTokenSet = !string.IsNullOrEmpty(user.MalAccessToken),
-        });
-
-        return userTokenInfos;
     }
 
     /// <summary>
@@ -649,6 +633,15 @@ public class UserRepository(DataContext context, UserManager<AppUser> userManage
     public async Task<bool> IsUserAdminAsync(AppUser? user, CancellationToken ct = default)
     {
         if (user == null) return false;
+
+        // ReSharper disable once ConditionIsAlwaysTrueOrFalseAccordingToNullableAPIContract
+        if (userManager == null)
+        {
+            // userManager is null on Unit Tests only
+            return await context.UserRoles
+                .AnyAsync(ur => ur.UserId == user.Id && ur.Role.Name == PolicyConstants.AdminRole, ct);
+        }
+
         return await userManager.IsInRoleAsync(user, PolicyConstants.AdminRole);
     }
 

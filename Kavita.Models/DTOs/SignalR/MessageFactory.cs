@@ -1,6 +1,7 @@
 ﻿using System;
 using Kavita.Common.Extensions;
 using Kavita.Models.DTOs.Account;
+using Kavita.Models.DTOs.KavitaPlus.Scrobble;
 using Kavita.Models.DTOs.Reader;
 using Kavita.Models.DTOs.Update;
 using Kavita.Models.Entities.Enums;
@@ -191,6 +192,22 @@ public static class MessageFactory
     /// A series was updated (E.x. K+ match)
     /// </summary>
     public const string SeriesUpdated = nameof(SeriesUpdated);
+    /// <summary>
+    /// A scrobble provider has had their (authentication) details updated
+    /// </summary>
+    public const string ScrobbleProviderUpdated = nameof(ScrobbleProviderUpdated);
+    /// <summary>
+    /// The K+ license info has updated
+    /// </summary>
+    public const string LicenseInfoUpdate = nameof(LicenseInfoUpdate);
+    /// <summary>
+    /// The K+ Metadata for a series has been updated
+    /// </summary>
+    public const string ExternalMetadataUpdate = nameof(ExternalMetadataUpdate);
+    /// <summary>
+    /// Progress event send after a batch completes
+    /// </summary>
+    public const string RerunMetadataMappingsProgress = nameof(RerunMetadataMappingsProgress);
 
 
     public static SignalRMessage DashboardUpdateEvent(int userId)
@@ -834,6 +851,53 @@ public static class MessageFactory
             Body = new
             {
                 Id = seriesId
+            }
+        };
+    }
+
+    public static SignalRMessage ScrobbleProviderUpdatedEvent(ScrobbleProvider provider)
+    {
+        return new SignalRMessage
+        {
+            Name = ScrobbleProviderUpdated,
+            Body = new
+            {
+                Provider = provider
+            }
+        };
+    }
+
+    public static SignalRMessage LicenseInfoUpdateEvent()
+    {
+        return new SignalRMessage
+        {
+            Name = LicenseInfoUpdate
+        };
+    }
+
+    public static SignalRMessage ExternalMetadataUpdateEvent(int seriesId)
+    {
+        return new SignalRMessage
+        {
+            Name = ExternalMetadataUpdate,
+            Body = new
+            {
+                SeriesId = seriesId
+            }
+        };
+    }
+
+    public static SignalRMessage ReRunMappingsProgressEvent(string progressEventType, float progress)
+    {
+        return new SignalRMessage()
+        {
+            Name = RerunMetadataMappingsProgress,
+            Title = "Rerun Metadata Mappings",
+            Progress = ProgressType.Determinate,
+            EventType = progressEventType,
+            Body = new
+            {
+                Progress = progress,
             }
         };
     }

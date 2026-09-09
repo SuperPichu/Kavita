@@ -16,10 +16,6 @@ export const SpecialVolumeNumber = 100000;
 export interface Chapter extends IHasCast, IHasReadingTime, IHasCover, IHasProgress, IHasMetadataIds {
   id: number;
   range: string;
-  /**
-   * @deprecated Use minNumber/maxNumber
-   */
-  number: string;
   minNumber: number;
   maxNumber: number;
   files: Array<MangaFile>;
@@ -77,6 +73,7 @@ export interface Chapter extends IHasCast, IHasReadingTime, IHasCover, IHasProgr
   metronId: number;
   comicVineId: string | null;
   mangaBakaId: number;
+  cbrId: number;
 
   genres: Array<Genre>;
   tags: Array<Tag>;

@@ -12,21 +12,23 @@
         "all-series": "All Series",
         "profile": "{{username}}'s Profile"
     },
+
     "login": {
         "title": "Sign in to your account",
         "username": "{{common.username}}",
         "password": "{{common.password}}",
-        "password-validation": "{{validation.password-validation}}",
         "forgot-password": "Forgot Password?",
         "submit": "Sign in",
         "oidc": "OpenID Connect"
     },
+
     "oidc": {
         "title": "OIDC Callback",
         "login": "Back to login screen",
         "error-loading-info": "An error occurred loading OIDC info, contact your administrator",
         "timeout": "OIDC resolution has timed out or an error has occurred"
     },
+
     "authority-validation-result-pipe": {
         "success": "Authority is valid",
         "invalid-authority": "Kavita can load the OIDC configuration, but the issuer does not match",
@@ -34,6 +36,7 @@
         "not-applicable": "Kavita cannot validate the authority because it is not configured",
         "missing-https": "{{manage-oidc-connect.tls-required}}"
     },
+
     "manage-oidc-connect": {
         "save": "{{common.save}}",
         "reset-label": "Reset ids",
@@ -49,10 +52,10 @@
         "behavior-title": "Behavior",
         "other-field-required": "{{validation.other-field-required}}",
         "other-field-invalid": "{{validation.other-field-invalid}}",
-        "invalid-uri": "{{validation.invalid-uri}}",
         "tls-required": "The OIDC provider must use tls (https)",
         "checking-authority": "Checking if the authority is valid, please be patient...",
         "manual-save-label": "Changing provider settings requires a manual save",
+
         "authority-label": "Authority",
         "authority-tooltip": "The URL to your OIDC provider, do not include the .well-known/openid-configuration path",
         "client-id-label": "Client ID",
@@ -68,9 +71,9 @@
         "auto-login-label": "Auto login",
         "auto-login-tooltip": "Auto redirect to OIDC provider when opening the login screen",
         "disable-password-authentication-label": "Disable password authentication",
-        "disable-password-authentication-tooltip": "Users with the admin role can bypass this restriction",
         "provider-name-label": "Provider name",
         "provider-name-tooltip": "Name shown on the login screen",
+
         "defaults-title": "Defaults",
         "defaults-requirement": "The following settings are used when a user is registered via OIDC while Sync User Settings is turned off",
         "default-include-unknowns-label": "Include unknowns",
@@ -80,6 +83,7 @@
         "no-restriction": "{{restriction-selector.no-restriction}}",
         "default-roles-label": "{{common.roles}}",
         "default-libraries-label": "{{common.libraries}}",
+
         "advanced-title": "Advanced settings",
         "advanced-tooltip": "Only modify these options if you understand their impact.",
         "roles-prefix-label": "Roles prefix",
@@ -89,6 +93,7 @@
         "custom-scopes-label": "Custom scopes",
         "custom-scopes-tooltip": "Additional scopes to request from your OIDC provider during login. Separate multiple scopes with commas. Incorrect values may prevent login."
     },
+
     "manage-auth-keys": {
         "auth-keys-title": "Manage Authorization Keys",
         "name-label": "Name",
@@ -107,25 +112,29 @@
         "add-auth-key": "New",
         "description": "An Auth Key is like a password. Rotating it will invalidate any existing clients.",
         "copy-key": "{{common.copy}}",
-        "clients-opds-error": "Failed to load OPDS url for key: {{key}}"
+        "clients-opds-error": "Failed to load OPDS url for key: {{key}}",
+        "no-data": "{{common.no-data}}",
+        "no-data-description": "You have no authorization keys yet."
     },
+
     "create-auth-key": {
         "create-title": "Create Auth Key",
         "rotate-title": "Rotate Auth Key",
         "name-label": "Name",
         "key-length-label": "Key Length",
         "expiration-label": "Expiration",
-        "required-field": "{{validations.required-field}}",
         "total-key-length": "Total Key Length: {{length}}",
         "cancel": "{{common.cancel}}",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "never": "Never"
     },
+
     "identity-provider-pipe": {
         "kavita": "Kavita",
         "oidc": "OpenID Connect"
     },
+
     "dashboard": {
         "no-libraries": "There are no libraries setup yet. Create some in",
         "server-settings-link": "Server settings",
@@ -135,11 +144,11 @@
         "recently-added-title": "Newly Added Series",
         "more-in-genre-title": "More In {{genre}}"
     },
+
     "edit-user": {
         "edit": "{{common.edit}}",
         "close": "{{common.close}}",
         "username": "{{common.username}}",
-        "required": "{{validation.required-field}}",
         "email": "{{common.email}}",
         "invalid-email-warning": "A non-valid email will block some functionalities of Kavita",
         "warning-read-only": "Read Only accounts have limited permissions",
@@ -155,39 +164,16 @@
         "libraries-label": "{{common.libraries}}",
         "roles-label": "{{common.roles}}"
     },
-    "user-scrobble-history": {
-        "title": "Scrobble History",
-        "description": "Here you will find any scrobble events linked with your account. In order for events to exist, you must have an active scrobble provider configured. All events that have been processed will clear after a month. If there are non-processed events, it is likely these cannot form matches upstream. Please reach out to your admin to get them corrected.",
-        "not-read-warning": "Upstream providers will always keep the highest number",
-        "filter-label": "{{common.filter}}",
-        "created-header": "Created",
-        "last-modified-header": "Last Modified",
-        "type-header": "Type",
-        "series-header": "Series",
-        "data-header": "Data",
-        "is-processed-header": "Is Processed",
-        "select-all-label": "Select all",
-        "delete-selected-label": "Delete selected",
-        "no-data": "{{common.no-data}}",
-        "volume-and-chapter-num": "Volume {{v}} Chapter {{n}}",
-        "volume-num": "{{entity-title.volume-num}}",
-        "chapter-num": "{{entity-title.chapter-num}}",
-        "rating": "Rating {{r}}",
-        "not-applicable": "Not Applicable",
-        "processed": "Processed",
-        "not-processed": "Not Processed",
-        "special": "{{entity-title.special}}",
-        "generate-scrobble-events": "Backfill Events",
-        "token-expired": "Your AniList token is Expired! Scrobbling events will not process until you renew on Accounts page.",
-        "scrobbling-disabled": "Scrobbling is disabled on your Account Settings."
-    },
+
     "scrobble-event-type-pipe": {
         "chapter-read": "Reading Progress",
         "score-updated": "Rating Update",
         "want-to-read-add": "Want to Read: Add",
         "want-to-read-remove": "Want to Read: Remove",
-        "review": "Review update"
+        "review": "Review update",
+        "read-status-update": "Read Status Update"
     },
+
     "spoiler": {
         "click-to-show": "Spoiler, click to show"
     },
@@ -195,21 +181,23 @@
         "user-reviews-local": "Local Reviews",
         "user-reviews-plus": "External Reviews"
     },
+
     "review-modal": {
         "title": "Edit Review",
         "review-label": "Review",
         "close": "{{common.close}}",
         "save": "{{common.save}}",
         "delete": "{{common.delete}}",
-        "min-length": "Review must be at least {{count}} characters",
-        "required": "{{validation.required-field}}"
+        "min-length": "Review must be at least {{count}} characters"
     },
+
     "review-card-modal": {
         "close": "{{common.close}}",
         "user-review": "{{username}}'s Review",
         "external-mod": "(external)",
         "go-to-review": "Go To Review"
     },
+
     "review-card": {
         "your-review": "This is your review",
         "external-review": "External Review",
@@ -217,19 +205,23 @@
         "rating-percentage": "Rating {{r}}%",
         "critic": "critic"
     },
+
     "review-list-item": {
         "by-label": "By",
         "created-alt": "Created"
     },
+
     "want-to-read": {
         "title": "Want To Read",
         "series-count": "{{common.series-count}}",
         "no-items": "There are no items. Try adding a series.",
         "no-items-filtered": "No items match your current filter."
     },
+
     "user-preferences": {
         "title": "User Dashboard",
         "pref-description": "These are global settings that are bound to your account. Reader settings are located in Reading Profiles.",
+
         "account-tab": "{{tabs.account-tab}}",
         "preferences-tab": "{{tabs.preferences-tab}}",
         "theme-tab": "{{tabs.theme-tab}}",
@@ -238,7 +230,9 @@
         "scrobbling-tab": "{{tabs.scrobbling-tab}}",
         "smart-filters-tab": "{{tabs.smart-filters-tab}}",
         "font-tab": "Font",
+
         "success-toast": "User preferences updated",
+
         "global-settings-title": "Global Settings",
         "social-settings-title": "Social Settings",
         "opds-settings-title": "OPDS Settings",
@@ -262,11 +256,13 @@
         "data-saver-tooltip": "Minimizes data usage by preventing automatic prefetching (e.g., PDF reader)",
         "prompt-for-rereads-after-label": "Prompt for Re-Reads",
         "prompt-for-rereads-after-tooltip": "Show the Re-Read Prompt if no progress since X days ago. 0 disables the prompt entirely.",
+
         "kavitaplus-settings-title": "Kavita+",
         "anilist-scrobbling-label": "AniList Scrobbling",
         "anilist-scrobbling-tooltip": "Allow Kavita to Scrobble (one-way sync) reading progress and ratings to AniList",
         "want-to-read-sync-label": "Want To Read Sync",
         "want-to-read-sync-tooltip": "Allow Kavita to add items to your Want to Read list based on AniList and MAL series in Pending read list",
+
         "share-series-reviews-label": "Share Series Reviews",
         "share-series-reviews-tooltip": "Allow your reviews to be visible to other users on this server",
         "share-annotations-label": "Share Annotations",
@@ -281,17 +277,22 @@
         "social-include-unknowns-tooltip": "Enable social features for series and chapters with an unknown age rating",
         "social-share-profile-label": "Share Profile",
         "social-share-profile-tooltip": "Enable sharing information about your reading activity to other server members",
+
+
         "embed-progress-indicator-label": "Embed Progress Indicator",
         "embed-progress-indicator-tooltip": "Embed Progress Indicator in Title",
         "include-continue-from-label": "Include Continue From Entry",
         "include-continue-from-tooltip": "Insert a \"Continue From X\" entry in OPDS fields to avoid finding your last reading point (Emulates Kavita's Continue button)",
+
         "clients-opds-alert": "OPDS is not enabled on this server. This will not affect Mihon users.",
         "clients-opds-description": "All 3rd Party clients will either use the OPDS Auth key or the Connection Url below. These are like passwords, keep it private.",
         "clients-opds-url-label": "OPDS URL",
         "clients-opds-url-tooltip": "See a list of supported OPDS clients: ",
+
         "reset": "{{common.reset}}",
         "save": "{{common.save}}"
     },
+
     "reread-modal": {
         "title": "Re-Read",
         "description-full-read": "You've already finished {{name}}! Would you like to start over?",
@@ -301,19 +302,24 @@
         "cancel": "{{common.cancel}}",
         "read-incognito": "Read incognito"
     },
+
     "multi-check-box-form": {
         "select-all": "Select all",
         "deselect-all": "Deselect all",
         "no-data": "{{typeahead.no-data}}"
     },
+
     "user-holds": {
         "title": "Scrobble Holds",
         "description": "This is a user-managed list of Series that will not be scrobbled to upstream providers. You can remove a series at any time and the next scrobble-able event (reading progress, rating, want to read status) will trigger scrobbling.",
         "no-data": "{{typeahead.no-data}}",
+        "no-data-description": "You don't have any series on hold. Series you place on hold will appear here.",
         "series-name-header": "{{manage-matched-metadata.series-name-header}}",
         "created-header": "{{manage-media-issues.created-header}}",
         "delete-label": "{{common.remove}}"
+
     },
+
     "theme-manager": {
         "description": "Kavita comes in many colors, find a color scheme that meets your needs or build one yourself and share it. Themes may be applied for your account or applied to all accounts.",
         "set-default": "Set Default",
@@ -332,6 +338,7 @@
         "preview-title": "Preview",
         "add": "{{common.add}}"
     },
+
     "file-drag-and-drop-upload": {
         "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
         "upload": "{{cover-image-chooser.upload}}",
@@ -341,24 +348,53 @@
         "back": "Back",
         "load": "Load"
     },
+
     "font-manager": {
-        "description": "Kavita's epub reader comes with a few build-in fonts, add your own fonts here. Upload a file, or use a google fonts url. See the <a href='{{wikiLink}}' target='_blank' rel='noreferrer noopener'>wiki</a> for more information.",
+        "description": "Fonts you can choose from in the epub reader. They're grouped by family, the name you pick while reading. Each family holds one or more files for its different weights and styles. Get fonts from {{googleFontsLink}}, or see the {{wikiLink}} for more information. ",
+        "wiki": "Wiki",
+        "google-fonts": "Google Fonts",
         "add": "{{common.add}}",
+        "add-font": "Add font",
         "drag-n-drop": "{{cover-image-chooser.drag-n-drop}}",
         "upload": "{{cover-image-chooser.upload}}",
         "upload-continued": "a font file",
-        "preview-default": "Upload your own font via file or Google Font url",
+        "preview-default": "Select a family to preview it, or add your own font via file or Google Font url",
         "delete": "{{common.delete}}",
         "no-preview": "This font cannot be previewed. This will take the default style from the book.",
         "brown-fox": "The quick brown fox jumps over the lazy dog",
-        "filter-system-fonts-label": "Filter System Fonts"
+        "filter-system-fonts-label": "Filter System Fonts",
+        "families": "Families",
+        "custom-only": "Custom only",
+        "var": "VAR",
+        "variable": "Variable",
+        "style": "style",
+        "styles": "styles",
+        "file": "file",
+        "files": "files",
+        "in-this-family": "in this family",
+        "styles-summary": "· {{styles}}",
+        "roman": "Roman",
+        "italic": "Italic",
+        "regular": "Regular",
+        "wght": "wght",
+        "alphabet": "ABCDEFGHIJKLM abcdefghijklm 0123456789",
+        "weight-axis": "Weight axis",
+        "weight-axis-hint": "drag to preview the full range",
+        "weight-thin": "thin",
+        "weight-black": "black",
+        "reading-sample": "Reading sample",
+        "reading-sample-text": "She turned the page slowly, the lamplight catching each letter. Whispered tales of ink and paper drifted up from the spine, the five boxing wizards jump quickly, and the night read on.",
+        "provider-note-system": "Built-in, always available",
+        "provider-note-custom": "Uploaded by you"
     },
+
     "theme": {
         "theme-dark": "Dark",
         "theme-black": "Black",
         "theme-paper": "Paper",
         "theme-white": "White"
     },
+
     "restriction-selector": {
         "title": "Age Rating Restriction",
         "description": "When selected, all series and reading lists that have at least one item that is greater than the selected restriction will be pruned from results.",
@@ -368,10 +404,16 @@
         "include-unknowns-label": "Include Unknowns",
         "include-unknowns-tooltip": "If true, Unknowns will be allowed with Age Restriction. This could lead to untagged media leaking to users with Age restrictions."
     },
+
     "site-theme-provider-pipe": {
         "system": "System",
         "custom": "{{device-platform-pipe.custom}}"
     },
+
+    "search-input": {
+        "clear": "Clear search"
+    },
+
     "manage-devices": {
         "title": "Device Manager",
         "description": "This section is for you to setup email devices that cannot connect to Kavita and instead have an email address that accepts files.",
@@ -382,18 +424,21 @@
         "add": "{{common.add}}",
         "delete": "{{common.delete}}",
         "edit": "{{common.edit}}",
-        "no-data": "{{typeahead.no-data}}",
+        "no-data": "{{common.no-data}}",
+        "no-data-description": "You have no email-based devices setup yet.",
         "actions-header": "{{manage-users.actions-header}}",
         "warning": "Warning",
         "client-devices-header": "Client Devices",
         "sendto-device-header": "Email-based Devices"
     },
+
     "server-devices": {
         "client-devices-header": "{{manage-devices.client-devices-header}}",
         "client-devices-this-month-header": "Client Devices this Month",
         "client-devices-mobile-vs-pc-header": "Mobile vs PC this Month",
         "no-data": "{{common.no-data}}"
     },
+
     "edit-device-modal": {
         "title": "Edit Email Device",
         "device-name-label": "{{manage-devices.name-label}}",
@@ -402,10 +447,9 @@
         "email-tooltip": "This email will be used to accept the file via Send To",
         "save": "{{common.save}}",
         "close": "{{common.close}}",
-        "cancel": "{{common.cancel}}",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}"
+        "cancel": "{{common.cancel}}"
     },
+
     "client-device-card": {
         "auth-type-label": "Authentication Type",
         "browser-label": "Browser",
@@ -418,6 +462,8 @@
         "save": "{{common.save}}",
         "local": "Local"
     },
+
+
     "change-password": {
         "password-label": "{{common.password}}",
         "current-password-label": "Current Password",
@@ -425,17 +471,17 @@
         "confirm-password-label": "Confirm Password",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
-        "required-field": "{{validation.required-field}}",
         "passwords-must-match": "Passwords must match",
         "permission-error": "You do not have permission to change your password. Reach out to the admin of the server."
     },
+
     "change-username": {
         "username-label": "{{common.username}}",
         "new-username-label": "New Username",
         "reset": "{{common.reset}}",
-        "save": "{{common.save}}",
-        "required-field": "{{validation.required-field}}"
+        "save": "{{common.save}}"
     },
+
     "change-email": {
         "email-title": "Email",
         "email-label": "New Email",
@@ -448,27 +494,28 @@
         "invite-url-label": "Invite Url",
         "invite-url-tooltip": "Copy this and paste in a new tab",
         "has-invalid-email": "It looks like you do not have a valid email set. Change email will require the admin to send you a link to complete this action.",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}"
     },
+
     "change-age-restriction": {
         "age-restriction-label": "Age Restriction",
         "unknowns": "Unknowns",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}"
     },
+
     "api-key": {
         "copy": "{{book-line-overlay.copy}}"
     },
+
     "scrobbling-providers": {
         "title": "Scrobbling Providers",
         "requires": "This feature requires an active {{product}} license",
         "token-valid": "Token Valid",
         "token-expired": "Token Expired",
         "no-token-set": "No Token Set",
-        "token-set": "Token Set",
+        "token-set":  "Token Set",
         "generate": "Generate",
         "generic-instructions": "Fill out information about different External Services you have to allow Kavita+ to interact with them.",
         "instructions": "First time users should click on \"{{scrobbling-providers.generate}}\" below to allow Kavita+ to talk with {{service}}. Once you authorize the program, copy and paste the token in the input below. You can regenerate your token at any time.",
@@ -487,7 +534,9 @@
         "anilist-first-description": "Your AniList token is now setup. This token lasts for a year and Kavita will inform you before it expires to refresh it here. With this, Kavita will generate scrobble (sync) events from your reading history, want to read, and ratings. You can start this now or later. If you have any series that you do not want to be scrobbled select later and place a Scrobble Hold on them. You only need to run this task once. Afterwards, Kavita will handle the syncing for you.<br/> If you select 'Later', you can find the button on Scrobbling page.",
         "anilist-first-later": "Later",
         "anilist-first-now": "Now"
+
     },
+
     "typeahead": {
         "locked-field": "Field is locked",
         "close": "{{common.close}}",
@@ -496,32 +545,39 @@
         "no-data": "{{common.no-data}}",
         "add-custom-item": ", type to add a custom item"
     },
+
     "generic-list-modal": {
         "close": "{{common.close}}",
         "clear": "{{common.clear}}",
         "filter": "{{common.filter}}",
         "open-filtered-search": "Open a filtered search for {{item}}"
     },
+
+
     "most-active-users": {
         "title": "Most Active Readers",
         "no-data": "No reading activity for time period"
     },
+
     "active-user-card": {
         "total-hours": "{{duration}} total",
         "comics-count": "{{count}} comics",
         "books-count": "{{count}} books"
     },
+
     "time-frame-label": {
         "overall": "Overall",
         "week": "This week",
         "month": "This month",
         "year": "This year"
     },
+
     "role-selector": {
         "title": "{{common.roles}}",
         "deselect-all": "{{common.deselect-all}}",
         "select-all": "{{common.select-all}}"
     },
+
     "directory-picker": {
         "title": "Choose a Folder",
         "close": "{{common.close}}",
@@ -534,6 +590,7 @@
         "share": "Share",
         "help": "{{common.help}}"
     },
+
     "library-access-modal": {
         "select-all": "{{common.select-all}}",
         "deselect-all": "{{common.deselect-all}}",
@@ -544,6 +601,7 @@
         "save": "{{common.save}}",
         "no-data": "There are no libraries setup yet."
     },
+
     "time-periods": {
         "this-week": "This Week",
         "last-7-days": "Last 7 Days",
@@ -551,10 +609,13 @@
         "last-90-days": "Last 90 Days",
         "last-year": "Last Year",
         "all-time": "All Time"
+
     },
+
     "device-platform-pipe": {
         "custom": "Custom"
     },
+
     "day-of-week-pipe": {
         "monday": "Monday",
         "tuesday": "Tuesday",
@@ -564,11 +625,13 @@
         "saturday": "Saturday",
         "sunday": "Sunday"
     },
+
     "cbl-import-result-pipe": {
         "success": "Success",
         "partial": "Partial",
         "failure": "Failure"
     },
+
     "cbl-match-tier-pipe": {
         "remap-rule": "Remap Rule",
         "external-id": "External ID",
@@ -580,6 +643,7 @@
         "user-decision": "User Decision",
         "unmatched": "Unmatched"
     },
+
     "cbl-import-reason-pipe": {
         "chapter-missing": "Chapter Missing",
         "volume-missing": "Volume Missing",
@@ -592,6 +656,7 @@
         "success": "Success",
         "invalid-file": "Invalid File"
     },
+
     "cbl-conflict-reason-pipe": {
         "all-series-missing": "Your account is missing access to all series in the list or Kavita does not have anything present in the list.",
         "chapter-missing": "{{series}}: Chapter {{chapter}} is missing from Kavita. This item will be skipped.",
@@ -604,6 +669,7 @@
         "invalid-file": "The file is corrupted or not matching the expected tags/spec.",
         "success": "{{series}} volume {{volume}} chapter {{chapter}} mapped successfully."
     },
+
     "time-duration-pipe": {
         "hours": "{{value}} hours",
         "minutes": "{{value}} minutes",
@@ -611,12 +677,13 @@
         "months": "{{value}} months",
         "years": "{{value}} years"
     },
+
     "time-ago-pipe": {
         "never": "Never",
         "just-now": "just now",
         "min-ago": "a minute ago",
         "mins-ago": "{{value}} minutes ago",
-        "hour-ago": "a hour ago",
+        "hour-ago": "an hour ago",
         "hours-ago": "{{value}} hours ago",
         "day-ago": "a day ago",
         "days-ago": "{{value}} days ago",
@@ -625,12 +692,61 @@
         "year-ago": "a year ago",
         "years-ago": "{{value}} years ago"
     },
+
+    "time-difference-pipe": {
+        "never": "Never",
+        "just-now": "just now",
+        "min": {
+            "ago": "a minute ago",
+            "in": "in a minute"
+        },
+        "mins": {
+            "ago": "{{value}} minutes ago",
+            "in": "in {{value}} minutes"
+        },
+        "hour": {
+            "ago": "an hour ago",
+            "in": "in an hour"
+        },
+        "hours": {
+            "ago": "{{value}} hours ago",
+            "in": "in {{value}} hours"
+        },
+        "day": {
+            "ago": "a day ago",
+            "in": "in a day"
+        },
+        "days": {
+            "ago": "{{value}} days ago",
+            "in": "in {{value}} days"
+        },
+        "month": {
+            "ago": "a month ago",
+            "in": "in a month"
+        },
+        "months": {
+            "ago": "{{value}} months ago",
+            "in": "in {{value}} months"
+        },
+        "year": {
+            "ago": "a year ago",
+            "in": "in a year"
+        },
+        "years": {
+            "ago": "{{value}} years ago",
+            "in": "in {{value}} years"
+        }
+    },
+
     "duration-pipe": {
         "seconds": "{{num}} seconds",
         "minutes": "{{num}} minutes",
         "hours": "{{num}} hours",
         "combo": "{{hour}}h {{min}}m"
+
     },
+
+
     "relationship-pipe": {
         "adaptation": "Adaptation",
         "alternative-setting": "Alternative Setting",
@@ -645,8 +761,10 @@
         "spin-off": "Spin Off",
         "parent": "Parent",
         "edition": "Edition",
-        "annual": "Annual"
+        "annual": "Annual",
+        "cameo": "Cameo"
     },
+
     "publication-status-pipe": {
         "ongoing": "Ongoing",
         "hiatus": "Hiatus",
@@ -654,6 +772,7 @@
         "cancelled": "Cancelled",
         "ended": "Ended"
     },
+
     "person-role-pipe": {
         "artist": "Artist",
         "character": "Character",
@@ -669,6 +788,7 @@
         "team": "{{filter-field-pipe.team}}",
         "location": "{{filter-field-pipe.location}}"
     },
+
     "manga-format-pipe": {
         "epub": "EPUB",
         "archive": "Archive",
@@ -676,6 +796,7 @@
         "pdf": "PDF",
         "unknown": "Unknown"
     },
+
     "library-type-pipe": {
         "book": "Book",
         "comic": "Comic (Flexible)",
@@ -684,6 +805,7 @@
         "image": "Image",
         "lightNovel": "Light Novel"
     },
+
     "library-type-subtitle-pipe": {
         "book": "General-purpose book library.",
         "comic": "Comic library with support for volume grouping and trade paperbacks within a single series. Does not support multiple runs in same Series.",
@@ -692,6 +814,7 @@
         "image": "Loose image files with limited support. Must largely follow wiki documentation.",
         "lightNovel": "Book library with special handling optimized for light novels"
     },
+
     "age-rating-pipe": {
         "unknown": "Unknown",
         "early-childhood": "Early Childhood",
@@ -710,14 +833,14 @@
         "pg": "PG",
         "r18-plus": "R18+"
     },
+
     "reset-password": {
         "title": "Password Reset",
         "description": "Enter the email of your account. Kavita will send you an email if a valid one is on file, otherwise ask the admin to reset your password.",
         "email-label": "{{common.email}}",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}",
         "submit": "{{common.submit}}"
     },
+
     "reset-password-modal": {
         "title": "Reset {{username}}'s Password",
         "new-password-label": "New Password",
@@ -726,24 +849,29 @@
         "cancel": "{{common.cancel}}",
         "save": "{{common.save}}"
     },
+
     "all-series": {
         "title": "All Series",
         "series-count": "{{common.series-count}}"
     },
+
     "all-filters": {
         "title": "All Smart Filters",
         "description": "Smart filters are saved filters that can be bound against the side nav and dashboard. You can create them for Series and Reading Lists by giving a name and using Save button.",
         "count": "{{count}} Total Smart Filters"
     },
+
     "announcements": {
         "title": "Announcements"
     },
+
     "changelog": {
         "installed": "Installed",
         "download": "Download",
         "nightly": "Nightly: {{version}}",
         "available": "Available"
     },
+
     "changelog-update-item": {
         "download": "Download",
         "added": "Added",
@@ -758,6 +886,7 @@
         "feature-requests": "Feature Requests",
         "known-issues": "Known Issues"
     },
+
     "version-update-modal": {
         "close": "{{common.close}}",
         "out-of-date": {
@@ -778,12 +907,14 @@
             "download": "Download"
         }
     },
+
+
+
     "invite-user": {
         "title": "Invite User",
         "close": "{{common.close}}",
-        "description": "Invite a user to your server by entering their email. They'll receive an email to create an account. For this to work you must have the Host Name and Email setting fields set in the <a href=\"/settings#email\" rel=\"noopener noreferrer\" target=\"_blank\">Email</a> tab, otherwise a link will be presented to you to setup on the user's behalf.<br/><br/>The email is not required to be valid.",
+        "description": "Invite a user to your server by entering their email. They'll receive an email to create an account. For this to work you must have the Host Name and Email setting fields set in the <a href=\"/settings#admin-email\" rel=\"noopener noreferrer\" target=\"_blank\">Email</a> tab, otherwise a link will be presented to you to setup on the user's behalf.<br/><br/>The email is not required to be valid.",
         "email": "{{common.email}}",
-        "required-field": "{{common.required-field}}",
         "setup-user-title": "User invited",
         "setup-user-description": "You can use the following link below to setup the account for your user or use the copy button. You may need to log out before using the link to register a new user.",
         "setup-user-account": "Setup user's account",
@@ -797,69 +928,308 @@
         "libraries-label": "{{common.libraries}}",
         "roles-label": "{{common.roles}}"
     },
+
     "library-selector": {
         "title": "{{common.libraries}}",
         "select-all": "{{common.select-all}}",
         "deselect-all": "{{common.deselect-all}}",
         "no-data": "There are no libraries setup yet."
     },
-    "license": {
-        "title": "Kavita+ License",
-        "kavita+-warning": "Kavita+ is separate from Kavita. Uninstalling without first cancelling your subscription will continue the billing cycle.",
-        "manage": "Manage",
-        "invalid-license-tooltip": "If your subscription has ended, you must email support to get a new subscription created",
-        "check": "Check",
-        "cancel": "{{common.cancel}}",
-        "edit": "{{common.edit}}",
-        "buy": "Buy",
-        "activate": "Activate",
-        "renew": "Renew",
-        "no-license-key": "No license key",
-        "license-valid": "License is Valid",
-        "license-not-valid": "License Not Valid",
-        "loading": "{{common.loading}}",
-        "help-label": "{{common.help}}",
-        "info-title": "License Info",
-        "actions-title": "Actions",
-        "license-active-label": "License Active",
-        "supported-version-label": "On Supported Kavita version",
-        "expiration-label": "Expiration",
-        "valid-tooltip": "Valid",
-        "invalid-tooltip": "Invalid",
-        "reset-label": "Reset",
-        "reset-tooltip": "This will reset the server instance Kavita+ license is tied to. Requires Email and License Key",
-        "delete-label": "Remove License",
-        "delete-tooltip": "This will remove the license from Kavita to stop Kavita from talking to Kavita+. Does not unsubscribe you. Use 'manage' first to cancel the subscription.",
-        "manage-tooltip": "Update payment info, Cancel/Pause subscription, etc",
-        "cancel-label": "Cancel Subscription",
-        "cancel-tooltip": "Cancel your subscription and delete the license within Kavita.",
-        "resend-license-email": "Send License to email",
-        "resend-license-email-tooltip": "Resend Kavita+ license to email. License must be bound to this server to work.",
-        "faq-title": "FAQ",
-        "total-subbed-months-label": "Total Months Subscribed",
-        "email-label": "Registered Email",
-        "supportId-label": "Support Id",
-        "license-mismatch": "License may be registered to another Kavita instance. Re-register to fix.",
-        "k+-license-overwrite": "License is registered to another Kavita instance. This can happen on re-installation and rarely due to system updates. Select overwrite to force this instance to register with Kavita+.",
-        "k+-already-registered-header": "License already registered",
-        "overwrite": "Overwrite",
-        "k+-unlocked": "Kavita+ unlocked!",
-        "k+-unlocked-description": "Welcome to Kavita+! Kavita will generate scrobble events from your progress, ratings and want to read once you register your Scrobbling Providers under account. Take some time to ensure you place scrobbling holds for any series you don't want to scrobble.",
-        "activate-description": "Enter the License Key and Email used to register with Stripe",
+
+
+    "edit-license-key": {
         "activate-license-label": "License Key",
         "activate-email-label": "{{common.email}}",
-        "activate-discordId-label": "Discord User Id",
+        "activate-discordId-label": "Discord User ID",
         "activate-discordId-tooltip": "Link your Discord Account with Kavita+. This grants you access to hidden channels to help shape Kavita.",
         "discord-validation": "This is not a valid Discord User Id. Your user id is not your discord username.",
-        "activate-delete": "{{common.delete}}",
-        "activate-reset": "Reset License",
-        "activate-reset-tooltip": "Invalidate a previous registration using your license. Requires both License and Email",
-        "activate-save": "{{common.save}}",
-        "kavita+-desc-part-1": "Kavita+ is a premium subscription service which unlocks features for all users on this Kavita instance. Buy a subscription to unlock ",
-        "kavita+-desc-part-2": "premium benefits",
-        "kavita+-desc-part-3": "today!",
-        "kavita+-requirement": "Kavita+ is designed to work only with the latest 3 releases. Anything outside of that is subject to not functioning."
+        "email-help": "This is the email registered with Stripe",
+        "license-help": "For your security, the stored key is encrypted on disk, re-enter it to update.",
+        "help-label": "{{common.help}}",
+        "license-length-validation": "License key is expected to be 19 characters long",
+        "license-format-validation": "License is expected to be formatted as: XXXX-XXXX-XXXX-XXXX",
+        "discord-format-validation": "Discord ID expected to be 19 number user id",
+        "email-format-validation": "Must be a valid email address"
     },
+
+    "manage-license-key-modal": {
+        "title": "Kavita+ License",
+        "last-validated": "last validated {{timeAgo}}",
+        "activate-license": "Activate License",
+        "close": "{{common.close}}",
+        "delete-license": "Delete license",
+        "reset-license": "Reset license",
+        "save": "{{common.save}}"
+    },
+
+    "manage-license-modal": {
+        "hub-title": "Manage subscription",
+        "hub-subtitle": "Choose what you'd like to do with this server's Kavita+ plan.",
+        "renew-title": "Renew subscription",
+        "renew-desc": "Reactivate Kavita+ for everyone on this server.",
+        "cancel-title": "Cancel subscription",
+        "cancel-desc": "End your plan. Kavita+ stays active until your billing date - no further charges.",
+        "change-email-title": "Change email",
+        "change-email-desc": "Update the address Stripe uses for receipts and where your license & renewal links are sent.",
+        "billing-title": "Billing & payment details",
+        "billing-desc": "Update your card, view invoices, and download receipts in Stripe's secure portal.",
+        "close": "{{common.close}}"
+    },
+
+    "renew-license": {
+        "title": "Renew Kavita+",
+        "subtitle": "Reactivate premium features for everyone on this server.",
+        "close": "{{common.close}}",
+        "billing-period-label": "Billing period",
+        "monthly-label": "Monthly",
+        "yearly-label": "Yearly",
+        "billing-email-label": "Billing email",
+        "on-file-label": "on file",
+        "email-help": "Auto-filled from this instance - must match your original purchase.",
+        "change-label": "Change",
+        "how-it-works-label": "How renewing works",
+        "how-step-1": "We create a secure Stripe checkout for {{email}} on the selected plan.",
+        "how-step-2": "Confirm your card there - your details never touch this server.",
+        "how-step-3": "Once payment clears, Kavita+ features will once again become available to everyone on the server.",
+        "back-label": "Back",
+        "send-link-label": "Continue to payment",
+        "checkout-ready-label": "Your checkout is ready",
+        "checkout-ready-help": "Open the secure Stripe checkout to complete your renewal. You can close this once payment is done and re-check.",
+        "pay-now-label": "Pay now",
+        "done-label": "{{common.done}}",
+        "link-sent-error": "Unable to start the renewal. Please try again or contact support."
+    },
+
+    "cancel-license": {
+        "title": "Cancel subscription",
+        "subtitle": "You'll keep full access until the end of your current billing period.",
+        "close": "{{common.close}}",
+        "server-wide-label": "Server-wide",
+        "users-active-label": "{{count}} users active",
+        "what-happens-label": "What happens",
+        "impact-1": "Kavita+ stays active until your current billing date.",
+        "impact-2": "No further charges are made after that date.",
+        "impact-3": "You can resubscribe at any time to restore premium features.",
+        "comment-label": "Reason for cancelling (optional)",
+        "comment-placeholder": "Let us know why you're cancelling...",
+        "cancelled-success": "Subscription cancelled. Access continues until your billing date.",
+        "cancelled-error": "We couldn't cancel your subscription. Please try again or contact support.",
+        "back-label": "Back",
+        "confirm-label": "Cancel subscription"
+    },
+
+    "change-license-email": {
+        "title": "Change email",
+        "subtitle": "Update where receipts, license keys, and renewal links are sent.",
+        "close": "{{common.close}}",
+        "current-email-label": "Current email",
+        "on-file-label": "on file",
+        "new-email-label": "New email address",
+        "new-email-placeholder": "you@domain.com",
+        "confirm-help": "We'll send a link to complete the change before anything changes.",
+        "back-label": "Back",
+        "send-code-label": "Send code"
+    },
+
+    "register-license-key": {
+        "title": "Already have a license?",
+        "description": "Enter the key from your purchase email to activate Kavita+ on this server.",
+        "activate-license": "Activate License"
+    },
+
+    "kavita-plus-registration-error-code-pipe": {
+        "registration-failed": "License activation failed. Verify your license key and email are correct.",
+        "already-registered": "This license is registered to another server. Use 'Reset license' first.",
+        "subscription-inactive": "Your subscription is not active. Renew at kavitareader.com.",
+        "internal-error": "An internal error occurred. Please contact Kavita+ support."
+    },
+
+    "kavita-plus-subscription-status-pipe": {
+        "active": "Active",
+        "paused": "Paused",
+        "cancelling": "Cancelling",
+        "expired": "Cancelled"
+    },
+
+    "kavita-plus-provider-health-status-pipe": {
+        "unknown-label": "Unknown",
+        "operational-label": "Operational",
+        "degraded-label": "Degraded",
+        "down-label": "Down"
+    },
+
+    "kavita-plus-api-name-title-desc-pipe": {
+        "cover-requests-title": "Cover Requests",
+        "cover-requests-description": "Series, chapters, and volume covers",
+        "metadata-sync-title": "Metadata Syncs",
+        "metadata-sync-description": "Series detail refreshes",
+        "series-matched-title": "Series Matched",
+        "series-matched-description": "Matched to upstream providers",
+        "scrobbles-title": "Scrobbles",
+        "scrobbles-description": "Progress pushed to providers",
+        "mal-stack-import-title": "MAL Stacks Imported",
+        "mal-stack-import-description": "Interest stacks ingested",
+        "want-to-read-title": "Want-to-Read Syncs",
+        "want-to-read-description": "Synced from MAL/AniList/Hardcover/MangaBaka",
+        "recommendations-title": "Recommendations",
+        "recommendations-description": "External recs loaded",
+        "reviews-title": "Reviews",
+        "reviews-description": "External reviews loaded"
+    },
+
+    "scrobble-provider-media-title-pipe": {
+        "anilist-label": "Manga + Light Novels",
+        "mal-label": "{{scrobble-provider-media-title-pipe.anilist-label}}",
+        "mangabaka-label": "{{scrobble-provider-media-title-pipe.anilist-label}}",
+        "hardcover-label": "Books",
+        "cbr-label": "Comics"
+    },
+
+    "scrobble-health": {
+        "title-label": "Upstream Providers",
+        "checked-ago-label": "checked {{time}} ago",
+        "live-label": "live",
+        "refresh-alt": "Refresh provider health",
+        "no-data-label": "No provider health data available"
+    },
+
+    "kavita-plus-billing-interval-pipe": {
+        "day-label": "daily",
+        "week-label": "weekly",
+        "month-label": "monthly",
+        "year-label": "yearly",
+        "day-unit-label": "day",
+        "week-unit-label": "week",
+        "month-unit-label": "month",
+        "year-unit-label": "year"
+    },
+
+    "kavita-plus-upsell": {
+        "title": "Unlock Kavita+",
+        "description": "A premium subscription that unlocks metadata, scrobbling, and recommendations for every user on this Kavita instance.",
+        "wiki-link-label": "Read the wiki",
+        "faq-btn-label": "FAQ",
+        "hero-headline-label": "Metadata, scrobbling, and recommendations.",
+        "hero-subtitle-label": "Auto-sync reading progress, pull in rich metadata, and connect to AniList, MyAnimeList, Hardcover, and MangaBaka - all from one subscription, server-wide.",
+        "start-cta-label": "Start Kavita+",
+        "feature-list-link-label": "See full feature list",
+        "price-label": "$4",
+        "price-per-month-label": "/ month",
+        "price-promo-label": "$2 your first month",
+        "pricing-feature-1-label": "One subscription - server-wide",
+        "pricing-feature-2-label": "Every user on this instance benefits",
+        "pricing-feature-3-label": "Cancel any time through Stripe",
+        "pricing-feature-4-label": "Node-locked - no per-seat charge",
+        "providers-label": "Connects to",
+        "providers-more-label": "+ more coming",
+        "benefits-section-label": "What's in the box",
+        "benefit-1-title-label": "Auto-sync reading progress",
+        "benefit-1-body-label": "Push progress to AniList, MangaBaka, Hardcover and more - no manual tracking.",
+        "benefit-2-title-label": "Ratings & reviews",
+        "benefit-2-body-label": "Pull ratings and reviews from AniList, MyAnimeList, and ComicBookRoundup straight into Kavita.",
+        "benefit-3-title-label": "Rich metadata, no tagging",
+        "benefit-3-body-label": "Automatic metadata for Manga, Books, and Comics. Cover art, summaries, genres, and people.",
+        "benefit-4-title-label": "Import & sync MAL Stacks",
+        "benefit-4-body-label": "Pull in Interest Stacks and keep them synced. More provider integrations coming.",
+        "benefit-5-title-label": "Reading lists, anywhere",
+        "benefit-5-body-label": "Two-way sync your reading lists with upstream providers like MAL and AniList.",
+        "benefit-6-title-label": "Server-wide unlock",
+        "benefit-6-body-label": "One subscription, node-locked to your server. Every user on this instance benefits.",
+        "faq-section-title-label": "FAQ",
+        "faq-1-question-label": "Is Kavita+ separate from Kavita?",
+        "faq-1-answer-label": "Yes. Kavita stays free and open-source. Kavita+ adds premium services - uninstalling Kavita does not cancel your subscription.",
+        "faq-2-question-label": "What if I have multiple servers?",
+        "faq-2-answer-label": "Each Kavita+ license is node-locked to a single server. Contact support to migrate.",
+        "faq-3-question-label": "How do I cancel?",
+        "faq-3-answer-label": "Use the Manage button to open the Stripe portal - cancel or pause any time.",
+        "faq-wiki-link-label": "Full FAQ on the wiki"
+    },
+
+    "kavita-plus-connect-providers": {
+        "title": "You're all set - One last step",
+        "description": "Connect the providers you scrobble to. Kavita+ will backfill your existing reading history and keep progress in sync (one way) going forward.",
+        "faq-btn-label": "FAQ",
+        "activated-title-label": "License activated",
+        "activated-body-label": "Premium features are unlocked for every user on this server.",
+        "skip-to-dashboard-label": "Skip to dashboard",
+        "backfill-title-label": "Backfill your reading history",
+        "backfill-body-label": "Connecting now lets Kavita+ pull your existing progress from these services so series in your library show as already-read. You can connect more later, but backfill is easiest right after activation.",
+        "step-2-of-2-label": "Step 2 of 2",
+        "skip-for-now-label": "Skip for now",
+        "go-to-dashboard-label": "Go to dashboard",
+        "footer-hint-label": "You can connect more providers later under Settings → Kavita+ → Linked accounts."
+    },
+
+    "license-api-stats": {
+        "title": "API Usage",
+        "description": "Calls this server has made to Kavita+. Purely informational, there are no caps.",
+        "last-30-days": "Last 30 days",
+        "lifetime": "Lifetime",
+        "range-toggle-alt": "Toggle API usage range"
+    },
+
+    "expired-license-api-stats": {
+        "title": "Final Usage Snapshot"
+    },
+
+    "license-dashboard": {
+        "title": "License & Kavita+",
+        "description-inactive": "Your Kavita+ subscription has lapsed. Renew to restore metadata sync, scrobbling, recommendations, and more.",
+        "description-active": "Subscription, integrations, and usage for this server.",
+        "faq-label": "FAQ",
+        "support-label": "Help"
+    },
+
+    "register-license": {
+        "k+-already-registered-header": "License already registered",
+        "k+-license-overwrite": "This license is already registered to a different server. Are you sure you want to overwrite? This will deregister the other server.",
+        "overwrite": "Overwrite",
+        "cancel": "{{common.cancel}}"
+    },
+
+    "discord-connect-card": {
+        "connect-title": "Connect Discord",
+        "connect-subtitle": "Access exclusive channels and show your flair",
+        "connect-button": "Connect",
+        "connected-label": "Discord Connected",
+        "connecting-title": "Connecting",
+        "connecting-subtitle": "Kavita is linking your discord in the background, stand by..."
+    },
+
+    "expired-license-info-card": {
+        "title-label": "Last Subscription",
+        "status-label": "Status",
+        "expired-on-label": "Expired on",
+        "member-since-label": "Member since",
+        "total-months-label": "Total months"
+    },
+
+    "license-info-panel": {
+        "desc-active-label": "Premium subscription · server-wide",
+        "desc-inactive-label": "Premium features paused for all users",
+        "next-charge-label": "Next Charge",
+        "member-since-label": "Member Since",
+        "months-subscribed-label": "{{count}} months subscribed",
+        "version-label": "Kavita Version",
+        "supported-label": "Supported",
+        "unsupported-label": "Unsupported",
+        "version-sub-label": "on v{{version}}",
+        "expired-label": "Expired",
+        "expires-label": "Expires",
+        "days-ago-label": "{{count}} days ago",
+        "days-remaining-label": "{{count}} days left",
+        "last-plan-label": "Last Plan",
+        "impacted-label": "Active Users Impacted",
+        "impacted-value-label": "{{count}} users",
+        "impacted-sub-label": "premium features paused",
+        "days-left-label": "Days Left",
+        "manage-label": "Manage",
+        "renew-label": "Renew",
+        "edit-license-label": "Edit license",
+        "check-license-label": "Check",
+        "support-id-label": "Support Id"
+    },
+
     "manage-matched-metadata": {
         "title": "Matched Metadata",
         "description": "All applicable Series that can be matched with External Metadata reside here. Kavita will prefetch or refresh series metadata, 50 series per 24 hours daily.",
@@ -877,8 +1247,11 @@
         "all-status-label": "All",
         "dont-match-label": "Don't Match",
         "no-data": "{{common.no-data}}",
-        "match-alt": "Match {{seriesName}}"
+        "match-alt": "Match {{seriesName}}",
+        "total-matched-label": "Total Matched",
+        "total-count": "Total: {{count}}"
     },
+
     "manage-user-tokens": {
         "description": "Users that have scrobbling tokens may need renewing occasionally. Kavita will automatically email them if email is setup and they have a valid email.",
         "username-header": "Username",
@@ -888,13 +1261,16 @@
         "no-data": "{{common.no-data}}",
         "expires-label": "Expires: {{date}}"
     },
+
     "manage-metadata-settings": {
-        "k+-warning": "The settings below are shared with those found on the K+ page. You may change them in either location",
+        "k+-warning": "The settings below are shared with those found on the K+ page. You may change them in either location.",
         "export-settings": "Export",
-        "export-tooltip": "Export your blacklist and whitelist, age rating, and field mappings",
+        "export-tooltip": "Export your blacklist and whitelist, age rating, and field mappings.",
         "export-file-name": "Kavita Metadata Settings Export.json",
         "import-settings": "Import",
-        "import-tooltip": "Import your or someone else's settings",
+        "import-tooltip": "Import your or someone else's settings.",
+        "run-metadata-mappings": "Run Metadata Mappings",
+        "run-metadata-mappings-tooltip": "Process series through your metadata mappings. This may take a while and consume more resources.",
         "description": "Kavita+ has the ability to download and write some limited metadata to the Database. This page allows for you to toggle what is in scope.",
         "enabled-label": "Enable Metadata Download",
         "enabled-tooltip": "Allow Kavita to download metadata and write to it's database.",
@@ -902,6 +1278,10 @@
         "summary-tooltip": "Allow Summary to be written when the field is unlocked.",
         "localized-name-label": "Localized Series Name",
         "localized-name-tooltip": "Allow Localized Name to be written when the field is unlocked. Kavita will attempt to make the best guess.",
+        "name-label": "Series Name",
+        "name-tooltip": "Allow the Series Name to be written when the field is unlocked. The name on disk is still used to keep the series matched during scans.",
+        "enable-age-rating-label": "Age Rating",
+        "enable-age-rating-tooltip": "Allow Age Rating to be written when the field is unlocked. Kavita will always take the highest from mapping controls.",
         "derive-publication-status-label": "Publication Status",
         "derive-publication-status-tooltip": "Allow Publication Status to be derived from Total Chapter/Volume counts.",
         "enable-relations-label": "Relationships",
@@ -912,6 +1292,7 @@
         "enable-cover-image-tooltip": "Allow Kavita to write the cover image for the Series",
         "enable-start-date-label": "Start Date",
         "enable-start-date-tooltip": "Allow Start Date of Series to be written to the Series",
+
         "enable-chapter-title-label": "Title",
         "enable-chapter-title-tooltip": "Allow Title of Chapter/Issue to be written",
         "enable-chapter-summary-label": "{{manage-metadata-settings.summary-label}}",
@@ -934,6 +1315,9 @@
         "whitelist-tooltip": "Only allow a string in this list from being written for <b>Tags</b>. Ensure they are comma-separated.",
         "age-rating-mapping-title": "Age Rating Mapping",
         "age-rating-mapping-description": "Any strings on the left, if found in either Genre or Tags, will set the Age Rating on the Series. Matching is normalized and case-insensitive, the highest age rating is used.",
+        "external-age-rating-header": "Provider Age Rating Mapping",
+        "external-age-rating-description": "Map a raw content rating string from a metadata provider to an Age Rating. Kavita+ will already map for you. This is additive, highest Age Rating will always win.",
+        "external-age-rating-label": "Provider Content Rating",
         "genre": "Genre",
         "tag": "Tag",
         "remove-source-tag-label": "Remove Source Tag",
@@ -953,17 +1337,44 @@
         "people-header": "People",
         "tags-header": "Tags",
         "source-genre-tags-placeholder": "Source genre/tag",
-        "dest-genre-tags-placeholder": "Destination genre/tag"
+        "dest-genre-tags-placeholder": "Destination genre/tag",
+        "volume-header": "Volume",
+        "enable-volume-cover-label": "Volume Cover",
+        "enable-volume-cover-tooltip": "Allow Kavita to set Volume covers",
+
+        "language-header": "Language",
+        "language-description": "Setup the priority order of languages that Kavita uses when setting Series Name/LocalizedName. You can add overrides just for specific libraries. Note that Localized Name will not always write if it will affect Series with 2 separate filenames.",
+        "global-series-name-language-label": "Name",
+        "global-series-name-language-tooltip": "Determines the order in which series name is prioritized. Separate BCP47 language codes with a semicolon. i.e. en;ja-Latn;ja. Use {Native} for the provider's native (original-script) title or {Romaji} for its romanized title, regardless of language.",
+        "global-series-name-localized-language-label": "Localized Name",
+        "global-series-name-localized-language-tooltip": "Determines the order in which series localized name is prioritized. Separate BCP47 language codes with a semicolon. i.e. en;ja-Latn;ja. Use {Native} for the provider's native (original-script) title or {Romaji} for its romanized title, regardless of language.",
+        "native-title-token-label": "Native title (original script)",
+        "romaji-title-token-label": "Romanized title",
+        "language-library-override-header": "Library Overrides",
+        "language-library-override-description": "A library override fully replaces the global order for that library, it does not add to it.",
+        "language-library-override-empty": "No library overrides. All libraries use the global order above.",
+        "language-override-library-label": "Library",
+        "language-override-library-placeholder": "Select a library",
+        "language-override-remove": "Remove override",
+        "language-code-malformed": "Not a valid language code: {{codes}}",
+        "language-code-unknown": "Unrecognized language code: {{codes}}. Double check the spelling, it will still be saved.",
+        "unsaved-changes-invalid": "Changes are not being saved. Fix the highlighted fields to resume saving.",
+        "add": "{{common.add}}",
+
+        "tag-weight-label": "Filter Tags above weight (Mangabaka only)",
+        "tag-weight-tooltip": "Select a tag weight to filter out after tag mapping. For example, Recurrent will filter out Incidental and Unweighted.",
+        "tag-weight-disabled": "Don't filter tags"
     },
+
     "book-line-overlay": {
         "copy": "Copy",
         "bookmark": "Bookmark",
         "annotate": "Annotate",
         "close": "{{common.close}}",
-        "required-field": "{{common.required-field}}",
         "bookmark-label": "Bookmark Name",
         "save": "{{common.save}}"
     },
+
     "annotation-card": {
         "page-num": "{{book-reader.page-num-label}}",
         "contains-spoilers-label": "Spoilers",
@@ -972,12 +1383,14 @@
         "liked": "Liked by {{amount}} people, including you",
         "not-liked": "Liked by {{amount}} people, you did not like it"
     },
+
     "view-annotations-drawer": {
         "title": "{{tabs.annotations-tab}}",
         "close": "{{common.close}}",
         "filter-label": "Filter Annotations",
         "no-data": "{{common.no-data}}"
     },
+
     "view-edit-annotation-drawer": {
         "view-title": "View Annotation",
         "edit-title": "Edit Annotation",
@@ -989,9 +1402,11 @@
         "read-more": "{{read-more.read-more}}",
         "read-less": "{{read-more.read-less}}"
     },
+
     "quill-wrapper": {
         "clean-tooltip": "Remove all styles"
     },
+
     "view-bookmark-drawer": {
         "title": "Bookmarks",
         "close": "{{common.close}}",
@@ -999,26 +1414,39 @@
         "page-num-label": "{{book-reader.page-num-label}}",
         "load-bookmark": "Load"
     },
+
     "page-chapter-label-pipe": {
         "page-only": "— Page {{pageNumber}}",
         "full": "— Page {{pageNumber}}, Chapter \"{{chapterTitle}}\""
     },
+
+    "tag-weight-title-pipe": {
+        "core": "Core",
+        "defining": "Defining",
+        "recurrent": "Recurrent",
+        "incidental": "Incidental",
+        "unweighted": "Unweighted"
+    },
+
     "view-toc-drawer": {
         "title": "Table of Contents",
         "close": "{{common.close}}",
         "toc-header": "Book",
         "personal-header": "Personal"
     },
+
     "epub-setting-drawer": {
         "title": "Book Settings",
         "close": "{{common.close}}"
     },
+
     "highlight-bar": {
         "add-new-color-alt": "Add Custom Color",
         "slot-label": "Highlight slot {{slot}}",
         "edit": "{{common.edit}}",
         "close": "{{common.close}}"
     },
+
     "book-reader": {
         "page-label": "Page",
         "skip-header": "Skip to main content",
@@ -1029,14 +1457,18 @@
         "incognito-mode-label": "Incognito Mode",
         "next": "Next",
         "previous": "Previous",
+
         "go-to-page": "Go to page",
         "go-to-page-prompt": "There are {{totalPages}} pages. Which page do you want to go to? Page starts at 1.",
+
         "page-num-label": "Page {{page}}",
         "completion-label": "{{percent}} complete",
+
         "force-selected-one-column": "Layout mode switched to One Column due to insufficient space to render Two Columns",
         "forced-vertical-switch": "Layout mode switched as Two Column layout doesn't work with Vertical Writing Style",
         "shortcuts-menu-alt": "{{manga-reader.shortcuts-menu-alt}}"
     },
+
     "personal-table-of-contents": {
         "no-data": "Nothing Bookmarked yet",
         "page-title": "Page {{page}}",
@@ -1045,32 +1477,33 @@
         "no-match": "No Bookmarks match filter",
         "filter-label": "{{common.filter}}"
     },
+
     "confirm-email": {
         "title": "Register",
         "description": "Complete the form to complete your registration",
         "username-label": "{{common.username}}",
         "password-label": "{{common.password}}",
         "email-label": "{{common.email}}",
-        "required-field": "{{common.required-field}}",
-        "valid-email": "{{common.valid-email}}",
         "password-validation": "{{validation.password-validation}}",
         "register": "Register",
         "error-label": "Error:"
     },
+
     "confirm-email-change": {
         "title": "Validate Email Change",
         "non-confirm-description": "Please wait while your email update is validated.",
         "confirm-description": "Your email has been validated and is now changed within Kavita. You will be redirected to login.",
         "success": "Success!"
     },
+
     "confirm-reset-password": {
         "title": "Password Reset",
         "description": "Enter the new password",
         "password-label": "{{common.password}}",
-        "required-field": "{{validation.required-field}}",
         "submit": "{{common.submit}}",
         "password-validation": "{{validation.password-validation}}"
     },
+
     "register": {
         "title": "Register",
         "description": "Complete the form to register an admin account",
@@ -1078,11 +1511,10 @@
         "email-label": "{{common.email}}",
         "email-tooltip": "Email does not need to be a real address, but provides access to forgot password. It is not sent outside the server unless Kavita emails you.",
         "password-label": "{{common.password}}",
-        "required-field": "{{validation.required-field}}",
-        "valid-email": "{{validation.valid-email}}",
         "password-validation": "{{validation.password-validation}}",
         "register": "Register"
     },
+
     "series-detail": {
         "page-settings-title": "Page Settings",
         "close": "{{common.close}}",
@@ -1096,12 +1528,14 @@
         "no-pages": "{{toasts.no-pages}}",
         "no-chapters": "There are no chapters to this volume. Cannot read.",
         "cover-change": "It can take up to a minute for your browser to refresh the image. Until then, the old image may be shown on some pages.",
+
         "writers-title": "{{metadata-fields.writers-title}}",
         "cover-artists-title": "{{metadata-fields.cover-artists-title}}",
         "genres-title": "{{metadata-fields.genres-title}}",
         "tags-title": "{{metadata-fields.tags-title}}",
         "ongoing": "{{publication-status-pipe.ongoing}}",
         "release-date-title": "Release",
+
         "volume-num": "{{common.volume-num}}",
         "reading-lists-title": "{{side-nav.reading-lists}}",
         "pages-count": "{{num}} Pages",
@@ -1116,8 +1550,231 @@
         "on": "{{reader-settings.on}}",
         "off": "{{reader-settings.off}}",
         "loading": "{{common.loading}}",
-        "read-count-tooltip": "Total Reads"
+        "read-count-tooltip": "Total Reads",
+        "kavitaplus-audit-alt": "Kavita+ Activity"
     },
+
+    "kavitaplus-tooltip": {
+        "panel-title": "Kavita+: Audit Log",
+        "matched": "Matched",
+        "unmatched": "Unmatched",
+        "filter-all": "All",
+        "filter-match": "Match",
+        "filter-metadata": "Metadata",
+        "filter-scrobble": "Scrobble",
+        "filter-sync": "Sync",
+        "no-events": "No recent events",
+        "no-data": "No data available",
+        "loading": "{{common.loading}}",
+        "close": "{{common.close}}",
+        "refreshed": "Refreshed",
+        "next-refresh": "Next Refresh",
+        "showing-latest": "Showing latest {{count}} events",
+        "my-activity": "My Activity",
+        "admin-feed": "Admin feed",
+        "read-progress-sent-label": "Read progress - {{chapter}}",
+        "fields-updated": "{{count}} fields updated",
+        "rating-updated": "Rating updated",
+        "add-want-to-read": "Added to want to read",
+        "remove-want-to-read": "Removed from want to read",
+        "review-submitted": "Review submitted",
+        "metadata-source": "Metadata source",
+        "linked-to": "Linked to"
+    },
+
+    "kavitaplus-activity": {
+        "description": "Reading activity Kavita has synced to external services on your behalf - progress, ratings, and reading status.",
+        "tab-select-label": "Filter activity",
+        "stats-queue-label": "{{manage-kavitaplus-activity.stats-queue-label}}",
+        "next-scrobble": "{{manage-kavitaplus-activity.next-scrobble}}",
+        "stats-events-label": "{{manage-kavitaplus-activity.stats-events-label}}",
+        "stats-failures-label": "{{manage-kavitaplus-activity.stats-failures-label}}"
+
+    },
+
+    "manage-kavitaplus-activity": {
+        "description": "90 days of metadata, match, scrobble and sync events. Triage failures and trigger a manual match from here.",
+        "stats-events-label": "Events (24h)",
+        "stats-failures-label": "Failures",
+        "stats-match-label": "Matched",
+        "stats-matched-label": "Matched {{percent}}%",
+        "stats-coverage-subtitle": "{{percent}}% coverage",
+        "stats-queue-label": "Queue",
+        "stats-unresolved": "{{count}} unresolved",
+        "stats-stale-subtitle": "{{count}} stale",
+        "stats-blacklisted-subtitle": "{{count}} failed to match",
+        "filter-all": "All",
+        "filter-match": "Match",
+        "filter-metadata": "Metadata",
+        "filter-scrobble": "Scrobble",
+        "filter-sync": "Sync",
+        "filter-system": "System",
+        "filter-status-label": "Status filter",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "events-count": "{{count}} events",
+        "subject-label": "Subject: {{subject}}",
+        "search-alt": "Search events",
+        "filter-subject-label": "Subject",
+        "filter-user-label": "User",
+        "filter-timeframe-label": "Time Frame",
+        "filter-timeframe-24h": "Last 24 Hours",
+        "filter-timeframe-7d": "Last 7 Days",
+        "filter-timeframe-30d": "Last 30 Days",
+        "system": "System",
+        "next-scrobble": "Next Scrobble: {{date}}",
+        "filter-provider-label": "Scrobble provider"
+    },
+
+    "kavitaplus-diff": {
+        "field-label": "Field",
+        "before-label": "Before",
+        "after-label": "After",
+        "null-value": "—",
+        "object-expanded": "expanded below"
+    },
+
+    "scrobble-account-card": {
+        "provider-connected": "Connected",
+        "provider-not-connected": "Not connected",
+        "provider-expired": "Token expired",
+        "provider-connect": "Connect",
+        "provider-settings": "Settings",
+        "provider-description": "Link to send progress",
+        "disabled": "{{cron-frequency-pipe.disabled}}"
+    },
+
+    "kavitaplus-timeline": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "events-count": "{{count}} events",
+        "load-more-label": "Load more",
+        "empty-title": "Nothing found",
+        "empty-description": "Try a different filter or perform some matches/reading to populate",
+        "system": "{{manage-kavitaplus-activity.system}}"
+    },
+
+    "kavita-plus-audit-entry": {
+        "system": "{{manage-kavitaplus-activity.system}}",
+        "retry": "Retry",
+        "match": "Match",
+        "remove-error": "Remove Scrobble Error"
+    },
+
+    "audit-status-title-pipe": {
+        "success": "Success",
+        "failure": "Failure",
+        "info": "Info"
+    },
+
+    "metadata-fetch-trigger-title-pipe": {
+        "series-added": "Auto on add",
+        "on-demand": "On page visit",
+        "manual-match": "Manual",
+        "scheduled-refresh": "Scheduled"
+    },
+
+    "audit-subject-title-pipe": {
+        "series": "Series",
+        "person": "Person",
+        "collection": "Collection",
+        "chapter": "Chapter",
+        "volume": "Volume",
+        "global": "Global"
+    },
+
+    "metadata-field-change-kind-title-pipe": {
+        "relationships": "Relationships",
+        "characters": "Characters",
+        "artists": "Artists",
+        "writers": "Writers",
+        "tags": "Tags",
+        "genres": "Genres",
+        "publication-status": "Publication Status",
+        "age-rating": "Age Rating",
+        "external-ids": "External IDs",
+        "summary": "Summary",
+        "title": "Title",
+        "release-date": "Release Date",
+        "release-year": "Release Year",
+        "localized-name": "Localized Name",
+        "name": "Series Name"
+    },
+
+
+    "kavita-plus-event-description-pipe": {
+        "read-progress-sent": "{{chapter}}",
+        "rating-updated": "Rating updated: {{rating}}/5",
+        "add-want-to-read": "Added to want to read",
+        "remove-want-to-read": "Removed from want to read",
+        "review-submitted": "Review submitted",
+        "fields-updated": "{{count}} fields updated",
+        "chapter-cover-updated": "Cover updated: {{chapter}}",
+        "volume-cover-updated": "Volume cover updated: {{volume}}",
+        "series-cover-updated": "Series cover updated",
+        "series-match-fixed": "Series matched with {{matchName}}",
+        "metadata-provider-changed": "Metadata Provider changed from {{previousProvider}} to {{newProvider}}",
+        "collection-synced": "{{collectionName}}: {{itemCount}} items synced, {{missingCount}} missing",
+        "collection-item-added": "Added to {{collectionName}}",
+        "person-cover-updated": "Cover updated for {{personName}}",
+        "person-alias-added": "Alias '{{aliasAdded}}' added for {{personName}}",
+        "sync-started-collection": "Starting sync of {{collectionName}} ({{itemCount}} items)",
+        "sync-failed-collection": "Sync failed for {{collectionName}}",
+        "sync-completed-want-to-read": "{{seriesMatched}} series matched for {{userName}}",
+        "read-status-update": "Status {{status}}",
+        "series-matched-against": "Matched against \"{{matchName}}\"",
+        "system-token-refresh-success": "Refresh authentication tokens for {{provider}}. They are valid until {{validUntil}}",
+        "system-token-refresh-failure": "Failed to refresh authentication tokens for {{provider}}",
+        "system-provider-info-sync-success": "Successfully synced information for {{provider}}. Linked to account {{username}}",
+        "system-provider-info-sync-failure": "Failed to sync account information for {{provider}}"
+    },
+
+    "kavita-plus-event-type-pipe": {
+        "series-matched": "Series Matched",
+        "series-match-failed": "Match Failed",
+        "series-blacklisted": "Blacklisted",
+        "series-match-fixed": "Match Fixed",
+        "series-dont-match-set": "Don't Match Set",
+        "series-metadata-provider-override-set": "Metadata Provider Changed",
+        "metadata-fetched": "Metadata Fetched",
+        "metadata-updated": "Metadata Updated",
+        "cover-updated": "Cover Updated",
+        "chapter-metadata-updated": "Chapter Metadata Updated",
+        "chapter-cover-updated": "Chapter Cover Updated",
+        "volume-cover-updated": "Volume Cover Updated",
+        "person-cover-updated": "Person Cover Updated",
+        "person-alias-added": "Person Alias Added",
+        "collection-synced": "Collection Synced",
+        "collection-item-added": "Collection Item Added",
+        "scrobble-created": "Scrobble Created",
+        "scrobble-updated": "Scrobble Updated",
+        "scrobble-sent": "Scrobble Sent",
+        "scrobble-failed": "Scrobble Failed",
+        "scrobble-rate-limit": "Rate Limit Hit",
+        "scrobble-skipped": "Scrobble Skipped",
+        "scrobble-hold-added": "Scrobble Hold Added",
+        "scrobble-hold-removed": "Scrobble Hold Removed",
+        "sync-started": "Sync Started",
+        "sync-completed": "Sync Completed",
+        "sync-failed": "Sync Failed",
+        "system-provider-info-sync": "Scrobble Provider Info Sync",
+        "system-token-refresh": "Scrobble Provider token refresh"
+    },
+
+    "audit-log-messages": {
+        "rate-limit-hit": "Rate Limit Hit",
+        "invalid-token": "Invalid AniList Token",
+        "unknown-series": "Unknown Series",
+        "series-dont-match": "Series Marked as Do Not Match",
+        "scrobble-hold-active": "Series Is on Hold",
+        "library-scrobbling-disabled": "Library Scrobbling Disabled",
+        "token-expired": "AniList Token Has Expired",
+        "no-matches": "No matches with enough certainty found to automatically pick",
+        "too-many-matches": "More than one match with high certainty found, manual intervention required",
+        "series-missing-required-ids": "Cannot scrobble as this series is missing required external ids",
+        "chapter-missing-required-ids": "Cannot scrobble as this chapter is missing required external ids"
+    },
+
     "reading-progress-status-pipe": {
         "no-progress": "Read",
         "no-progress-incognito": "Read incognito",
@@ -1126,26 +1783,83 @@
         "full-read": "Re-Read",
         "full-read-incognito": "Read incognito"
     },
+
     "match-series-modal": {
-        "title": "Match {{seriesName}}",
-        "description": "Select a match to rewire Kavita+ metadata and regenerate scrobble events. Don't Match can be used to restrict Kavita from matching metadata and scrobbling.",
+        "title-prefix": "Match",
+        "in-kavita": "In Kavita",
+        "description": "Pick a match to rewire Kavita+ metadata and regenerate scrobble events. Click an edition to get Volume/Chapter level metadata (if applicable).",
+        "dont-match-hint": "Use \"Do not match\" to opt this series out entirely.",
+        "try": "Try",
+        "search": "Search",
+        "searching-alt": "Searching…",
+        "clear": "Clear search",
+        "dont-match-label": "Do not match",
+        "dont-match-tooltip": "Stop Kavita from auto-matching or scrobbling this series",
+        "match-count": "{{ count }} matches",
+        "apply-match": "Apply match",
         "close": "{{common.close}}",
+        "loading-alt": "Loading results",
+        "empty-title": "Search for a match",
+        "empty-description": "Try a series title or paste a direct AniList, MAL, MangaBaka, CBR or Hardcover URL.",
+        "no-results-title": "No matches found",
+        "no-results-description": "Nothing came back for \"{{ query }}\". Try a shorter query, romanized title, or a direct ID.",
+        "dont-match-active-title": "Do not match enabled",
+        "dont-match-active-description": "This series is opted out of Kavita+ matching and scrobbling.",
         "save": "{{common.save}}",
-        "no-results": "Unable to find a match. Try adding the url from a supported provider and retry.",
-        "query-label": "Query",
-        "query-tooltip": "Enter series name, AniList/MyAnimeList/ComicBookRoundup url. Urls will use a direct lookup.",
-        "dont-match-label": "Do not Match",
-        "dont-match-tooltip": "Opt this series from matching and scrobbling",
-        "search": "Search"
+        "volume-count": "{{match-series-result-item.volume-count}}",
+        "chapter-count": "{{match-series-result-item.chapter-count}}",
+        "special-count": "{{match-series-result-item.special-count}}",
+        "matched-to": "Currently matched to",
+        "searching-against": "Searching against {{provider}}",
+        "change-provider-help": "Choose a different provider to search against for this series",
+        "provider-switch-help": "Results are from {{provider}}. Applying a match will switch this series to {{provider}}",
+        "is-standalone-label": "Is standalone",
+        "is-standalone-tooltip": "Enable if this series represents a single book, and hardcover doesn't have a series entry for it"
     },
+
     "match-series-result-item": {
-        "volume-count": "{{server-stats.volume-count}}",
-        "chapter-count": "{{common.chapter-count}}",
-        "issue-count": "{{common.issue-count}}",
-        "releasing": "Releasing",
-        "details": "View page",
-        "updating-metadata-status": "Updating Metadata"
+        "matched-alt": "Matched alt:",
+        "more": "more",
+        "matched-alt-count": "matched alt titles",
+        "alt-titles": "Alt titles",
+        "more-titles": "+{{count}} more",
+        "selected-alt": "Selected",
+        "volume-count": "{{num}} vol",
+        "chapter-count": "{{num}} ch",
+        "special-count": "{{num}} special",
+        "issue-count": "{{num}} issues",
+        "edition-main-count": "{{num}} main",
+        "edition-extra-count": "+{{num}} extra"
     },
+
+    "metadata-provider-title-pipe": {
+        "hardcover": "Hardcover",
+        "mangabaka": "MangaBaka",
+        "cbr": "Comic Book Roundup"
+    },
+
+    "recommendation-source-pipe": {
+        "similar": "Similar",
+        "user-based": "Users Liked",
+        "personalized": "For You"
+    },
+
+    "scrobble-provider-tag-badge": {
+        "view-on": "View on {{ provider }}"
+    },
+
+    "confidence-chip": {
+        "strong": "Strong",
+        "likely": "Likely",
+        "weak": "Weak",
+        "doubt": "Doubt"
+    },
+
+    "match-status-dot": {
+        "ongoing": "Ongoing",
+        "completed": "Completed"
+    },
+
     "metadata-fields": {
         "collections-title": "{{side-nav.collections}}",
         "reading-lists-title": "{{side-nav.reading-lists}}",
@@ -1168,10 +1882,12 @@
         "age-rating-title": "Age Rating",
         "links-title": "Weblinks"
     },
+
     "download-button": {
         "download-tooltip": "Download",
         "downloading-status": "Downloading…"
     },
+
     "external-rating": {
         "entry-label": "See Details",
         "kavita-tooltip": "Your Rating + Overall",
@@ -1179,19 +1895,23 @@
         "close": "{{common.close}}",
         "critic": "{{review-card.critic}}"
     },
+
     "badge-expander": {
         "more-items": "and {{count}} more"
     },
+
     "read-more": {
         "read-more": "Read More",
         "read-less": "Read Less"
     },
+
     "side-nav-companion-bar": {
         "page-settings-title": "{{series-detail.page-settings-title}}",
         "open-filter-and-sort": "Open Filtering and Sorting",
         "close-filter-and-sort": "Close Filtering and Sorting",
         "filter-and-sort-alt": "Sort / Filter"
     },
+
     "side-nav": {
         "home": "Home",
         "want-to-read": "Want To Read",
@@ -1210,6 +1930,7 @@
         "customize": "{{settings.customize}}",
         "edit": "{{common.edit}}"
     },
+
     "browse-people": {
         "title": "Browse People",
         "author-count": "{{num}} People",
@@ -1222,23 +1943,27 @@
         "issue-count-label": "Issue Count",
         "series-count-label": "Series Count"
     },
+
     "browse-genres": {
         "title": "Browse Genres",
         "genre-count": "{{num}} Genres",
         "issue-count": "{{common.issue-count}}",
         "series-count": "{{common.series-count}}"
     },
+
     "browse-tags": {
         "title": "Browse Tags",
         "genre-count": "{{num}} Tags",
         "issue-count": "{{common.issue-count}}",
         "series-count": "{{common.series-count}}"
     },
+
     "all-annotations": {
         "title": "All Annotations",
         "annotations-count": "{{num}} Annotations",
         "export": "Export"
     },
+
     "person-detail": {
         "aka-title": "Also known as ",
         "known-for-title": "Known For",
@@ -1248,6 +1973,7 @@
         "all-roles": "{{common.roles}}",
         "no-info": "No information about this Person"
     },
+
     "library-settings-modal": {
         "close": "{{common.close}}",
         "edit-title": "Edit {{name}}",
@@ -1285,6 +2011,8 @@
         "include-in-search-tooltip": "Should series and any derived information (genres, people, files) from the library be included in search results.",
         "enable-metadata-label": "Enable Metadata (ComicInfo/Epub/PDF)",
         "enable-metadata-tooltip": "Allow Kavita to read metadata files which override filename parsing.",
+        "metadata-provider-label": "Metadata Provider",
+        "metadata-provider-tooltip": "Select the source Kavita pulls metadata from.",
         "remove-prefix-for-sortname-label": "Remove common prefixes for Sort Name",
         "remove-prefix-for-sortname-tooltip": "Kavita will remove common prefixes like 'The', 'A', 'An' from titles for sort name. Does not override set metadata.",
         "inherit-web-links-label": "Inherit web links from first chapter",
@@ -1297,7 +2025,6 @@
         "cancel": "{{common.cancel}}",
         "next": "Next",
         "save": "{{common.save}}",
-        "required-field": "{{validation.required-field}}",
         "file-type-group-label": "File Types",
         "file-type-group-tooltip": "What types of files should Kavita scan for. For example, Archive will include all cb*, zip, rar, etc files.",
         "exclude-patterns-label": "Exclude Patterns",
@@ -1305,12 +2032,18 @@
         "help": "{{common.help}}",
         "files-at-root-warning": "One or more folders contains files at the root. Kavita does not support this."
     },
+
     "file-type-group-pipe": {
         "archive": "Archive",
         "epub": "Epub",
         "pdf": "Pdf",
         "image": "Image"
     },
+
+    "epub-font-title-pipe": {
+        "user-font-suffix": "(User)"
+    },
+
     "reader-settings": {
         "general-settings-title": "General Settings",
         "font-family-label": "{{manage-reading-profiles.font-family-label}}",
@@ -1350,16 +2083,20 @@
         "layout-mode-option-1col": "1 Column",
         "layout-mode-option-2col": "2 Column",
         "color-theme-title": "Color Theme",
+
         "line-spacing-min-label": "1x",
         "line-spacing-max-label": "2.5x",
+
         "theme-dark": "Dark",
         "theme-black": "Black",
         "theme-white": "White",
         "theme-paper": "Paper"
     },
+
     "table-of-contents": {
         "no-data": "This book does not have Table of Contents set in the metadata or a toc file"
     },
+
     "bookmarks": {
         "title": "{{side-nav.bookmarks}}",
         "series-count": "{{common.series-count}}",
@@ -1370,6 +2107,7 @@
         "delete-success": "Bookmarks have been removed",
         "delete-single-success": "{{seriesName}}'s bookmarks have been removed"
     },
+
     "bulk-operations": {
         "title": "Bulk Actions",
         "items-selected": "{{num}} items selected",
@@ -1378,15 +2116,18 @@
         "mark-as-read-with-session": "Mark as Read with Session",
         "deselect-all": "{{common.deselect-all}}"
     },
+
     "card-detail-layout": {
         "total-items": "{{count}} total items",
         "no-data": "{{common.no-data}}"
     },
+
     "card-item": {
         "cannot-read": "Cannot Read",
         "select": "Select",
         "read": "read"
     },
+
     "details-tab": {
         "writers-title": "{{metadata-fields.writers-title}}",
         "publishers-title": "{{metadata-fields.publishers-title}}",
@@ -1432,12 +2173,14 @@
         "words-count": "{{series-detail.words-count}}",
         "bytes-count": "{{num}} bytes"
     },
+
     "related-tab": {
         "reading-lists-title": "{{reading-lists.title}}",
         "collections-title": "{{side-nav.collections}}",
         "relations-title": "{{tabs.related-tab}}",
         "bookmarks-title": "{{side-nav.bookmarks}}"
     },
+
     "cover-image-chooser": {
         "enter-an-url-pre-title": "Enter an {{url}}",
         "url": "Url",
@@ -1449,14 +2192,23 @@
         "back": "Back",
         "reset-cover-tooltip": "Reset Cover Image",
         "reset": "{{common.reset}}",
+        "cover-locked": "Cover is locked",
+        "cover-not-locked": "Cover is not locked",
         "image-num": "Image {{num}}",
         "apply": "{{common.apply}}",
-        "applied": "{{theme-manager.applied}}"
+        "applied": "{{theme-manager.applied}}",
+        "reset-tab": "Reset",
+        "no-images": "No images available",
+        "loading": "{{common.loading}}",
+        "select-image-alt": "Select an image",
+        "download-cover": "Download Cover"
     },
+
     "download-indicator": {
         "progress": "{{percentage}}% downloaded",
         "completed": "Download complete"
     },
+
     "edit-series-relation": {
         "description-part-1": "Not sure what relationship to add? See our",
         "description-part-2": "wiki for hints.",
@@ -1466,6 +2218,7 @@
         "add-relationship": "Add Relationship",
         "parent": "{{relationship-pipe.parent}}"
     },
+
     "bulk-add-to-collection": {
         "title": "Add to Collection",
         "promoted": "{{common.promoted}}",
@@ -1477,6 +2230,7 @@
         "collection-label": "Collection",
         "create": "{{common.create}}"
     },
+
     "bulk-set-reading-profile-modal": {
         "title": "Set Reading profile",
         "close": "{{common.close}}",
@@ -1484,10 +2238,11 @@
         "clear": "{{common.clear}}",
         "no-data": "No collections created yet",
         "loading": "{{common.loading}}",
-        "bound": "Bound",
+        "bound":  "Bound",
         "warning-duplicate": "Your selection contains overlapping devices, this is not allowed",
         "hidden": "{{amount}} profile(s) hidden due to invalid state"
     },
+
     "entity-title": {
         "special": "Special",
         "issue-num": "Issue #{{num}}",
@@ -1495,6 +2250,7 @@
         "book-num": "Book {{num}}",
         "volume-num": "Volume {{num}}",
         "single-volume": "Single Volume",
+
         "book-title": "Book",
         "book-title-plural": "Books",
         "issue-title": "Issue",
@@ -1502,9 +2258,11 @@
         "chapter-title": "Chapter",
         "chapter-title-plural": "Chapters"
     },
+
     "external-series-card": {
         "open-external": "Open External"
     },
+
     "email-history": {
         "description": "Here you can find all emails sent from Kavita and to which user.",
         "template-header": "Template",
@@ -1515,6 +2273,8 @@
         "sent-tooltip": "Sent",
         "not-sent-tooltip": "Not Sent"
     },
+
+
     "manage-media-issues": {
         "description-part-1": "This table contains issues found during scan or reading of your media. You can clear it at any time and use Library (Force) Scan to perform analysis. A list of some common errors and what they mean can be found on the ",
         "description-part-2": "wiki.",
@@ -1525,6 +2285,7 @@
         "created-header": "Created",
         "no-data": "{{common.no-data}}"
     },
+
     "manage-email-settings": {
         "description": "In order to use some functions of Kavita like Send To Device an email provider must be setup. Other features like Forgot Password require admin intervention without Email setup.",
         "setting-description": "You must fill out both Host Name and SMTP settings to use email-based functionality within Kavita.",
@@ -1538,6 +2299,7 @@
         "host-name-label": "Host Name",
         "host-name-tooltip": "The domain name of your reverse proxy, required for email functionality. If you’re not using a reverse proxy, you can use any URL, including http://externalip:port/",
         "host-name-validation": "Host name must start with http(s) and not end in /",
+
         "sender-address-label": "Sender Address",
         "sender-address-tooltip": "This is the email address from which the receiver will see when they receive the email. Typically the email address associated with the account.",
         "sender-displayname-label": "Display Name",
@@ -1555,9 +2317,11 @@
         "customized-templates-tooltip": "Should Kavita use config/templates directory for templates rather than default? You are responsible to keep up to date with template changes.",
         "gmail-label": "Gmail",
         "outlook-label": "Outlook",
+
         "reset-to-default": "{{common.reset-to-default}}",
         "save": "{{common.save}}"
     },
+
     "manage-library": {
         "title": "{{common.libraries}}",
         "add-library": "Add Library",
@@ -1583,6 +2347,8 @@
         "include-type-tooltip": "This will not scan automatically. On the next scan, you may have series shift due to parsing differences",
         "bulk-action-label": "Bulk Action"
     },
+
+
     "copy-settings-from-library-modal": {
         "close": "{{common.close}}",
         "select": "Select",
@@ -1590,6 +2356,7 @@
         "description": "Select a library to copy settings from and on the next screen select libraries to apply to.",
         "select-option": "Select a Library"
     },
+
     "manage-media-settings": {
         "encode-as-description-part-1": "WebP/AVIF can drastically reduce space requirements for files. WebP/AVIF is not supported on all browsers or versions. To learn if these settings are appropriate for your setup, visit ",
         "encode-as-description-part-2": "Can I Use WebP?",
@@ -1604,6 +2371,7 @@
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
+
         "media-issue-title": "Media Issues",
         "scrobble-issue-title": "Scrobble Issues",
         "pdf-render-resolution-label": "PDF Render Resolution",
@@ -1611,20 +2379,23 @@
         "cover-image-size-label": "Cover Image Size",
         "cover-image-size-tooltip": "How large should cover images generate as. Note: Anything larger than the default will incur longer page load times."
     },
+
     "pdf-render-resolution": {
         "default": "Default (1080x1920)",
         "high": "High (1920x2560)",
         "ultra": "Ultra (2160x3840)"
     },
+
     "cover-image-size": {
         "default": "Default (320x455)",
         "medium": "Medium (640x909)",
         "large": "Large (900x1277)",
         "xlarge": "Extra Large (1265x1795)"
     },
+
     "manage-scrobble-errors": {
         "title": "Scrobbling Errors",
-        "description": "This table contains issues found during scrobbling. You can clear it at any time and wait for the next scrobble upload to see. If there is an unknown series, you are best correcting the series name or localized series name or adding a weblink for the providers.",
+        "description": "This table contains issues found during scrobbling. You can clear it at any time and wait for the next scrobble upload to see. If there is an unknown series, use the match to correct and enqueue events again.",
         "filter-label": "{{common.filter}}",
         "clear-errors": "Clear Errors",
         "series-header": "Series",
@@ -1632,11 +2403,14 @@
         "comment-header": "Comment",
         "edit-header": "Edit",
         "edit-item-alt": "Edit {{seriesName}}",
-        "no-data": "No issues"
+        "no-data": "No issues",
+        "generic": "There was an unknown error"
     },
+
     "default-date-pipe": {
         "never": "Never"
     },
+
     "manage-settings": {
         "networking-settings-title": "Networking",
         "system-settings-title": "System",
@@ -1674,6 +2448,8 @@
         "host-name-label": "{{manage-email-settings.host-name-label}}",
         "host-name-tooltip": "{{manage-email-settings.host-name-tooltip}}",
         "host-name-validation": "{{manage-email-settings.host-name-validation}}",
+
+
         "reset-to-default": "{{common.reset-to-default}}",
         "reset": "{{common.reset}}",
         "save": "{{common.save}}",
@@ -1688,6 +2464,7 @@
         "ip-address-validation": "IP addresses can only contain valid IPv4 or IPv6 addresses",
         "base-url-validation": "Base URL must start and end with /"
     },
+
     "manage-system": {
         "title": "About System",
         "version-title": "Version",
@@ -1704,6 +2481,7 @@
         "localization-title": "Localizations:",
         "updates-title": "Update History"
     },
+
     "manage-tasks-settings": {
         "title": "Recurring Tasks",
         "library-scan-label": "Library Scan",
@@ -1724,35 +2502,47 @@
         "recurring-tasks-title": "{{title}}",
         "last-executed-header": "Last Executed",
         "cron-header": "Cron",
+
+
         "convert-media-task": "Convert Media to Target Encoding",
         "convert-media-task-desc": "Runs a long-running task which will convert all kavita-managed media to the target encoding. This is slow (especially on ARM devices).",
         "convert-media-task-success": "Conversion of Media to Target Encoding has been queued",
+
         "bust-cache-task": "Bust Cache",
         "bust-cache-task-desc": "Busts the Kavita+ Cache - should only be used when debugging bad matches.",
         "bust-cache-task-success": "Kavita+ Cache busted",
+
         "bust-locale-task": "Bust Locale Cache",
         "bust-locale-task-desc": "Busts the Locale Cache. This can fix issues with strings not showing correctly after an update. A browser refresh is needed.",
         "bust-locale-task-success": "Locale Cache busted",
+
         "clear-reading-cache-task": "Clear Reading Cache",
         "clear-reading-cache-task-desc": "Clears cached files for reading. Useful when you've just updated a file that you were previously reading within the last 24 hours.",
         "clear-reading-cache-task-success": "Cache has been cleared",
+
         "clean-up-want-to-read-task": "Clean up Want to Read",
         "clean-up-want-to-read-task-desc": "Removes any series that users have fully read that are within Want to Read and have a publication status of Completed. Runs every 24 hours.",
         "clean-up-want-to-read-task-success": "Want to Read has been cleaned up",
+
         "clean-up-task": "General Cleanup",
         "clean-up-task-desc": "Performs nightly cleanup activities on the server. Can be heavy, advised to not run with active users or scans. Runs every 24 hours.",
         "clean-up-task-success": "Cleanup complete",
+
         "backup-database-task": "Backup Database",
         "backup-database-task-desc": "Takes a backup of the database, bookmarks, themes, manually uploaded covers, and config files.",
         "backup-database-task-success": "A job to backup the database has been queued",
+
         "download-logs-task": "Download Logs",
         "download-logs-task-desc": "Compiles all log files into a zip and downloads it.",
+
         "sync-themes-task": "Sync Themes",
         "sync-themes-task-desc": "Synchronize downloaded themes with upstream changes if version matches.",
         "sync-themes-success": "Synchronization of themes has been queued",
+
         "check-for-updates-task": "Check for Updates",
         "check-for-updates-task-desc": "See if there are any Stable releases ahead of your version."
     },
+
     "manage-users": {
         "invite": "Invite",
         "pending-title": "Pending",
@@ -1773,13 +2563,15 @@
         "all-libraries": "All Libraries",
         "too-many-libraries": "A lot",
         "sharing-header": "Sharing",
-        "no-data": "There are no other users.",
+        "no-data": "{{common.no-data}}",
+        "no-data-description": "There are no other users.",
         "actions-header": "Actions",
         "pending-tooltip": "This user has not validated their email",
         "identity-provider-oidc-tooltip": "OIDC",
         "identity-provider-native-tooltip": "Native",
         "profile-link-alt": "Profile"
     },
+
     "role-localized-pipe": {
         "admin": "Admin",
         "download": "Download",
@@ -1790,9 +2582,9 @@
         "read-only": "Read Only",
         "promote": "Promote"
     },
+
     "edit-collection-tags": {
         "title": "Edit {{collectionName}} Collection",
-        "required-field": "{{validation.required-field}}",
         "save": "{{common.save}}",
         "close": "{{common.close}}",
         "cancel": "{{common.cancel}}",
@@ -1808,8 +2600,11 @@
         "last-sync-tooltip": "Kavita syncs daily against upstream collection provider.",
         "source-url-title": "Source Url:",
         "total-series-title": "Total Series:",
-        "missing-series-title": "Missing Series:"
+        "missing-series-title": "Missing Series:",
+        "series-tab": "{{tabs.series-tab}}",
+        "matched-series": "Matched Series:"
     },
+
     "library-recommended": {
         "no-data": "Nothing to show here. Add some metadata to your library, read something or rate something. This library may also have recommendations turned off.",
         "more-in-genre": "More In {{genre}}",
@@ -1819,6 +2614,8 @@
         "quick-reads": "Quick Reads",
         "on-deck": "{{dashboard.on-deck-title}}"
     },
+
+
     "settings": {
         "account-section-title": "Account",
         "server-section-title": "Server",
@@ -1826,8 +2623,10 @@
         "info-section-title": "Info",
         "import-section-title": "Import",
         "kavitaplus-section-title": "Kavita+",
+
         "admin-activity": "Activity",
         "admin-device": "Devices",
+
         "admin-general": "General",
         "admin-oidc": "OpenID Connect",
         "admin-users": "Users",
@@ -1841,11 +2640,12 @@
         "admin-system": "System",
         "admin-email-history": "Email History",
         "admin-kavitaplus": "License",
-        "admin-matched-metadata": "Matched Metadata",
-        "admin-manage-tokens": "Manage User Tokens",
-        "admin-metadata": "Manage Metadata",
-        "admin-mappings-import": "Metadata Settings",
+        "admin-matched-metadata": "Matched Series",
+        "admin-manage-tokens": "User Tokens",
+        "admin-metadata": "Metadata Controls",
+        "admin-mappings-import": "Metadata Controls",
         "scrobble-holds": "Scrobble Holds",
+        "my-activity": "My Activity",
         "account": "Account",
         "preferences": "Preferences",
         "custom-key-binds": "Key Binds",
@@ -1859,8 +2659,98 @@
         "cbl-import": "Reading List Manager",
         "remap-rules": "Remap Rules",
         "mal-stack-import": "MAL Stack",
-        "admin-public-metadata": "Manage Metadata"
+        "admin-public-metadata": "Metadata Controls",
+        "admin-manage-kavitaplus-activity": "Kavita+ Activity",
+        "scrobble-settings": "Connections"
     },
+
+    "scrobble-provider-settings-manager": {
+        "description": "Manage what, when, and where things are scrobbled to. Scrobbling runs hourly.",
+        "none-setup": "You do not have any scrobble providers setup yet! Click the add button above to start",
+        "select-provider-title": "New Scrobble Provider",
+        "info": "User Info",
+        "connect": "Connect",
+        "connected": "Connected",
+        "regenerate": "Regenerate",
+        "disconnect": "Disconnect",
+        "expires":  "Expires {{time}}",
+        "last-synced": "Last synced {{time}}",
+        "not-setup": "Provider not set-up, connect to get started",
+        "sync-options": "Sync options",
+        "reviews-sync-label": "Sync reviews",
+        "reviews-sync-tooltip": "Kavita will scrobble reviews for matched series & chapters",
+        "progress-sync-label": "Sync Progress",
+        "progress-sync-tooltip": "Kavita scrobbles series progress when chapters complete, or chapter progress on page changes",
+        "rating-sync-label": "Sync Ratings",
+        "rating-sync-tooltip": "Kavita scrobbles ratings for matched series & chapters",
+        "want-to-read-sync-label": "Sync Want To Read list",
+        "want-to-read-sync-tooltip": "Keep your want to read list in sync. Does not change read statuses",
+        "reviews-target-label": "Review target",
+        "reviews-target-tooltip": "Who gets to see synced reviews, depends on provider support",
+        "filter-rules": "Filters",
+        "highest-age-rating-label": "Highest age ratings",
+        "highest-age-rating-tooltip": "Highest (inclusive) age rating a series can have to be scrobbled",
+        "automations": "Automations",
+        "inactive-series-rule-label": "Inactive series rule",
+        "inactive-series-rule-condition": "If a series/chapter hasn't been read for",
+        "rule-days-mark": "days, mark it is",
+        "rule-publication-exception": "unless publication status is",
+        "dropped-series-rule-label": "Dropped series rule",
+        "dropped-series-rule-condition": "If a series/chapter hasn't been read for",
+        "all-libraries-label": "All libraries",
+        "all-libraries-tooltip": "When enabled, scrobbling runs on all applicable libraries. Disable to restrict it to specific libraries using the selection below.",
+        "confirm-delete": "Are you sure you want to disconnect {{provider}}?",
+        "inactive-series-rule-days-aria": "Inactive series threshold in days",
+        "inactive-series-rule-status-aria": "Inactive series transition status",
+        "inactive-series-rule-excluded-publication-aria": "Excluded publication statuses for inactive series rule",
+        "dropped-series-rule-days-aria": "Dropped series threshold in days",
+        "dropped-series-rule-status-aria": "Dropped series transition status",
+        "dropped-series-rule-excluded-publication-aria": "Excluded publication statuses for dropped series rule",
+        "backfill-events": "{{manage-user-scrobble-provider-modal.generate-scrobble-events}}",
+        "anilist-warning": "AniList sync may be slower during busy periods. MangaBaka offers a larger library and consistently faster syncing.",
+        "loading-background": "Kavita is loading your connection in the background, stand by..."
+    },
+
+    "manage-user-scrobble-provider-modal": {
+        "close": "{{common.close}}",
+        "save": "{{common.save}}",
+        "title": "Manage your authentication details for {{provider}}",
+        "username-label": "Username",
+        "authentication-token-label": "Authentication Token",
+        "refresh-token-label": "Refresh token",
+        "valid-until-label": "Valid Until",
+        "last-synced-label": "Last synced",
+        "not-synced": "Not yet synced",
+        "event-generation-label": "Last scrobble backfill",
+        "event-generation-not-run": "Backfill not yet ran",
+        "generate": "Generate",
+        "generate-scrobble-events": "Backfill Events",
+        "connect-label": "Connect Account",
+        "connect-tooltip": "You will be redirected to Kavita+ and the Scrobble provider"
+    },
+
+    "scrobble-provider-description-pipe": {
+        "anilist": "Everything Manga & Light Novels",
+        "my-anime-list": "Want To Read & Stacks sync for Manga & Light Novels",
+        "hardcover": "Everything Books, Manga, and Light Novels!",
+        "mangabaka": "Everything Manga & Light Novels"
+    },
+
+    "review-scrobble-target-name-pipe": {
+        "private": "Only you",
+        "friends": "Friends",
+        "public": "Everyone"
+    },
+
+    "scrobble-read-status-pipe": {
+        "ignore": "Ignore",
+        "want-to-read": "Want to Read",
+        "read": "Read",
+        "unread": "Unread",
+        "dropped": "Dropped",
+        "on-hold": "On Hold"
+    },
+
     "manage-custom-key-binds": {
         "description": "Sometimes clicking and dragging your mouse is just too slow. Use your preferred keybinds to speed things up. Each option allows for up to {{max}} different keybinds. <b> Long press a keybind to remove it. </b>",
         "key-bind-error-reserved-key-bind": "This keybind is reserved and cannot be used",
@@ -1873,28 +2763,33 @@
         "warning-duplicated-control": "Keybind {{index}} for {{target}} has been used for an other target as well",
         "warning-duplicate-key-bind": "This keybind has also been used elsewhere",
         "key-bind-tooltip": "Long press a keybind to remove it.",
+
         "global-header": "Global",
         "readers-header": "Readers"
     },
+
     "keybind-setting-description-pipe": {
         "key-bind-title-navigate-to-settings": "Open settings",
         "key-bind-tooltip-navigate-to-settings": "Open settings while not in a reader",
         "key-bind-title-open-search": "Open search",
         "key-bind-tooltip-open-search": "Open the top search bar",
-        "key-bind-title-navigate-to-scrobbling": "Open Scrobbling",
-        "key-bind-tooltip-navigate-to-scrobbling": "Open settings page on the Scrobbling tab",
+        "key-bind-title-navigate-to-scrobbling": "Open My Activity",
+        "key-bind-tooltip-navigate-to-scrobbling": "Open settings page on the My Activity tab",
         "key-bind-title-escape": "Escape",
         "key-bind-tooltip-escape": "Close the currently open context",
-        "key-bind-title-toggle-fullscreen": "Toggle full screen",
-        "key-bind-tooltip-toggle-fullscreen": "Alternative to F11",
-        "key-bind-title-bookmark-page": "Bookmark current page",
-        "key-bind-tooltip-bookmark-page": "Saves the current image as a bookmark",
-        "key-bind-title-open-help": "Open help menu",
-        "key-bind-tooltip-open-help": "Opens a help modal with all relevant keybinds",
-        "key-bind-title-go-to": "Goto page",
-        "key-bind-tooltip-go-to": "Open a prompt to switch pages",
-        "key-bind-title-toggle-menu": "Toggle menu",
-        "key-bind-tooltip-toggle-menu": "Toggles to reader menu",
+        "key-bind-title-navigate-home": "Navigate home",
+        "key-bind-tooltip-navigate-home": "Navigate to the dashboard from anywhere in Kavita",
+
+        "key-bind-title-toggle-fullscreen":  "Toggle full screen",
+        "key-bind-tooltip-toggle-fullscreen":  "Alternative to F11",
+        "key-bind-title-bookmark-page":  "Bookmark current page",
+        "key-bind-tooltip-bookmark-page":  "Saves the current image as a bookmark",
+        "key-bind-title-open-help":  "Open help menu",
+        "key-bind-tooltip-open-help":  "Opens a help modal with all relevant keybinds",
+        "key-bind-title-go-to":  "Goto page",
+        "key-bind-tooltip-go-to":  "Open a prompt to switch pages",
+        "key-bind-title-toggle-menu":  "Toggle menu",
+        "key-bind-tooltip-toggle-menu":  "Toggles to reader menu",
         "key-bind-title-page-left": "Page left",
         "key-bind-tooltip-page-left": "Move one page to the left",
         "key-bind-title-page-right": "Page right",
@@ -1914,6 +2809,7 @@
         "key-bind-title-last-page": "Last Page",
         "key-bind-tooltip-last-page": "Move to the last page"
     },
+
     "cbl-manager": {
         "browse-repo": "Browse CBLs",
         "description": "You can import Reading Lists from file, url, or browse the CBL Repo. Lists created from an online source will automatically update in the background or on demand.",
@@ -1947,6 +2843,7 @@
         "not-authorized": "You lack the ability to interact with this content",
         "source": "Source"
     },
+
     "import-cbl-modal": {
         "title": "CBL Importer",
         "description": "On this screen you can build remap rules to automatically map series or issues to Kavita entities. Remap rules will apply to this and future lists.",
@@ -1992,6 +2889,7 @@
         "promote": "{{actionable.promote}}",
         "promote-tooltip": "{{actionable.promote-tooltip}}"
     },
+
     "manage-remap-rules-modal": {
         "title": "Manage Remap Rules",
         "close": "{{common.close}}",
@@ -2003,6 +2901,7 @@
         "series-level": "Series-level",
         "volume-target": "{{common.volume-num-shorthand}}"
     },
+
     "manage-remap-rules": {
         "create-rule-title": "Create Rule",
         "edit-rule-title": "Edit Remap Rule",
@@ -2037,8 +2936,11 @@
         "cbl-number-placeholder": "e.g. 1",
         "kavita-chapter-label": "Kavita Chapter (optional)",
         "series-level": "Series-level",
-        "edit": "{{common.edit}}"
+        "edit": "{{common.edit}}",
+        "no-data": "{{common.no-data}}",
+        "no-data-description": "There are no remap rules to display here yet."
     },
+
     "browse-cbl-repo-modal": {
         "title": "CBL Repo Browser",
         "rate-limit-warning": "Kavita is coming close to hitting Rate Limit for GitHub! You have {{remaining}} calls left.",
@@ -2058,7 +2960,9 @@
         "download": "Download",
         "owned-label": "Owned",
         "close": "{{common.close}}"
+
     },
+
     "collection-detail": {
         "no-data": "There are no items. Try adding a series.",
         "no-data-filtered": "No items match your current filter.",
@@ -2066,6 +2970,7 @@
         "last-sync": "Last Sync: {{date}}",
         "item-count": "{{common.item-count}}"
     },
+
     "all-collections": {
         "title": "Collections",
         "item-count": "{{common.item-count}}",
@@ -2073,16 +2978,19 @@
         "create-one-part-1": "Try creating",
         "create-one-part-2": "one"
     },
+
     "carousel-reel": {
         "prev-items": "Previous Items",
         "next-items": "Next Items"
     },
+
     "draggable-ordered-list": {
         "instructions-alt": "When you put a number in the reorder input, the item will be inserted at that location and all other items will have their order updated.",
         "reorder-label": "Reorder",
         "bulk-select-label": "Bulk Select item",
         "remove-item-alt": "Remove item"
     },
+
     "reading-lists": {
         "title": "Reading Lists",
         "item-count": "{{common.item-count}}",
@@ -2090,12 +2998,14 @@
         "create-one-part-1": "Try creating",
         "create-one-part-2": "one"
     },
+
     "reading-list-item": {
         "remove": "{{common.remove}}",
         "read": "{{common.read}}",
         "released-label": "Released: {{date}}",
         "pages-count": "{{series-detail.pages-count}}"
     },
+
     "stream-list-item": {
         "remove": "{{common.remove}}",
         "delete": "{{common.delete}}",
@@ -2105,6 +3015,7 @@
         "library": "Library",
         "external-source": "External Source"
     },
+
     "reading-list-detail": {
         "item-count": "{{common.item-count}}",
         "missing-count": "{{num}} missing",
@@ -2130,6 +3041,7 @@
         "tags-title": "{{metadata-fields.tags-title}}",
         "filter-label": "{{common.filter}}"
     },
+
     "events-widget": {
         "title-alt": "Activity",
         "dismiss-all": "Dismiss All",
@@ -2143,10 +3055,13 @@
         "left-to-process": "Left to Process: {{leftToProcess}} / {{totalToProcess}}",
         "download-in-queue": "{{num}} downloads in Queue",
         "reading-now": "{{num}} reading now",
-        "downloads-active": "{{count}} download(s) in progress"
+        "downloads-active": "{{count}} download(s) in progress",
+        "not-connected": "Not connected, try refreshing"
     },
+
     "download-queue-drawer": {
         "title": "Downloads",
+
         "cancel": "{{common.cancel}}",
         "cancel-all": "Cancel All",
         "retry": "Retry",
@@ -2161,10 +3076,12 @@
         "clear-all": "Clear All",
         "failed-from-auth": "Not Authenticated, refresh browser",
         "failed-interrupted": "Interrupted by page refresh",
+
         "tab-downloading": "Downloading",
         "tab-completed": "Completed",
         "today": "Today",
         "older": "Older",
+
         "queued": "{{download-queue-status-pipe.queued}}",
         "preparing": "{{download-queue-status-pipe.preparing}}",
         "downloading": "{{download-queue-status-pipe.downloading}}",
@@ -2172,11 +3089,14 @@
         "failed": "{{download-queue-status-pipe.failed}}",
         "cancelled": "{{download-queue-status-pipe.cancelled}}"
     },
+
     "download-queue-item": {
         "retry": "{{download-queue-drawer.retry}}",
         "cancel": "{{common.cancel}}",
         "remove": "Remove"
+
     },
+
     "download-queue-status-pipe": {
         "queued": "Queued",
         "preparing": "Preparing",
@@ -2185,14 +3105,17 @@
         "failed": "Failed",
         "cancelled": "Cancelled"
     },
+
     "download-queue-widget": {
         "title": "{{download-queue-drawer.title}}"
     },
+
     "reading-list-provider-pipe": {
         "none": "System",
         "file": "File",
         "url": "Url"
     },
+
     "shortcuts-modal": {
         "title": "Keyboard Shortcuts",
         "close": "{{common.close}}",
@@ -2204,8 +3127,13 @@
         "close-reader": "Close reader",
         "toggle-menu": "Toggle Menu",
         "offset-double-page": "{{keybind-setting-description-pipe.key-bind-title-offset-double-page}}",
-        "navigate-to-settings": "{{keybind-setting-description-pipe.key-bind-title-navigate-to-settings}}"
+        "navigate-to-settings": "{{keybind-setting-description-pipe.key-bind-title-navigate-to-settings}}",
+        "previous-chapter": "{{keybind-setting-description-pipe.key-bind-title-previous-chapter}}",
+        "next-chapter": "{{keybind-setting-description-pipe.key-bind-title-next-chapter}}",
+        "first-page": "{{keybind-setting-description-pipe.key-bind-title-first-page}}",
+        "last-page": "{{keybind-setting-description-pipe.key-bind-title-last-page}}"
     },
+
     "grouped-typeahead": {
         "files": "Files",
         "chapters": "Chapters",
@@ -2221,6 +3149,7 @@
         "loading": "{{common.loading}}",
         "include-extras": "Include Chapters & Files"
     },
+
     "nav-header": {
         "skip-alt": "Skip to main content",
         "search-series-alt": "Search series",
@@ -2241,15 +3170,18 @@
         "all-annotations": "Browse Annotations",
         "my-profile": "My Profile"
     },
+
     "client-device-auth-type-pipe": {
         "unknown": "Unknown",
         "oidc": "OIDC",
         "jwt": "JWT",
         "auth-key": "Auth Key"
     },
+
     "client-device-platform-pipe": {
         "unknown": "{{client-device-auth-type-pipe.unknown}}"
     },
+
     "client-device-client-type-pipe": {
         "unknown": "{{client-device-auth-type-pipe.unknown}}",
         "web-browser": "Web Browser",
@@ -2259,13 +3191,18 @@
         "librera": "Librera",
         "opds-client": "OPDS Client"
     },
+
+
+
     "promoted-icon": {
         "promoted": "{{common.promoted}}"
     },
+
     "collection-owner": {
         "collection-created-label": "Created by: {{owner}}",
         "collection-via-label": "via {{source}}"
     },
+
     "add-to-list-modal": {
         "title": "Add to Reading List",
         "close": "{{common.close}}",
@@ -2276,6 +3213,7 @@
         "reading-list-label": "Reading List",
         "create": "{{common.create}}"
     },
+
     "edit-reading-list-modal": {
         "title": "Edit Reading List: {{name}}",
         "close": "{{common.close}}",
@@ -2283,7 +3221,6 @@
         "year-validation": "Must be greater than 1000, 0 or blank",
         "month-validation": "Must be between 1 and 12 or blank",
         "name-unique-validation": "Name must be unique",
-        "required-field": "{{validation.required-field}}",
         "name-label": "{{edit-series-modal.name-label}}",
         "summary-label": "Summary",
         "year-label": "Year",
@@ -2294,16 +3231,19 @@
         "promote-tooltip": "Promotion means that the collection can be seen server-wide, not just for you. All series within this collection will still have user-access restrictions placed on them.",
         "tags-label": "{{metadata-fields.tags-title}}"
     },
+
     "import-mal-collection-modal": {
         "close": "{{common.close}}",
         "title": "MAL Interest Stack Import",
-        "description": "Import your MAL Interest Stacks and create Collections within Kavita",
+        "description": "Import your MAL Interest Stacks and create Collections within Kavita that sync",
         "series-count": "{{common.series-count}}",
         "restack-count": "{{num}} Restacks",
-        "nothing-found": "Nothing found",
+        "no-data": "{{common.no-data}}",
+        "no-data-description": "Make sure you have a valid MAL token and have followed some Stacks",
         "track": "Track",
         "by-author": "by {{author}}"
     },
+
     "import-mappings": {
         "import-step": "Import",
         "configure-step": "Configure",
@@ -2313,29 +3253,36 @@
         "import": "{{import-cbl.import}}",
         "next": "{{import-cbl.next}}",
         "save": "{{common.save}}",
+
         "import-description": "Upload a file you, or someone else, has exported to replace or merge with your current settings.",
         "select-files-warning": "You must upload a json file to continue",
         "invalid-file": "Failed to parse your file, check your input",
         "file-no-valid-content": "Your import did not contain any meaningful data to continue with",
+
         "fields-to-import": "Settings",
         "fields-to-import-tooltip": "Disable to skip a setting fully",
         "whitelist-label": "Tags whitelist",
         "blacklist-label": "Tags blacklist",
         "age-ratings-label": "Age rating mappings",
         "field-mappings-label": "Field mappings",
+
         "age-ratings-conflicts-tooltip": "Decide which age rating to use",
         "field-mappings-conflicts-tooltip": "Decide which destination result to use",
+
         "import-mode-label": "Import mode",
         "import-mode-tooltip": "Replace disregards your current settings, merge will try and resolve conflcits in the way you've configured",
         "merge": "Merge",
         "replace": "Replace",
+
         "resolution-label": "Conflict resolution",
         "resolution-tooltip": "Decide how Kavita should handle conflicts",
         "manual": "Manual",
         "keep": "Keep",
         "to-pick": "Choose resolution",
+
         "finalize-title": "Preview of your settings, press save to finish your import"
     },
+
     "import-cbl": {
         "close": "{{common.close}}",
         "title": "CBL Import",
@@ -2356,6 +3303,7 @@
         "comicvine-parsing-label": "Use Comic Vine Series matching",
         "cbl-repo": "You can find many reading lists in the community <a href='https://github.com/DieselTech/CBL-ReadingLists' target='_blank' rel='noopener noreferrer'>repository</a>."
     },
+
     "pdf-reader": {
         "loading-message": "Loading...",
         "incognito-mode": "Incognito Mode",
@@ -2365,29 +3313,34 @@
         "toggle-incognito": "Turn off Incognito Mode",
         "shortcuts-menu-alt": "{{manga-reader.shortcuts-menu-alt}}"
     },
+
     "pdf-layout-mode-pipe": {
         "single": "Single Page",
         "book": "Book mode",
         "multiple": "Default",
         "infinite-scroll": "Infinite Scroll"
     },
+
     "pdf-scroll-mode-pipe": {
         "vertical": "Vertical",
         "horizontal": "Horizontal",
         "wrapped": "Wrapped",
         "page": "Tap to Paginate"
     },
+
     "pdf-spread-mode-pipe": {
         "off": "No Spreads",
         "odd": "Odd Spreads",
         "even": "Even Spreads"
     },
+
     "infinite-scroller": {
         "continuous-reading-prev-chapter-alt": "Scroll up to move to previous chapter",
         "continuous-reading-prev-chapter": "Previous Chapter",
         "continuous-reading-next-chapter-alt": "Scroll up to move to next chapter",
         "continuous-reading-next-chapter": "Next Chapter"
     },
+
     "manga-reader": {
         "back": "Back",
         "update-parent": "{{reader-settings.update-parent}}",
@@ -2423,6 +3376,7 @@
         "bookmark-page-tooltip": "Bookmark Page",
         "unbookmark-page-tooltip": "Unbookmark Page",
         "bookmarks-title": "Bookmarks",
+
         "first-time-reading-manga": "Tap the image at any time to open the menu. You can configure different settings or go to page by clicking progress bar. Tap sides of image move to next/prev page.",
         "layout-mode-switched": "Layout mode switched to Single due to insufficient space to render double layout",
         "no-next-chapter": "No Next Chapter",
@@ -2434,6 +3388,7 @@
         "page-offset-label": "Page Offset",
         "offset-only-double": "Page Offset can only be used with Double Layout"
     },
+
     "metadata-filter": {
         "filter-title": "{{common.filter}}",
         "sort-by-label": "Sort By",
@@ -2444,6 +3399,7 @@
         "apply": "{{common.apply}}",
         "save": "{{common.save}}",
         "limit-label": "Limit",
+
         "format-label": "Format",
         "libraries-label": "{{common.libraries}}",
         "collections-label": "Collections",
@@ -2473,16 +3429,18 @@
         "min": "Min",
         "max": "Max"
     },
+
     "metadata-filter-row": {
         "unit-reading-date": "Date",
         "unit-average-rating": "Kavita+ external rating, percent",
         "unit-reading-progress": "Percent",
         "unit-user-rating": "0.0 - 5.0 Stars",
-        "unit-read-last": "Days from TODAY",
+        "unit-read-last": "Days ago",
         "disclaimer-highlight-slots": "When using this field, only your own annotations will be shown",
         "unit-file-size": "GB, MB, KB, B",
         "disclaimer-file-size": "File size must include the unit"
     },
+
     "sort-field-pipe": {
         "sort-name": "Sort Name",
         "created": "Created",
@@ -2506,6 +3464,7 @@
         "readinglist-releaseyear-end": "Release Year (End)",
         "readinglist-item-count": "Item Count"
     },
+
     "edit-series-modal": {
         "title": "{{seriesName}} Details",
         "general-tab": "{{tabs.general-tab}}",
@@ -2517,6 +3476,7 @@
         "info-tab": "{{tabs.info-tab}}",
         "tasks-tab": "{{tabs.tasks-tab}}",
         "external-ids-tab": "{{tabs.external-ids-tab}}",
+
         "genres-label": "{{metadata-fields.genres-title}}",
         "tags-label": "{{metadata-fields.tags-title}}",
         "cover-artist-label": "{{metadata-fields.cover-artists-title}}",
@@ -2534,10 +3494,11 @@
         "location-label": "{{metadata-fields.locations-title}}",
         "language-label": "{{metadata-fields.language-title}}",
         "age-rating-label": "{{metadata-fields.age-rating-title}}",
+
         "publication-status-label": "Publication Status",
-        "required-field": "{{validation.required-field}}",
         "close": "{{common.close}}",
         "name-label": "Name",
+        "align-sort-name": "You've renamed this series but its sort name is locked. Update the sort name to match the new name?",
         "sort-name-label": "Sort Name",
         "localized-name-label": "Localized Name",
         "summary-label": "Summary",
@@ -2577,8 +3538,12 @@
         "specials-volume": "Specials",
         "release-year-validation": "{{validation.year-validation}}",
         "volumes-title": "{{tab.volumes-tab}}",
-        "no-data": "{{common.no-data}}"
+        "no-data": "{{common.no-data}}",
+        "metadata-provider-override-label": "Metadata Provider Override",
+        "metadata-provider-override-tooltip": "Use a different Metadata Provider than the Library default for this Series",
+        "metadata-provider-override-default": "Use Library Default"
     },
+
     "edit-chapter-modal": {
         "title": "Edit",
         "close": "{{common.close}}",
@@ -2610,10 +3575,12 @@
         "external-ids-tab": "{{tabs.external-ids-tab}}",
         "field-locked-alt": "{{edit-series-modal.field-locked-alt}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
+
         "pages-label": "Pages",
         "words-label": "Length",
         "pages-count": "{{series-detail.pages-count}}",
         "words-count": "{{series-detail.words-count}}",
+
         "reading-time-label": "Read Time",
         "date-added-label": "Date Added",
         "size-label": "{{edit-series-modal.size-title}}",
@@ -2624,6 +3591,7 @@
         "read-time-label": "Read Time",
         "files-label": "Files"
     },
+
     "edit-volume-modal": {
         "title": "Edit",
         "close": "{{common.close}}",
@@ -2633,6 +3601,7 @@
         "info-tab": "{{tabs.info-tab}}",
         "external-ids-tab": "{{tabs.external-ids-tab}}",
         "read-time-label": "{{edit-chapter-modal.read-time-label}}",
+
         "pages-label": "{{edit-chapter-modal.pages-label}}",
         "words-label": "{{edit-chapter-modal.words-label}}",
         "pages-count": "{{edit-chapter-modal.pages-count}}",
@@ -2643,6 +3612,7 @@
         "files-label": "{{edit-chapter-modal.files-label}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}"
     },
+
     "edit-person-modal": {
         "title": "{{personName}} Details",
         "close": "{{common.close}}",
@@ -2657,9 +3627,7 @@
         "hardcover-tooltip": "https://hardcover.app/authors/{HardcoverId}",
         "asin-label": "ASIN",
         "asin-tooltip": "https://www.amazon.com/stores/J.K.-Rowling/author/{ASIN}",
-        "invalid-amazon-code": "ASIN should start with B0 or BT",
         "description-label": "Description",
-        "required-field": "{{validation.required-field}}",
         "cover-image-description": "{{edit-series-modal.cover-image-description}}",
         "cover-image-description-extra": "Alternatively you can download a cover from CoversDB if available.",
         "save": "{{common.save}}",
@@ -2668,6 +3636,7 @@
         "alias-overlap": "This alias already points towards another person or is the name of this person, consider merging them.",
         "aliases-tooltip": "When a series is tagged with an alias of a person, the person is assigned rather than creating a new person. When deleting an alias, you'll have to rescan the series for the change to be picked up."
     },
+
     "merge-person-modal": {
         "title": "{{personName}}",
         "close": "{{common.close}}",
@@ -2677,10 +3646,12 @@
         "alias-title": "New aliases",
         "known-for-title": "Known for"
     },
+
     "day-breakdown": {
-        "title": "Day Breakdown",
+        "title": "Reading by Day",
         "no-data": "No progress, get to reading"
     },
+
     "file-breakdown-stats": {
         "format-title": "Format",
         "format-tooltip": "Not Classified means Kavita has not scanned some files. This occurs on old files existing prior to v0.7. You may need to run a forced scan via Library settings modal.",
@@ -2696,6 +3667,7 @@
         "download-file-for-extension-alt": "Download files Report for {{extension}}",
         "no-data": "{{common.no-data}}"
     },
+
     "reading-activity": {
         "title": "Reading Activity",
         "legend-label": "Formats",
@@ -2712,11 +3684,13 @@
         "all-time": "{{time-periods.all-time}}",
         "select-user-alt": "Select user to filter"
     },
+
     "files-over-time": {
         "title": "Files added over time",
         "no-data": "{{common.no-data}}",
         "most-files": "On {{date}}, {{count}} files were added"
     },
+
     "publication-status-stats": {
         "title": "Publication Status",
         "visualisation-label": "Visualisation",
@@ -2725,6 +3699,7 @@
         "count-header": "Count",
         "no-data": "{{common.no-data}}"
     },
+
     "series-preview-drawer": {
         "staff-label": "Staff",
         "tags-label": "{{filter-field-pipe.tags}}",
@@ -2736,12 +3711,15 @@
         "provided-by-label": "Provided by",
         "story-and-art-label": "Story & Art"
     },
+
     "next-expected-card": {
         "title": "~{{date}}",
         "upcoming-title": "Upcoming"
     },
+
     "server-stats": {
         "stats-title": "Explore",
+
         "total-series-label": "Total Series",
         "total-series-tooltip": "Total Series: {{count}}",
         "total-volumes-label": "Total Volumes",
@@ -2769,6 +3747,8 @@
         "popular-genres-title": "Popular Genres",
         "popular-tags-title": "Popular Tags",
         "popular-person-title": "Popular {{role}}",
+
+
         "series-count": "{{num}} Series",
         "volume-count": "{{num}} Volumes",
         "file-count": "{{num}} Files",
@@ -2779,9 +3759,11 @@
         "people": "People",
         "genres": "{{metadata-fields.genres-title}}"
     },
+
     "server-activity": {
         "no-data": "Nothing to see here"
     },
+
     "activity-card": {
         "total-pages-label": "Total Pages",
         "total-words-label": "Total Words",
@@ -2789,6 +3771,7 @@
         "started-label": "Started",
         "view-label": "View"
     },
+
     "profile": {
         "title": "{{username}}'s Profile",
         "joined-label": "Joined:",
@@ -2800,11 +3783,13 @@
         "total-reads-badge": "{{reads}} Reads",
         "k+-badge": "K+ Subscriber"
     },
+
     "profile-review-list": {
         "no-data": "No Reviews or Reviews aren't being shared",
         "filter-label": "Filter by Series",
         "clear-rating-alt": "Clear Rating Filter"
     },
+
     "profile-stat-bar": {
         "books-read-label": "Books Read",
         "books-read-tooltip": "Books Read: {{count}}",
@@ -2821,10 +3806,12 @@
         "ratings-label": "Ratings",
         "ratings-tooltip": "Ratings: {{count}}"
     },
+
     "profile-image": {
         "edit-image-alt": "Edit Image",
         "reset-image-alt": "Reset Image"
     },
+
     "profile-activity": {
         "time-filter-title": "{{username}}'s activity through",
         "pages-count": "{{series-detail.pages-count}}",
@@ -2842,22 +3829,26 @@
         "num-more": "{{num}} more",
         "generated-session-tooltip": "This reading session has been automatically generated based on an estimate"
     },
+
     "user-stats-info-cards": {
         "pages-read-by-year-title": "Pages read by year",
         "pages-count": "{{num}} pages",
         "words-read-by-year-title": "Words read by year",
         "words-count": "{{num}} words"
     },
+
     "preferred-format": {
         "title": "Preferred format",
         "sub-title": "{{name}} prefers to read {{format}}",
         "no-data": "{{common.no-data}}"
     },
+
     "favorite-authors": {
         "title": "Most Read Authors",
         "sub-title": "{{name}}'s most read author is {{author}}, with {{count}} total reads",
         "no-data": "{{common.no-data}}"
     },
+
     "page-spread": {
         "title": "Chapters by Page Count",
         "sub-title": "{{username}}'s reads chapters between {{highestBucket}} pages",
@@ -2866,6 +3857,7 @@
         "range": "Page range: {{range}}",
         "no-data": "{{common.no-data}}"
     },
+
     "word-spread": {
         "title": "Chapters by Word Count",
         "sub-title": "{{username}}'s reads chapters between {{highestBucket}} words",
@@ -2874,6 +3866,7 @@
         "range": "Word range: {{range}}",
         "no-data": "{{common.no-data}}"
     },
+
     "tag-breakdown": {
         "title": "Most read tags",
         "sub-title": "{{name}}'s most read tag is {{mostUsed}}",
@@ -2886,22 +3879,26 @@
         "missing": "Missing genres for {{amount}} series",
         "no-data": "{{common.no-data}}"
     },
+
     "reads-by-month": {
         "title": "Total reads by month",
         "sub-title": "{{username}} has read the most in {{month}} {{year}} with {{reads}} chapters read",
         "no-data": "{{common.no-data}}"
     },
+
     "avg-time-reading-by-hour": {
         "title": "Average time spent reading by hour",
         "most-time-spend-reading": "{{name}} spends most of their time reading between {{startHour}} and {{endHour}} with an average of {{amount}} minutes",
         "data-since": "Only includes reads since {{date}}",
         "no-data": "{{common.no-data}}"
     },
+
     "profile-overview": {
         "currently-reading": "Currently Reading",
         "want-to-read": "{{side-nav.want-to-read}}",
         "just-finished-reading": "Just Finished Reading"
     },
+
     "activity-graph": {
         "title": "Reading Activity",
         "day-of-week-alt": "Day of the Week",
@@ -2920,6 +3917,7 @@
         "high-activity-alt": "High Activity",
         "aggregated-count": "You read {{totalPages}} pages and {{totalWords}} words in {{year}}"
     },
+
     "reading-pace": {
         "title-books": "Reading Pace: Books",
         "title-comics": "Reading Pace: Comics",
@@ -2937,6 +3935,7 @@
         "disclaimer-books": "Applies to Epub/Pdfs",
         "disclaimer-comics": "Applies to Image/Archives"
     },
+
     "smart-time-picker": {
         "forever": "Forever",
         "select-year": "Select Year",
@@ -2948,12 +3947,14 @@
         "during-select": "Select a time range",
         "close": "{{common.close}}"
     },
+
     "client-device-type-pipe": {
         "mobile": "Mobile",
         "tablet": "Tablet",
         "desktop": "Desktop",
         "Unknown": "{{common.unknown}}"
     },
+
     "month-label-pipe": {
         "january": "January",
         "january-short": "Jan",
@@ -2980,6 +3981,7 @@
         "december": "December",
         "december-short": "Dec"
     },
+
     "day-label-pipe": {
         "sunday": "Sunday",
         "sunday-short": "Sun",
@@ -2996,6 +3998,7 @@
         "saturday": "Saturday",
         "saturday-short": "Sat"
     },
+
     "errors": {
         "series-doesnt-exist": "This series no longer exists",
         "collection-invalid-access": "You don't have access to any libraries this tag belongs to or this collection is invalid",
@@ -3035,16 +4038,19 @@
             "syncing-user": "Failed to sync your account from OIDC, please contact an administrator"
         }
     },
+
     "metadata-builder": {
         "or": "Match any of the following",
         "and": "Match all of the following",
         "add-rule": "Add Rule",
         "remove-rule": "Remove Row"
     },
+
     "customize-dashboard-modal": {
         "title-smart-filters": "{{tabs.smart-filters-tab}}",
         "description": "You can customize different aspects of Kavita by reordering, toggling visibility, and binding smart filters/external sources to your home page or side nav."
     },
+
     "customize-dashboard-streams": {
         "no-data": "All Smart filters added to Dashboard or none created yet.",
         "add": "{{common.add}}",
@@ -3052,6 +4058,7 @@
         "clear": "{{common.clear}}",
         "smart-filter-title": "{{tabs.smart-filters-tab}}"
     },
+
     "customize-sidenav-streams": {
         "no-data": "All Smart filters added to Side Nav or none created yet.",
         "no-data-external-source": "All External Sources added to Side Nav or none created yet.",
@@ -3064,6 +4071,7 @@
         "order-numbers-label": "{{reading-list-detail.order-numbers-label}}",
         "bulk-mode-label": "Bulk Mode"
     },
+
     "manage-external-sources": {
         "add-source": "Add",
         "help-link": "More information",
@@ -3072,6 +4080,7 @@
         "filter": "{{common.filter}}",
         "no-data": "No External Sources exist"
     },
+
     "manage-smart-filters": {
         "delete": "{{common.delete}}",
         "no-data": "No Smart Filters created",
@@ -3085,10 +4094,10 @@
         "edit-smart-filter": "Edit {{name}}",
         "name-label": "Name",
         "entity-type-label": "Entity Type",
-        "required-field": "Smart Filters need a name",
         "filter-name-unique": "Smart Filter names must be unique",
         "no-content": "This smart filter has no results on the dashboard"
     },
+
     "edit-external-source-item": {
         "not-unique": "External source exists with this host. Ensure you don't have duplicates",
         "title": "New External Source",
@@ -3100,9 +4109,9 @@
         "edit": "{{common.edit}}",
         "cancel": "{{common.cancel}}",
         "delete": "{{common.delete}}",
-        "pattern": "Host must be a valid http(s):// url",
-        "required": "{{validation.required-field}}"
+        "pattern": "Host must be a valid http(s):// url"
     },
+
     "stream-pipe": {
         "on-deck": "{{dashboard.on-deck-title}}",
         "recently-updated": "{{dashboard.recently-updated-title}}",
@@ -3115,6 +4124,7 @@
         "all-series": "{{side-nav.all-series}}",
         "browse-authors": "{{side-nav.browse-people}}"
     },
+
     "filter-field-pipe": {
         "age-rating": "{{metadata-fields.age-rating-title}}",
         "characters": "{{metadata-fields.characters-title}}",
@@ -3149,14 +4159,17 @@
         "read-date": "Reading Date",
         "read-last": "Read Last",
         "average-rating": "Average rating",
-        "file-size": "File size"
+        "file-size": "File size",
+        "collapse-series-relationships": "{{user-preferences.collapse-series-relationships-label}}"
     },
+
     "filter-entity-type-pipe": {
         "series": "{{tabs.series-tab}}",
         "reading-list": "{{add-to-list-modal.reading-list-label}}",
         "person": "Person",
         "annotation": "Annotation"
     },
+
     "filter-comparison-pipe": {
         "begins-with": "Begins with",
         "contains": "Contains",
@@ -3177,6 +4190,7 @@
         "is-empty": "Is Empty",
         "is-not-empty": "Is Not Empty"
     },
+
     "log-level-pipe": {
         "debug": "Debug",
         "information": "Information",
@@ -3184,17 +4198,20 @@
         "warning": "Warning",
         "critical": "Critical"
     },
+
     "cron-frequency-pipe": {
         "disabled": "Disabled",
         "daily": "Daily",
         "weekly": "Weekly",
         "custom": "Custom"
     },
+
     "setting-cron-item": {
         "custom-label": "Custom Schedule (Cron Notation)",
         "required-field": "{{validation.required-field}}",
         "cron-notation": "This is not valid Cron Notation"
     },
+
     "confirm": {
         "alert": "Alert",
         "confirm": "Confirm",
@@ -3203,6 +4220,7 @@
         "ok": "Ok",
         "prompt": "Question"
     },
+
     "browse-title-pipe": {
         "publication-status": "{{value}} works",
         "age-rating": "Rated {{value}}",
@@ -3226,6 +4244,7 @@
         "team": "Team {{value}}",
         "location": "In {{value}} location"
     },
+
     "generic-filter-field-pipe": {
         "person-role": "Role",
         "person-name": "Name",
@@ -3251,6 +4270,8 @@
         "readinglist-provider": "Provider",
         "readinglist-missing-item-count": "Missing Item Count"
     },
+
+
     "toasts": {
         "save-remap-rule": "Save \"{{from}} → {{to}}\" as a remap rule for future imports?",
         "import-complete": "Import complete",
@@ -3342,7 +4363,7 @@
         "smart-filter-deleted": "Smart Filter Deleted",
         "smart-filter-updated": "Created/Updated smart filter",
         "external-source-already-exists": "An External Source already exists with the same Name/Host/API Key",
-        "anilist-token-expired": "Your AniList token is expired. Scrobbling will no longer process until you re-generate it in User Settings > Account",
+        "tokens-expired": "One or more Connection tokens have expired. Scrobbling/Syncing are paused until you re-generate it in Kavita+ > Connections",
         "collection-tag-deleted": "Collection Tag deleted",
         "force-kavita+-refresh-success": "Kavita+ external metadata has been invalidated",
         "collection-not-owned": "You do not own this collection",
@@ -3387,8 +4408,12 @@
         "cbl-remap-rule-promoted": "Rule promoted to global",
         "cbl-remap-rule-demoted": "Rule demoted to user scope",
         "confirm-delete-read-from-readinglist": "Are you sure you want to remove all read issues from this reading list? This cannot be undone.",
-        "reading-list-sync-enqueued": "The Reading List has been enqueued for sync."
+        "reading-list-sync-enqueued": "The Reading List has been enqueued for sync.",
+        "confirm-rerun-backfill": "You've already generated scrobble events for {{provider}} at least once. Backfilling may delay scrobbling of recent read events. Are you sure you want to continue?",
+        "change-email-success": "A confirmation link was sent to your new address. Click it to complete the change.",
+        "change-email-error": "We couldn't change your email. Please try again, or contact support if it keeps happening."
     },
+
     "read-time-pipe": {
         "less-than-hour": "<1 Hour",
         "hour": "Hour",
@@ -3396,6 +4421,7 @@
         "hour-left": "Hour left",
         "hours-left": "Hours left"
     },
+
     "metadata-setting-field-pipe": {
         "covers": "Covers",
         "age-rating": "{{metadata-fields.age-rating-title}}",
@@ -3406,12 +4432,18 @@
         "genres": "{{metadata-fields.genres-title}}",
         "tags": "{{metadata-fields.tags-title}}",
         "localized-name": "{{edit-series-modal.localized-name-label}}",
+        "name": "{{edit-series-modal.name-label}}",
         "chapter-release-date": "Release Date (Chapter)",
         "chapter-summary": "Summary (Chapter)",
         "chapter-covers": "Covers (Chapter)",
         "chapter-publisher": "{{person-role-pipe.publisher}} (Chapter)",
-        "chapter-title": "Title (Chapter)"
+        "chapter-title": "Title (Chapter)",
+        "chapter-age-rating": "Age Rating (Chapter)",
+        "volume-covers": "Covers (Volume)",
+        "sort-name": "{{sort-field-pipe.sort-name}}"
     },
+
+
     "actionable": {
         "scan-library": "Scan Library",
         "scan-library-tooltip": "Scan library for changes. Use force scan to force checking every folder",
@@ -3440,12 +4472,14 @@
         "remove-from-want-to-read-tooltip": "Remove series from Want to Read",
         "remove-from-on-deck": "Remove From On Deck",
         "remove-from-on-deck-tooltip": "Remove series from showing from On Deck",
+
         "reading-profiles": "Reading Profiles",
         "set-reading-profile": "Set Reading Profile",
         "set-reading-profile-tooltip": "Bind a Reading Profile to this Library",
         "clear-reading-profile": "Clear Reading Profile",
         "clear-reading-profile-tooltip": "Clear Reading Profile for this Library",
         "cleared-profile": "Cleared Reading Profile",
+
         "others": "Others",
         "add-to-reading-list": "Add to Reading List",
         "add-to-reading-list-tooltip": "Add to a Reading List",
@@ -3505,6 +4539,7 @@
         "add-to-side-nav": "Add to Side Nav",
         "add-to-side-nav-tooltip": "Adds the smart filter to the bottom of your Side Nav"
     },
+
     "preferences": {
         "left-to-right": "Left to Right",
         "right-to-left": "Right to Left",
@@ -3545,12 +4580,14 @@
         "tablet": "Tablet",
         "desktop": "Desktop"
     },
+
     "account-settings": {
         "oidc": "{{login.oidc}}",
         "unlink-oidc": "Remove OIDC link",
         "confirm-unlink": "Are you sure you want to remove your OIDC link?",
         "confirm-unlink-extra": "If you are currently authenticated with the OIDC account, you will be logged out. You can link again via email at any time."
     },
+
     "manage-reading-profiles": {
         "description": "Not all your series may be read in the same way, set up distinct reading profiles per library/series/device to make getting back in your series as seamless as possible.",
         "extra-tip": "Assign reading profiles via the action menu on series and libraries, or in bulk. When changing settings in a reader, a hidden profile is created that remembers your choices for that series (not for pdfs). This profile is removed when you assign one of your own reading profiles to the series. More information can be found on the",
@@ -3565,6 +4602,7 @@
         "selection-tip": "Select a profile from the list, or create a new one at the top right",
         "set-devices": "Set Devices",
         "select-devices-for": "Set devices for {{name}}",
+
         "reading-direction-label": "Reading Direction",
         "reading-direction-tooltip": "Direction to click to move to next page. Right to Left means you click on left side of screen to move to next page.",
         "scaling-option-label": "Scaling Options",
@@ -3592,6 +4630,7 @@
         "disable-width-override-label": "Disable width override",
         "disable-width-override-tooltip": "Prevent the width override from taking effect when your screen is at least the configured breakpoint or smaller",
         "reset": "{{common.reset}}",
+
         "tap-to-paginate-label": "Tap to Paginate",
         "tap-to-paginate-tooltip": "Should the sides of the book reader screen allow tapping on it to move to prev/next page",
         "immersive-mode-label": "Immersive Mode",
@@ -3614,22 +4653,27 @@
         "margin-book-tooltip": "How much spacing on each side of the screen. This will override to 0 on mobile devices regardless of this setting.",
         "disable-bookmark-icon-label": "Disable Bookmark Icon",
         "disable-bookmark-icon-tooltip": "Removes bookmark icons from images in the reader",
+
         "pdf-scroll-mode-label": "Scroll Mode",
         "pdf-scroll-mode-tooltip": "How you scroll through pages. Vertical/Horizontal and Tap to Paginate (no scroll)",
         "pdf-spread-mode-label": "Spread Mode",
         "pdf-spread-mode-tooltip": "How pages should be laid out. Single or double (odd/even)",
         "pdf-theme-label": "Theme",
         "pdf-theme-tooltip": "Color theme of the reader",
+
         "page-calc-method-label": "{{reader-settings.page-calc-method-label}}",
         "page-calc-method-tooltip": "{{reader-settings.page-calc-method-tooltip}}",
+
         "reading-profile-series-settings-title": "Series",
         "reading-profile-library-settings-title": "Library",
         "delete": "{{common.delete}}",
         "breakpoint-pipe-never": "{{breakpoint-pipe.never}}"
     },
+
     "list-select-modal": {
-        "hidden": "{{amount}} items hidden due to invalid state"
+      "hidden": "{{amount}} items hidden due to invalid state"
     },
+
     "edit-external-metadata-form": {
         "aniListId-label": "AniList Id",
         "malId-label": "MAL Id",
@@ -3637,18 +4681,43 @@
         "hardcoverId-label": "Hardcover Id",
         "comicVineId-label": "Comic Vine Id",
         "metronId-label": "Metron Id",
+        "cbrId-label": "Comic Book Roundup Id",
         "not-set-label": "Not set",
         "isbn-label": "{{edit-chapter-modal.isbn-label}}"
     },
+
+    "run-metadata-mappings-modal": {
+        "title": "Re Run mappings",
+        "close": "{{common.close}}",
+        "cancel": "{{common.cancel}}",
+        "submit": "{{common.submit}}",
+        "saving": "{{common.saving}}",
+        "all-libraries-label": "All libraries",
+        "all-libraries-tooltip": "When enabled, metadata mappings will be run for all libraries. Disable this option to include or exclude specific libraries.",
+        "included-libraries-title": "Included libraries",
+        "included-libraries-tooltip": "Libraries to process if all libraries is not enabled",
+        "excluded-libraries-title": "Excluded libraries",
+        "excluded-libraries-tooltip": "Libraries to skip",
+        "queued-title": "Queued re run",
+        "queued-description": "Processing will kick of shortly, please be patient."
+    },
+
     "validation": {
         "required-field": "This field is required",
         "other-field-required": "{{name}} is required when {{other}} is set",
         "other-field-invalid": "Cannot check validity, {{other}} is invalid",
         "valid-email": "This must be a valid email",
+        "email-invalid": "This must be a valid email",
+        "min-length": "This must be at least {{requiredLength}} characters",
         "password-validation": "Password must be between 6 and 256 characters in length",
         "year-validation": "This must be a valid year greater than 1000 and 4 characters long",
-        "invalid-uri": "The provided uri is invalid"
+        "invalid-uri": "The provided uri is invalid",
+        "min": "Value must be greater than {{min}}",
+        "max": "Value must be less than {{max}}",
+        "invalid-amazon-code": "ASIN should start with B0 or BT",
+        "invalid-asin": "This isn't a valid ASIN"
     },
+
     "entity-type": {
         "volume": "volume",
         "chapter": "chapter",
@@ -3656,6 +4725,7 @@
         "bookmark": "bookmark",
         "logs": "logs"
     },
+
     "tabs": {
         "details-tab": "Details",
         "reviews-tab": "Reviews",
@@ -3697,8 +4767,18 @@
         "book-reader-tab": "Book Reader",
         "pdf-reader-tab": "PDF Reader",
         "bookmark-image-tab": "Image",
-        "bookmark-text-tab": "Text"
+        "bookmark-text-tab": "Text",
+        "uploaded-tab": "Uploaded",
+        "current-tab": "Current",
+        "kavita-plus-tab": "Kavita+",
+        "other-tab": "Other",
+        "all-tab": "All",
+        "scrobbles-tab": "Scrobbles",
+        "failed-tab": "Failed",
+        "my-changes-tab": "My Changes",
+        "scrobble-holds-tab": "Scrobble Holds"
     },
+
     "common": {
         "reset-to-default": "Reset to Default",
         "close": "Close",
@@ -3715,6 +4795,7 @@
         "edit": "Edit",
         "help": "Help",
         "submit": "Submit",
+        "done": "Done",
         "email": "Email",
         "read": "Read",
         "unknown": "Unknown",
@@ -3731,6 +4812,7 @@
         "no-data": "No Data",
         "confirm": "Confirm",
         "selected": "Selected",
+
         "book-num": "Book",
         "issue-hash-num": "Issue #",
         "issue-num": "Issue",
@@ -3742,4 +4824,5 @@
         "volume-num-shorthand": "Vol {{num}}",
         "libraries": "Libraries"
     }
+
 }

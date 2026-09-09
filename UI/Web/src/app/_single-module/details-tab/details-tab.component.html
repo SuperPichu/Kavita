@@ -37,15 +37,15 @@
 
     @if (showBasicMetadata() && bm) {
       <section class="mb-4 ms-1">
-        <p class="kv-section-header">{{t('basic-metadata-title')}}</p>
+        <h4 class="kv-section-header">{{t('basic-metadata-title')}}</h4>
         <div class="label-card-grid">
           @if (bm.readingTime) {
             <app-label-card [label]="t('read-time-label')" [value]="bm.readingTime | readTime" />
           }
           <app-label-card [label]="t('pages-label')" [value]="bm.pages != null ? t('pages-count', {num: bm.pages | compactNumber}) : (null | defaultValue)" />
           <app-label-card [label]="t('words-label')" [value]="bm.words != null ? t('words-count', {num: bm.words | compactNumber}) : (null | defaultValue)" />
-          <app-label-card [label]="t('added-label')" [value]="bm.addedAt | date:'shortDate' | defaultValue" />
-          <app-label-card [label]="t('updated-label')" [value]="(bm.updatedAt ?? null) | timeAgo | defaultValue" />
+          <app-label-card [label]="t('added-label')" [value]="bm.addedAt | utcToLocalTime:'shortDate'| defaultDate" />
+          <app-label-card [label]="t('updated-label')" [value]="(bm.updatedAt ?? null) | timeDifference | defaultValue" />
           <app-label-card [label]="t('kavita-id-label')" [value]="bm.kavitaId | defaultValue" />
           @if (bm.sortOrder != null) {
             <app-label-card [label]="t('sort-order-label')" [value]="bm.sortOrder | defaultValue" />
@@ -66,7 +66,7 @@
     @if (metadataEntity) {
       <section class="mb-3 ms-1">
         <h4 class="kv-section-header">{{t('external-metadata-title')}}</h4>
-        <app-external-metadata-detail [entity]="metadataEntity" [isbn]="isbn()" />
+        <app-external-metadata-detail [entity]="metadataEntity" [isbn]="isbn()" [individualWork]="individualWork()" />
       </section>
     }
 

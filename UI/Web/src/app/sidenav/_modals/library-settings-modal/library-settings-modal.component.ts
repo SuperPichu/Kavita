@@ -2,7 +2,9 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  computed,
   DestroyRef,
+  effect,
   inject,
   Input,
   OnInit,
@@ -19,27 +21,16 @@ import {
   NgbNavOutlet,
   NgbTooltip
 } from '@ng-bootstrap/ng-bootstrap';
-import {ToastrService} from 'ngx-toastr';
-import {debounceTime, distinctUntilChanged, of, switchMap, tap} from 'rxjs';
-import {
-  DirectoryPickerComponent,
-  DirectoryPickerResult
-} from 'src/app/admin/_modals/directory-picker/directory-picker.component';
-import {ConfirmService} from 'src/app/shared/confirm.service';
-import {UtilityService} from 'src/app/shared/_services/utility.service';
-import {
-  allKavitaPlusMetadataApplicableTypes,
-  allLibraryTypes,
-  Library,
-  LibraryType
-} from 'src/app/_models/library/library';
-import {ImageService} from 'src/app/_services/image.service';
-import {LibraryService} from 'src/app/_services/library.service';
-import {UploadService} from 'src/app/_services/upload.service';
-import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
-import {DatePipe, NgTemplateOutlet} from "@angular/common";
+import {ToastrService} from '@openng/ngx-toastr';
+import {debounceTime, distinctUntilChanged, switchMap, tap} from 'rxjs';
+import {takeUntilDestroyed, toSignal} from "@angular/core/rxjs-interop";
+import {NgTemplateOutlet} from "@angular/common";
 import {SentenceCasePipe} from "../../../_pipes/sentence-case.pipe";
 import {CoverImageChooserComponent} from "../../../cards/cover-image-chooser/cover-image-chooser.component";
+import {
+  CoverChooserConfigFactoryService,
+  CoverImageChooserConfig
+} from "../../../_services/cover-chooser-config-factory.service";
 import {translate, TranslocoModule} from "@jsverse/transloco";
 import {DefaultDatePipe} from "../../../_pipes/default-date.pipe";
 import {allFileTypeGroup, FileTypeGroup} from "../../../_models/library/file-type-group.enum";
@@ -52,7 +43,7 @@ import {SettingButtonComponent} from "../../../settings/_components/setting-butt
 import {LibraryTypePipe} from "../../../_pipes/library-type.pipe";
 import {LibraryTypeSubtitlePipe} from "../../../_pipes/library-type-subtitle.pipe";
 import {TypeaheadComponent} from "../../../typeahead/_components/typeahead.component";
-import {setupLanguageSettings, TypeaheadSettings} from "../../../typeahead/_models/typeahead-settings";
+import {TypeaheadSettings} from "../../../typeahead/_models/typeahead-settings";
 import {Language} from "../../../_models/metadata/language";
 import {MetadataService} from "../../../_services/metadata.service";
 import {BreakpointService} from "../../../_services/breakpoint.service";
@@ -63,6 +54,22 @@ import {modalSaved} from "../../../_models/modal/modal-result";
 import {ModalService} from "../../../_services/modal.service";
 import {Tabs} from "../../../_models/tabs";
 import {TabTitlePipe} from "../../../_pipes/tab-title.pipe";
+import {MetadataProvider} from "../../../_models/kavitaplus/metadata-provider.enum";
+import {map} from "rxjs/operators";
+import {MetadataProviderTitlePipe} from "../../../_pipes/metadata-provider-title.pipe";
+import {UtcToLocalTimePipe} from "../../../_pipes/utc-to-local-time.pipe";
+import {UtilityService} from "../../../shared/_services/utility.service";
+import {UploadService} from "../../../_services/upload.service";
+import {ConfirmService} from "../../../shared/confirm.service";
+import {LibraryService} from "../../../_services/library.service";
+import {allLibraryTypes, Library, LibraryType} from "../../../_models/library/library";
+import {
+  DirectoryPickerModalComponent,
+  DirectoryPickerResult
+} from "../../../admin/_modals/directory-picker/directory-picker-modal.component";
+import {TypeaheadSettingsFactoryService} from "../../../typeahead-settings-factory.service";
+import {FormFieldDirective} from "../../../_directives/form-field.directive";
+import {ValidationErrorsComponent} from "../../../shared/_components/validation-errors/validation-errors.component";
 
 enum StepID {
   General = 0,
@@ -75,7 +82,7 @@ enum StepID {
   selector: 'app-library-settings-modal',
   imports: [NgbModalModule, NgbNavLink, NgbNavItem, NgbNavContent, ReactiveFormsModule, NgbTooltip,
     SentenceCasePipe, NgbNav, NgbNavOutlet, CoverImageChooserComponent, TranslocoModule, DefaultDatePipe,
-    FileTypeGroupPipe, EditListComponent, SettingItemComponent, SettingSwitchComponent, SettingButtonComponent, LibraryTypeSubtitlePipe, NgTemplateOutlet, DatePipe, TypeaheadComponent, TabTitlePipe],
+    FileTypeGroupPipe, EditListComponent, SettingItemComponent, SettingSwitchComponent, SettingButtonComponent, LibraryTypeSubtitlePipe, NgTemplateOutlet, TypeaheadComponent, TabTitlePipe, MetadataProviderTitlePipe, UtcToLocalTimePipe, FormFieldDirective, ValidationErrorsComponent],
   templateUrl: './library-settings-modal.component.html',
   styleUrls: ['./library-settings-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -91,10 +98,11 @@ export class LibrarySettingsModalComponent implements OnInit {
   private readonly libraryService = inject(LibraryService);
   private readonly toastr = inject(ToastrService);
   private readonly cdRef = inject(ChangeDetectorRef);
-  private readonly imageService = inject(ImageService);
   private readonly actionFactoryService = inject(ActionFactoryService);
   private readonly metadataService = inject(MetadataService);
   protected readonly breakpointService = inject(BreakpointService);
+  private readonly coverChooserConfigFactory = inject(CoverChooserConfigFactoryService);
+  private readonly typeaheadSettingFactoryService = inject(TypeaheadSettingsFactoryService);
 
   protected readonly LibraryType = LibraryType;
   protected readonly Tabs = Tabs;
@@ -105,7 +113,7 @@ export class LibrarySettingsModalComponent implements OnInit {
   @Input({required: true}) library!: Library | undefined;
 
   active = Tabs.General;
-  imageUrls: Array<string> = [];
+  chooserConfig = signal<CoverImageChooserConfig>({});
   protected readonly excludePatternTooltip = `<span>` + translate('library-settings-modal.exclude-patterns-tooltip') +
   `<a class="ms-1" href="${WikiLink.ScannerExclude}" rel="noopener noreferrer" target="_blank">${translate('library-settings-modal.help')}` +
   `<i class="fa fa-external-link-alt ms-1" aria-hidden="true"></i></a>`;
@@ -126,8 +134,24 @@ export class LibrarySettingsModalComponent implements OnInit {
     removePrefixForSortName: new FormControl<boolean>(false, { nonNullable: true, validators: [] }),
     inheritWebLinksFromFirstChapter: new FormControl<boolean>(false, { nonNullable: true, validators: []}),
     defaultLanguage: new FormControl<string>('', {nonNullable: true, validators: []}),
+    metadataProvider: new FormControl<MetadataProvider>(MetadataProvider.Mangabaka, {nonNullable: true, validators: []}),
     // TODO: Missing excludePatterns
   });
+
+  selectedLibraryType = toSignal(this.libraryForm.get('type')!.valueChanges.pipe(
+    map(() => this.libraryForm.getRawValue().type as LibraryType),
+  ), { initialValue: LibraryType.Manga });
+
+  supportsMetadata = computed(() => {
+    if (this.validMetadataProviders.hasValue()) {
+      return this.validMetadataProviders.value().length > 0;
+    }
+
+    return false;
+  });
+
+  scrobbleEnabledLibraries = signal<LibraryType[]>([]);
+  validMetadataProviders = this.libraryService.getSupportedMetadataProviders(() => this.selectedLibraryType());
 
   selectedFolders: string[] = [];
   madeChanges = false;
@@ -135,9 +159,9 @@ export class LibrarySettingsModalComponent implements OnInit {
     return {title: this.libraryTypePipe.transform(f), value: f};
   }).sort((a, b) => a.title.localeCompare(b.title));
 
-  languageSettings: TypeaheadSettings<Language> | null = null;
+  languageSettings = signal<TypeaheadSettings<Language> | null>(null);
 
-  isAddLibrary = false;
+  isAddLibrary= signal<boolean>(false);
   setupStep = StepID.General;
   fileTypeGroups = allFileTypeGroup;
   excludePatterns: Array<string> = [''];
@@ -149,41 +173,39 @@ export class LibrarySettingsModalComponent implements OnInit {
     return  parseInt(this.libraryForm.get('type')?.value + '', 10) as LibraryType;
   }
 
-  get IsKavitaPlusEligible() {
-    const libType = parseInt(this.libraryForm.get('type')?.value + '', 10) as LibraryType;
-    return allKavitaPlusMetadataApplicableTypes.includes(libType);
-  }
+  constructor() {
+    effect(() => {
+      if (!this.validMetadataProviders.hasValue()) return;
+      const validMetadataProviders = this.validMetadataProviders.value();
+      const selectedMetadataProvider = this.libraryForm.get('metadataProvider')!.value as MetadataProvider;
 
-  get IsMetadataDownloadEligible() {
-    const libType = parseInt(this.libraryForm.get('type')?.value + '', 10) as LibraryType;
-    return allKavitaPlusMetadataApplicableTypes.includes(libType);
+      if (!validMetadataProviders.includes(selectedMetadataProvider)) {
+        this.libraryForm.get('metadataProvider')?.setValue(validMetadataProviders[0]);
+      }
+    });
   }
 
   ngOnInit(): void {
     if (this.library === undefined) {
-      this.isAddLibrary = true;
-      this.cdRef.markForCheck();
+      this.isAddLibrary.set(true);
     }
 
-    if (this.library?.coverImage != null && this.library?.coverImage !== '') {
-      this.imageUrls.push(this.imageService.getLibraryCoverImage(this.library.id));
-      this.cdRef.markForCheck();
-    }
+    this.chooserConfig.set(this.coverChooserConfigFactory.forLibrary(this.library));
 
-    if (this.library && !(this.library.type === LibraryType.Manga || this.library.type === LibraryType.LightNovel) ) {
-      this.libraryForm.get('allowScrobbling')?.setValue(false);
-      this.libraryForm.get('allowScrobbling')?.disable();
+    this.libraryService.getLibraryTypesWithScrobbleSupport().pipe(
+      takeUntilDestroyed(this.destroyRef),
+      tap(libraryTypes => {
+        this.scrobbleEnabledLibraries.set(libraryTypes);
 
-      if (this.IsMetadataDownloadEligible) {
-        this.libraryForm.get('allowMetadataMatching')?.setValue(this.library.allowMetadataMatching ?? true);
-        this.libraryForm.get('allowMetadataMatching')?.enable();
-      } else {
-        this.libraryForm.get('allowMetadataMatching')?.setValue(false);
-        this.libraryForm.get('allowMetadataMatching')?.disable();
-      }
-    }
+        if (!libraryTypes.includes(this.library?.type ?? this.LibraryTypeValue)) {
+          this.libraryForm.get('allowScrobbling')?.setValue(false);
+          this.libraryForm.get('allowScrobbling')?.disable();
+        }
 
-
+        // We want scrobbleEnabledLibraries to be loaded before doing this
+        this.setValues();
+      })
+    ).subscribe();
 
     this.libraryForm.get('name')?.valueChanges.pipe(
       debounceTime(100),
@@ -202,8 +224,11 @@ export class LibrarySettingsModalComponent implements OnInit {
       ).subscribe();
 
 
-    this.setValues();
-    this.setupLanguageTypeahead().subscribe();
+    this.languageSettings.set(this.typeaheadSettingFactoryService.forLanguage({id: 'language', currentSelectedLanguage: this.library?.defaultLanguage,
+      overrides: {
+        showLocked: false
+      }
+    }));
 
     // Turn on/off manage collections/rl
     this.libraryForm.get('enableMetadata')?.valueChanges.pipe(
@@ -257,21 +282,15 @@ export class LibrarySettingsModalComponent implements OnInit {
             break;
         }
 
-        this.libraryForm.get('allowScrobbling')?.setValue(this.IsKavitaPlusEligible);
-        this.libraryForm.get('allowMetadataMatching')?.setValue(this.IsKavitaPlusEligible);
-
-        if (!this.IsKavitaPlusEligible) {
+        if (!this.scrobbleEnabledLibraries().includes(libType)) {
+          this.libraryForm.get('allowScrobbling')?.setValue(false);
           this.libraryForm.get('allowScrobbling')?.disable();
         } else {
+          this.libraryForm.get('allowScrobbling')?.setValue(true);
           this.libraryForm.get('allowScrobbling')?.enable();
         }
 
-        if (this.IsMetadataDownloadEligible) {
-          this.libraryForm.get('allowMetadataMatching')?.enable();
-        } else {
-          this.libraryForm.get('allowMetadataMatching')?.disable();
-        }
-
+        this.libraryForm.get('allowMetadataMatching')?.setValue(true);
 
         this.cdRef.markForCheck();
       }),
@@ -290,8 +309,9 @@ export class LibrarySettingsModalComponent implements OnInit {
       this.libraryForm.get('manageCollections')?.setValue(this.library.manageCollections);
       this.libraryForm.get('manageReadingLists')?.setValue(this.library.manageReadingLists);
       this.libraryForm.get('collapseSeriesRelationships')?.setValue(this.library.collapseSeriesRelationships);
-      this.libraryForm.get('allowScrobbling')?.setValue(this.IsKavitaPlusEligible ? this.library.allowScrobbling : false);
-      this.libraryForm.get('allowMetadataMatching')?.setValue(this.IsMetadataDownloadEligible ? this.library.allowMetadataMatching : false);
+      this.libraryForm.get('allowScrobbling')?.setValue(this.scrobbleEnabledLibraries().includes(this.library.type) ? this.library.allowScrobbling : false);
+      this.libraryForm.get('allowMetadataMatching')?.setValue(this.library.allowMetadataMatching);
+      this.libraryForm.get('metadataProvider')?.setValue(this.library.metadataProvider);
       this.libraryForm.get('excludePatterns')?.setValue(this.excludePatterns ? this.library.excludePatterns : false);
       this.libraryForm.get('enableMetadata')?.setValue(this.library.enableMetadata);
       this.libraryForm.get('removePrefixForSortName')?.setValue(this.library.removePrefixForSortName);
@@ -324,17 +344,6 @@ export class LibrarySettingsModalComponent implements OnInit {
     }
 
     this.cdRef.markForCheck();
-  }
-
-  setupLanguageTypeahead() {
-    return this.metadataService.getAllValidLanguages()
-      .pipe(
-        tap(validLanguages => {
-          this.languageSettings = setupLanguageSettings(false, this.utilityService, validLanguages, this.library?.defaultLanguage)
-          this.cdRef.markForCheck();
-        }),
-        switchMap(_ => of(true))
-      );
   }
 
   updateLanguage(languages: Array<Language>) {
@@ -431,17 +440,14 @@ export class LibrarySettingsModalComponent implements OnInit {
     this.uploadService.updateLibraryCoverImage(this.library!.id, coverUrl).subscribe();
   }
 
-  updateCoverImageIndex(selectedIndex: number) {
-    if (selectedIndex <= 0) return;
-    this.applyCoverImage(this.imageUrls[selectedIndex]);
-  }
-
-  resetCoverImage() {
-    this.uploadService.updateLibraryCoverImage(this.library!.id, '', false).subscribe();
+  handleCoverChanged(event: { isDirty: boolean; fileName: string }) {
+    if (event.isDirty) {
+      this.applyCoverImage(event.fileName);
+    }
   }
 
   openDirectoryPicker() {
-    const modalRef = this.modalService.open(DirectoryPickerComponent);
+    const modalRef = this.modalService.open(DirectoryPickerModalComponent);
     modalRef.closed.subscribe((closeResult: DirectoryPickerResult) => {
       if (closeResult.success) {
         if (!this.selectedFolders.includes(closeResult.folderPath)) {

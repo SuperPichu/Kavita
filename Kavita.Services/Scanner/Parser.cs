@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -6,7 +7,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using Kavita.Common.Extensions;
 using Kavita.Models.Constants;
+using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Enums.Font;
 
 namespace Kavita.Services.Scanner;
 
@@ -93,6 +96,10 @@ public static partial class Parser
     public static readonly Regex AsinRegex = new(@"^(B0|BT)[0-9A-Z]{8}$",
         MatchOptions, RegexTimeout);
 
+    [GeneratedRegex(@"(?<=[a-z])(?=[A-Z])")]
+    public static partial Regex CamelCaseRegex();
+    [GeneratedRegex(@"[^a-zA-Z0-9]")]
+    public static partial Regex NonAlphanumericRegex();
 
     private static readonly Regex ImageRegex = new(ImageFileExtensions,
         MatchOptions, RegexTimeout);
@@ -571,13 +578,13 @@ public static partial class Parser
         new Regex(
             @"^(?<Series>.+?)(?:\s|_)#(?<Chapter>\d+)",
             MatchOptions, RegexTimeout),
-        // Batman 2016 - Chapter 01, Batman 2016 - Issue 01, Batman 2016 - Issue #01
+        // Batman 2016 - Chapter 01, Batman 2016 - Issue 01, Batman 2016 - Issue #01, Blade Runner 2019 - Ch. 01
         new Regex(
-            @"^(?<Series>.+?)((c(hapter)?)|issue)(_|\s)#?(?<Chapter>(\d+(\.\d)?)-?(\d+(\.\d)?)?)",
+            @"^(?<Series>.+?)((chapter|ch|c)\.?|issue)(_|\s)#?(?<Chapter>(\d+(\.\d)?)-?(\d+(\.\d)?)?)",
             MatchOptions, RegexTimeout),
         // Invincible 070.5 - Invincible Returns 1 (2010) (digital) (Minutemen-InnerDemons).cbr
         new Regex(
-            @"^(?<Series>.+?)(?:\s|_)(c? ?(chapter)?)(?<Chapter>(\d+(\.\d)?)-?(\d+(\.\d)?)?)(c? ?)-",
+            @"^(?<Series>.+?)(?<!Vol)(?<!Vol.)(?<!Volume)(?<!Tome)(?:\s|_)(c? ?(chapter)?)(?<Chapter>(\d+(\.\d)?)-?(\d+(\.\d)?)?)(?!\d)(?![\s_]*-?[\s_]*(?:vol(?:ume)?|tome)(?![a-zA-Z]))(c? ?)-",
             MatchOptions, RegexTimeout),
         // Batgirl Vol.2000 #57 (December, 2004)
         new Regex(
@@ -594,7 +601,7 @@ public static partial class Parser
             MatchOptions, RegexTimeout),
         // Batman & Catwoman - Trail of the Gun 01, Batman & Grendel (1996) 01 - Devil's Bones, Teen Titans v1 001 (1966-02) (digital) (OkC.O.M.P.U.T.O.-Novus)
         new Regex(
-            @"^(?<Series>.+?)(?: (?<Chapter>\d+))",
+            @"^(?<Series>.+?)(?<!Vol)(?<!Vol.)(?<!Volume)(?<!Tome)(?: (?<Chapter>\d+))(?!\d)(?![\s_]*-?[\s_]*(?:vol(?:ume)?|tome)(?![a-zA-Z]))",
             MatchOptions, RegexTimeout),
         // Saga 001 (2012) (Digital) (Empire-Zone)
         new Regex(
@@ -621,8 +628,10 @@ public static partial class Parser
             @"(?<Volume>((เล่ม|เล่มที่))?(\s|_)?\.?\d+)(\s|_)(บทที่|ตอนที่)\.?(\s|_)?(?<Chapter>\d+)",
             MatchOptions, RegexTimeout),
         // Historys Strongest Disciple Kenichi_v11_c90-98.zip, ...c90.5-100.5
+        // Trailing (?(Range)|(?![a-zA-Z])) keeps this from matching inside ripper/scanlator tags like "(c1fi7)"
+        // (a bare short number glued to more letters) while still allowing ranges like c001-006x1.
         new Regex(
-            @"(\b|_)(c|ch)(\.?\s?)(?<Chapter>(\d+(\.\d)?)(-c?\d+(\.\d)?)?)",
+            @"(\b|_)(c|ch)(\.?\s?)(?<Chapter>(?>\d+(\.\d)?)(?<Range>-c?\d+(\.\d)?)?)(?(Range)|(?:x\d+)?(?![a-zA-Z]))",
             MatchOptions, RegexTimeout),
         // [Suihei Kiki]_Kasumi_Otoko_no_Ko_[Taruby]_v1.1.zip
         new Regex(
@@ -662,7 +671,7 @@ public static partial class Parser
             MatchOptions, RegexTimeout),
         // Hinowa ga CRUSH! 018 (2019) (Digital) (LuCaZ).cbz, Hinowa ga CRUSH! 018.5 (2019) (Digital) (LuCaZ).cbz
         new Regex(
-            @"^(?<Series>.+?)(?<!Vol)(?<!Vol.)(?<!Volume)\s(\d\s)?(?<Chapter>\d+(?:\.\d+|-\d+)?)(?![\d.권])(?:\s\(\d{4}\))?(\b|_|-)",
+            @"^(?<Series>.+?)(?<!Vol)(?<!Vol.)(?<!Volume)(?<!Tome)\s(\d\s)?(?<Chapter>\d+(?:\.\d+|-\d+)?)(?![\d.권])(?:\s\(\d{4}\))?(?!\d)(?![\s_]*-?[\s_]*(?:vol(?:ume)?|tome)(?![a-zA-Z]))(?!.*\bv\.?\d)(?!.*\b(?:vol(?:ume)?|tome)\.?\s*\d)(?<!\bv\.?\d.*)(?<!\b(?:vol(?:ume)?|tome)\.?\s*\d.*)(\b|_|-)",
             MatchOptions, RegexTimeout),
         // Tower Of God S01 014 (CBT) (digital).cbz
         new Regex(
@@ -670,7 +679,7 @@ public static partial class Parser
             MatchOptions, RegexTimeout),
         // Beelzebub_01_[Noodles].zip, Beelzebub_153b_RHS.zip
         new Regex(
-            @"^((?!v|vo|vol|Volume).)*(\s|_)(?<Chapter>\.?\d+(?:.\d+|-\d+)?)(?<Part>b)?(\s|_|\[|\()",
+            @"^((?!v|vo|vol|Volume).)*(\s|_)(?<Chapter>\.?\d+(?:.\d+|-\d+)?)(?<Part>b)?(?!\d)(?![\s_]*-?[\s_]*(?:vol(?:ume)?|tome)(?![a-zA-Z]))(?!.*\bv\.?\d)(?!.*\b(?:vol(?:ume)?|tome)\.?\s*\d)(\s|_|\[|\()",
             MatchOptions, RegexTimeout),
         // Yumekui-Merry_DKThias_Chapter21.zip
         new Regex(
@@ -696,6 +705,12 @@ public static partial class Parser
     // Matches anything between balanced parenthesis, tags between brackets, {} and {Complete}
     private static readonly Regex CleanupRegex = new Regex(
         $@"(?:\({BalancedParen}\)|{TagsInBrackets}|\{{\}}|\{{Complete\}})",
+        MatchOptions, RegexTimeout
+    );
+
+    // Don't strip parens for cases like rent-a-(really shy)-girlfriend
+    private static readonly Regex GluedParenRegex = new Regex(
+        $@"(?<=[a-z0-9]-?)\({BalancedParen}\)(?=-?[a-z0-9])",
         MatchOptions, RegexTimeout
     );
 
@@ -951,7 +966,11 @@ public static partial class Parser
 
     private static string RemoveEditionTagHolders(string title)
     {
-        title = CleanupRegex.Replace(title, string.Empty);
+        title = CleanupRegex.Replace(title, m =>
+        {
+            var glued = GluedParenRegex.Match(title, m.Index);
+            return glued.Success && glued.Index == m.Index ? m.Value : string.Empty;
+        });
 
         title = MangaEditionRegex.Replace(title, string.Empty);
 
@@ -1038,6 +1057,10 @@ public static partial class Parser
         return XmlRegex.IsMatch(Path.GetExtension(filePath));
     }
 
+    public static bool IsRange(string range)
+    {
+        return !string.IsNullOrEmpty(range) && Regex.IsMatch(range, @"^[\d\-.]+$", MatchOptions, RegexTimeout);
+    }
 
     public static float MinNumberFromRange(string range)
     {
@@ -1290,7 +1313,7 @@ public static partial class Parser
      */
     public static string PrettifyFileName(string name)
     {
-        return Regex.Replace(name, "[^a-zA-Z0-9]", " ");
+        return NonAlphanumericRegex().Replace(name, " ").Replace("VariableFont", "Variable Font");
     }
 
     /// <summary>
@@ -1371,5 +1394,90 @@ public static partial class Parser
     public static bool IsLooseLeafVolume(string? volumeNumber)
     {
         return !string.IsNullOrEmpty(volumeNumber) && (volumeNumber.Equals(LooseLeafVolume) || volumeNumber.Equals(LooseLeafVolume + ".0"));
+    }
+
+    private static readonly Dictionary<string, string> FontWeightLookup = new()
+    {
+        { "variable",    "1 1000" }, /* Special entry for variable fonts, sets weight to full range.
+                                        Technically incorrect since most variable fonts generally don't
+                                        support full 1-1000 range. Usually the lowest is 300
+                                        with some going down to 100. Usually the highest is 800 with
+                                        some going to 900 or 950. Setting '1 1000' should be fine since
+                                        browsers should clamp to the lowest value the font file supports.
+                                     */
+        { "hairline",    "100" },
+        { "thin",        "100" },
+        { "ultralight",  "200" },
+        { "ultra light", "200" },
+        { "extralight",  "200" },
+        { "extra light", "200" },
+        { "light",       "300" },
+        { "normal",      "400" },
+        { "regular",     "400" },
+        { "medium",      "500" },
+        { "semibold",    "600" },
+        { "semi bold",   "600" },
+        { "demibold",    "600" },
+        { "demi bold",   "600" },
+        { "bold",        "700" },
+        { "extrabold",   "800" },
+        { "extra bold",  "800" },
+        { "ultrabold",   "800" },
+        { "ultra bold",  "800" },
+        { "black",       "900" },
+        { "heavy",       "900" },
+        { "extrablack",  "950" },
+        { "extraheavy",  "950" },
+        { "extra black", "950" },
+        { "extra heavy", "950" }
+    };
+
+    /// <summary>
+    /// Parses a given filename into an EpubFont object.
+    /// Filename will be passed through to the object.
+    /// Callers are expected to update the filename with
+    /// the full path for general use.
+    /// </summary>
+    /// <param name="fileName"></param>
+    /// <returns></returns>
+    public static EpubFont ParseEpubFontFromFilename(string fileName)
+    {
+        var nakedFileName = Path.GetFileNameWithoutExtension(fileName);
+
+        var fontStyle = nakedFileName.Contains("italic", StringComparison.OrdinalIgnoreCase) ? "italic" : "normal";
+        // Match longest descriptors first so specific weights (e.g. "extrabold") win over substrings (e.g. "bold")
+        var fontWeight = FontWeightLookup
+            .OrderByDescending(entry => entry.Key.Length)
+            .FirstOrDefault(entry => nakedFileName.Contains(entry.Key, StringComparison.OrdinalIgnoreCase), new KeyValuePair<string, string>("normal", "400")).Value;
+
+        var fontFamily = nakedFileName;
+        var descriptorControlCharIndex = fontFamily.IndexOf('-');
+        if (descriptorControlCharIndex >= 1)
+        {
+            fontFamily = fontFamily[..descriptorControlCharIndex];
+        }
+
+        fontFamily = CamelCaseRegex().Replace(fontFamily, " ");
+
+        var fontName = nakedFileName;
+        var axesControlCharIndex = fontName.IndexOf('_');
+        if (axesControlCharIndex >= 1)
+        {
+            fontName = fontName[..axesControlCharIndex];
+        }
+        fontName = PrettifyFileName(fontName).Trim();
+
+        var font = new EpubFont()
+        {
+            Family = fontFamily,
+            Name = fontName,
+            NormalizedName = Normalize(fontName),
+            FileName = fileName,
+            Style = fontStyle,
+            Weight = fontWeight,
+            Provider = FontProvider.User
+        };
+
+        return font;
     }
 }

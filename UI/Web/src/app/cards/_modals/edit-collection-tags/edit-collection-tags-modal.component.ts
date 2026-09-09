@@ -6,7 +6,8 @@ import {
   effect,
   inject,
   input,
-  OnInit
+  OnInit,
+  signal
 } from '@angular/core';
 import {FormControl, FormGroup, FormsModule, ReactiveFormsModule, Validators} from '@angular/forms';
 import {
@@ -19,21 +20,15 @@ import {
   NgbPagination,
   NgbTooltip
 } from '@ng-bootstrap/ng-bootstrap';
-import {ToastrService} from 'ngx-toastr';
+import {ToastrService} from '@openng/ngx-toastr';
 import {concat, debounceTime, delay, distinctUntilChanged, forkJoin, last, Observable, switchMap, tap} from 'rxjs';
-import {ConfirmService} from 'src/app/shared/confirm.service';
-import {UtilityService} from 'src/app/shared/_services/utility.service';
-import {UserCollection} from 'src/app/_models/collection-tag';
-import {Pagination} from 'src/app/_models/pagination';
-import {Series} from 'src/app/_models/series';
-import {CollectionTagService} from 'src/app/_services/collection-tag.service';
-import {ImageService} from 'src/app/_services/image.service';
-import {LibraryService} from 'src/app/_services/library.service';
-import {SeriesService} from 'src/app/_services/series.service';
-import {UploadService} from 'src/app/_services/upload.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {DecimalPipe, NgTemplateOutlet} from "@angular/common";
 import {CoverImageChooserComponent} from "../../cover-image-chooser/cover-image-chooser.component";
+import {
+  CoverChooserConfigFactoryService,
+  CoverImageChooserConfig
+} from "../../../_services/cover-chooser-config-factory.service";
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {ScrobbleProvider} from "../../../_services/scrobbling.service";
 import {FilterPipe} from "../../../_pipes/filter.pipe";
@@ -47,13 +42,25 @@ import {BreakpointService} from "../../../_services/breakpoint.service";
 import {modalSaved} from "../../../_models/modal/modal-result";
 import {Tabs} from "../../../_models/tabs";
 import {TabTitlePipe} from "../../../_pipes/tab-title.pipe";
+import {UtilityService} from "../../../shared/_services/utility.service";
+import {SeriesService} from "../../../_services/series.service";
+import {CollectionTagService} from "../../../_services/collection-tag.service";
+import {ConfirmService} from "../../../shared/confirm.service";
+import {LibraryService} from "../../../_services/library.service";
+import {UploadService} from "../../../_services/upload.service";
+import {UserCollection} from "../../../_models/collection-tag";
+import {Pagination} from "../../../_models/pagination";
+import {ImageService} from "../../../_services/image.service";
+import {Series} from "../../../_models/series";
+import {ValidationErrorsComponent} from "../../../shared/_components/validation-errors/validation-errors.component";
+import {FormFieldDirective} from "../../../_directives/form-field.directive";
 
 
 @Component({
   selector: 'app-edit-collection-tags',
   imports: [NgbNav, NgbNavItem, NgbNavLink, NgbNavContent, ReactiveFormsModule, FormsModule, NgbPagination,
     CoverImageChooserComponent, NgbNavOutlet, NgbTooltip, TranslocoDirective, NgTemplateOutlet, FilterPipe, DefaultDatePipe,
-    SafeHtmlPipe, SafeUrlPipe, DecimalPipe, UtcToLocalTimePipe, TabTitlePipe],
+    SafeHtmlPipe, SafeUrlPipe, DecimalPipe, UtcToLocalTimePipe, TabTitlePipe, ValidationErrorsComponent, FormFieldDirective],
   templateUrl: './edit-collection-tags-modal.component.html',
   styleUrls: ['./edit-collection-tags-modal.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -73,9 +80,7 @@ export class EditCollectionTagsModalComponent implements OnInit {
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly accountService = inject(AccountService);
   protected readonly breakpointService = inject(BreakpointService);
-
-
-
+  private readonly coverChooserConfigFactory = inject(CoverChooserConfigFactoryService);
 
   tag = input.required<UserCollection>();
 
@@ -88,8 +93,10 @@ export class EditCollectionTagsModalComponent implements OnInit {
   libraryNames!: any;
   collectionTagForm!: FormGroup;
   active = Tabs.General;
-  imageUrls: Array<string> = [];
   selectedCover: string = '';
+  coverImageDirty = false;
+  coverImageReset = false;
+  chooserConfig = signal<CoverImageChooserConfig>({});
   formGroup = new FormGroup({'filter': new FormControl('', [])});
 
 
@@ -121,7 +128,6 @@ export class EditCollectionTagsModalComponent implements OnInit {
       title: new FormControl(tag.title, { nonNullable: true, validators: [Validators.required] }),
       summary: new FormControl(tag.summary, { nonNullable: true, validators: [] }),
       coverImageLocked: new FormControl(tag.coverImageLocked, { nonNullable: true, validators: [] }),
-      coverImageIndex: new FormControl(0, { nonNullable: true, validators: [] }),
       promoted: new FormControl(tag.promoted, { nonNullable: true, validators: [] }),
     });
 
@@ -147,7 +153,6 @@ export class EditCollectionTagsModalComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef)
       ).subscribe();
 
-    this.imageUrls.push(this.imageService.randomize(this.imageService.getCollectionCoverImage(this.tag().id)));
     this.loadSeries();
   }
 
@@ -171,7 +176,8 @@ export class EditCollectionTagsModalComponent implements OnInit {
       this.pagination = series.pagination;
       this.series = series.result;
 
-      this.imageUrls.push(...this.series.map(s => this.imageService.getSeriesCoverImage(s.id)));
+      this.chooserConfig.set(this.coverChooserConfigFactory.forCollection(this.tag(), this.series));
+
       this.selections = new SelectionModel<Series>(true, this.series);
       this.isLoading = false;
 
@@ -196,11 +202,14 @@ export class EditCollectionTagsModalComponent implements OnInit {
   }
 
   close() {
-    this.modal.dismiss();
+    if (this.coverImageReset) {
+      this.modal.close(modalSaved(this.tag(), true));
+    } else {
+      this.modal.dismiss();
+    }
   }
 
   async save() {
-    const selectedIndex = this.collectionTagForm.get('coverImageIndex')?.value || 0;
     const unselectedIds = this.selections.unselected().map(s => s.id);
     const tag = this.collectionTagForm.value;
 
@@ -224,7 +233,7 @@ export class EditCollectionTagsModalComponent implements OnInit {
       apis.push(this.collectionService.updateSeriesForTag(tag, unselectedSeries));
     }
 
-    if (selectedIndex > 0) {
+    if (this.coverImageDirty) {
       apis.push(this.uploadService.updateCollectionCoverImage(this.tag().id, this.selectedCover));
     }
 
@@ -233,26 +242,20 @@ export class EditCollectionTagsModalComponent implements OnInit {
       last()
     ).subscribe(() => {
       this.toastr.success(translate('toasts.collection-updated'));
-      this.modal.close(modalSaved(updatedTag ?? tag, selectedIndex > 0));
+      this.modal.close(modalSaved(updatedTag ?? tag, this.coverImageDirty));
     });
   }
 
-  updateSelectedIndex(index: number) {
-    this.collectionTagForm.patchValue({
-      coverImageIndex: index
-    });
-  }
-
-  updateSelectedImage(url: string) {
-    this.selectedCover = url;
+  handleCoverChanged(event: { isDirty: boolean; fileName: string }) {
+    this.coverImageDirty = event.isDirty;
+    this.selectedCover = event.fileName;
     this.cdRef.markForCheck();
   }
 
   handleReset() {
-    this.collectionTagForm.patchValue({
-      coverImageLocked: false
-    });
-    this.cdRef.markForCheck();
+    this.coverImageReset = true;
+    this.collectionTagForm.patchValue({ coverImageLocked: false });
+    this.chooserConfig.set({ ...this.chooserConfig(), isLocked: false });
   }
 
   protected readonly Tabs = Tabs;

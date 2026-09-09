@@ -17,7 +17,7 @@ The docs are maintained in the [Wiki-Nextra](https://github.com/Kareadita/Wiki-N
 - HTML/Javascript editor (VS Code/Sublime Text/Webstorm/Atom/etc)
 - [Git](https://git-scm.com/downloads)
 - [NodeJS](https://nodejs.org/en/download/) (Node 18.13.X or higher)
-- .NET 9.0+
+- Latest .NET 
 - dotnet tool install -g Swashbuckle.AspNetCore.Cli
 - dotnet cli tools [link](https://learn.microsoft.com/en-us/ef/core/cli/dotnet) 
 
@@ -29,7 +29,7 @@ Fork the repository on GitHub, then clone your fork onto your local development 
 
 1. Install the required Node Packages
     - `cd Kavita/UI/Web`
-    - `npm install`
+    - `npm ci`
     - `npm install -g @angular/cli`
 2. Start the frontend 
     - `npm run start`
@@ -67,7 +67,7 @@ Run build.sh and pass the Runtime Identifier for your OS or just build.sh for al
 - Reach out to us on Discord if you have any questions
 
 ### Formatting
-- Commit with *nix line endings for consistency (We checkout Windows and commit *nix)
+- Commit with *nix line endings for consistency (We check out Windows and commit *nix)
 - Use 4 spaces instead of tabs, this is the default for VS 2019 and WebStorm (to our knowledge)
 - Use 2 spaces for UI files
 
@@ -110,3 +110,8 @@ We welcome anyone to build external scripts and applications. Reach out to us ab
 **Please do not use words like "Kavita reader" or "Kavita" as your explicit app name.** Use of "[name]: A Kavita Reader" is preferred. 
 
 If you have any questions about any of this, please let us know.
+
+
+## Misc
+- Localization should use component name for primary grouping, -label for labels, -alt for accessibility text
+- /theme can be used to visualize different components available for building

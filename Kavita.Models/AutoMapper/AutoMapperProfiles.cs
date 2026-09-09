@@ -12,8 +12,10 @@ using Kavita.Models.DTOs.Dashboard;
 using Kavita.Models.DTOs.Device.EmailDevice;
 using Kavita.Models.DTOs.Email;
 using Kavita.Models.DTOs.Font;
+using Kavita.Models.DTOs.KavitaPlus.Account;
 using Kavita.Models.DTOs.KavitaPlus.Manage;
 using Kavita.Models.DTOs.KavitaPlus.Metadata;
+using Kavita.Models.DTOs.KavitaPlus.Scrobble;
 using Kavita.Models.DTOs.MediaErrors;
 using Kavita.Models.DTOs.Metadata;
 using Kavita.Models.DTOs.Person;
@@ -296,8 +298,7 @@ public class AutoMapperProfiles : Profile
                     opt.MapFrom(src => src))
             .ForMember(dest => dest.IsMatched,
                 opt =>
-                    opt.MapFrom(src => src.ExternalSeriesMetadata != null && src.ExternalSeriesMetadata.AniListId != 0
-                                                                          && src.ExternalSeriesMetadata.ValidUntilUtc > DateTime.MinValue))
+                    opt.MapFrom(src => src.ExternalSeriesMetadata != null && src.ExternalSeriesMetadata.ValidUntilUtc > DateTime.MinValue))
             .ForMember(dest => dest.ValidUntilUtc,
                 opt => opt.MapFrom(src =>
                     src.ExternalSeriesMetadata != null
@@ -315,7 +316,16 @@ public class AutoMapperProfiles : Profile
             .ForMember(dest => dest.Blacklist, opt => opt.MapFrom(src => src.Blacklist ?? new List<string>()))
             .ForMember(dest => dest.Whitelist, opt => opt.MapFrom(src => src.Whitelist ?? new List<string>()))
             .ForMember(dest => dest.Overrides, opt => opt.MapFrom(src => src.Overrides ?? new List<MetadataSettingField>()))
-            .ForMember(dest => dest.AgeRatingMappings, opt => opt.MapFrom(src => src.AgeRatingMappings ?? new Dictionary<string, AgeRating>()));
+            .ForMember(dest => dest.AgeRatingMappings, opt => opt.MapFrom(src => src.AgeRatingMappings ?? new Dictionary<string, AgeRating>()))
+            .ForMember(dest => dest.GlobalLanguageTitleSettings, opt => opt.MapFrom(src => new SeriesNameLanguageDto
+            {
+                Name = src.GlobalNameLanguages ?? string.Empty,
+                LocalizedName = src.GlobalLocalizedNameLanguages ?? string.Empty,
+            }))
+            .ForMember(dest => dest.LibraryLanguageTitleOverrides,
+                opt => opt.MapFrom(src => src.LibraryLanguageTitleOverrides ?? new Dictionary<int, SeriesNameLanguage>()));
+
+        CreateMap<SeriesNameLanguage, SeriesNameLanguageDto>();
 
         CreateMap<AppUserAnnotation, AnnotationDto>()
             .ForMember(dest => dest.OwnerUsername, opt => opt.MapFrom(src => src.AppUser.UserName))
@@ -411,12 +421,8 @@ public class AutoMapperProfiles : Profile
                 opt => opt.MapFrom(src => src.Chapter));
 
         CreateMap<AppUserAuthKey, AuthKeyDto>();
+        CreateMap<AppUserScrobbleProvider, ScrobbleProviderDto>();
 
-
-        #region Deprecated Code
-
-
-        #endregion
 
     }
 }

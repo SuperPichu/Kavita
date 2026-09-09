@@ -1,7 +1,7 @@
 import {Injectable} from '@angular/core';
 import {HubConnection, HubConnectionBuilder} from '@microsoft/signalr';
 import {BehaviorSubject, ReplaySubject} from 'rxjs';
-import {environment} from 'src/environments/environment';
+import {environment} from '../../environments/environment';
 import {LibraryModifiedEvent} from '../_models/events/library-modified-event';
 import {NotificationProgressEvent} from '../_models/events/notification-progress-event';
 import {ThemeProgressEvent} from '../_models/events/theme-progress-event';
@@ -16,6 +16,7 @@ import {toSignal} from "@angular/core/rxjs-interop";
 import {ReadingSessionCloseEvent, ReadingSessionUpdateEvent} from "../_models/events/reading-session-close-event";
 import {ReadingListUpdatedEvent} from "../_models/events/reading-list-updated-event";
 import {SeriesUpdateEvent} from "../_models/events/series-update-event";
+import {ScrobbleProviderUpdatedEvent} from "../_models/events/scrobble-provider-updated-event";
 
 export enum EVENTS {
   UpdateAvailable = 'UpdateAvailable',
@@ -151,7 +152,23 @@ export enum EVENTS {
   /**
    * A series was updated (E.x. K+ match)
    */
-  SeriesUpdated = 'SeriesUpdated'
+  SeriesUpdated = 'SeriesUpdated',
+  /**
+   * A scrobble provider has had their (authentication) details updated
+   */
+  ScrobbleProviderUpdated = 'ScrobbleProviderUpdated',
+  /**
+   * The K+ license info has updated
+   */
+  LicenseInfoUpdate = 'LicenseInfoUpdate',
+  /**
+   * The K+ Metadata for a series has been updated
+   */
+  ExternalMetadataUpdate = 'ExternalMetadataUpdate',
+  /**
+   * Progress event send after a batch completes
+   */
+  RerunMetadataMappingsProgress = 'RerunMetadataMappingsProgress',
 }
 
 export interface Message<T> {
@@ -169,8 +186,9 @@ export class MessageHubService {
 
   private messagesSource = new ReplaySubject<Message<any>>(1);
   private onlineUsersSource = new BehaviorSubject<string[]>([]); // UserNames
+  private isConnectedSource =  new BehaviorSubject<boolean>(false);
 
-  /**
+    /**
    * Any events that come from the backend
    */
   public readonly messages$ = this.messagesSource.asObservable();
@@ -180,6 +198,9 @@ export class MessageHubService {
    */
   public onlineUsers$ = this.onlineUsersSource.asObservable();
   public readonly onlineUsersSignal = toSignal(this.onlineUsers$);
+
+
+  public readonly isConnectedSignal = toSignal(this.isConnectedSource);
 
   constructor() {}
 
@@ -206,9 +227,20 @@ export class MessageHubService {
       .withStatefulReconnect()
       .build();
 
-    this.hubConnection
-    .start()
-    .catch(err => console.error(err));
+    this.hubConnection.onreconnecting(() => this.isConnectedSource.next(false));
+    this.hubConnection.onreconnected(() => this.isConnectedSource.next(true));
+    this.hubConnection.onclose(() => this.isConnectedSource.next(false));
+
+    const started = this.hubConnection
+      .start()
+      .then(() => {
+        // Only report connected once the handshake actually resolves
+        this.isConnectedSource.next(true);
+      })
+      .catch(err => {
+        console.error(err);
+        this.isConnectedSource.next(false);
+      });
 
     this.hubConnection.on(EVENTS.OnlineUsers, (usernames: string[]) => {
       this.onlineUsersSource.next(usernames);
@@ -450,11 +482,35 @@ export class MessageHubService {
         payload: resp.body as SeriesUpdateEvent
       });
     });
+
+    this.hubConnection.on(EVENTS.ScrobbleProviderUpdated, (resp) => {
+      this.messagesSource.next({
+        event: EVENTS.ScrobbleProviderUpdated,
+        payload: resp.body as ScrobbleProviderUpdatedEvent
+      });
+    });
+
+    this.hubConnection.on(EVENTS.LicenseInfoUpdate, (resp) => {
+      this.messagesSource.next({
+        event: EVENTS.LicenseInfoUpdate,
+        payload: resp.body,
+      });
+    });
+
+    this.hubConnection.on(EVENTS.ExternalMetadataUpdate, (resp) => {
+      this.messagesSource.next({
+        event: EVENTS.ExternalMetadataUpdate,
+        payload: resp.body
+      });
+    });
+
+    return started;
   }
 
   stopHubConnection() {
     if (this.hubConnection) {
       this.hubConnection.stop().catch(err => console.error(err));
+      this.isConnectedSource.next(false);
     }
   }
 }

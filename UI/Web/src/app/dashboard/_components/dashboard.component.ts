@@ -12,15 +12,6 @@ import {
 import {Router, RouterLink} from '@angular/router';
 import {filter, Observable, ReplaySubject, Subject, switchMap} from 'rxjs';
 import {debounceTime, map, shareReplay, take, tap, throttleTime} from 'rxjs/operators';
-import {FilterUtilitiesService} from 'src/app/shared/_services/filter-utilities.service';
-import {Library} from 'src/app/_models/library/library';
-import {RecentlyAddedItem} from 'src/app/_models/recently-added-item';
-import {SeriesSortField} from 'src/app/_models/metadata/series-filter';
-import {AccountService} from 'src/app/_services/account.service';
-import {ImageService} from 'src/app/_services/image.service';
-import {LibraryService} from 'src/app/_services/library.service';
-import {EVENTS, MessageHubService} from 'src/app/_services/message-hub.service';
-import {SeriesService} from 'src/app/_services/series.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {CarouselReelComponent} from '../../carousel/_components/carousel-reel/carousel-reel.component';
 import {AsyncPipe, NgTemplateOutlet} from '@angular/common';
@@ -37,8 +28,8 @@ import {Genre} from "../../_models/metadata/genre";
 import {DashboardStream} from "../../_models/dashboard/dashboard-stream";
 import {StreamType} from "../../_models/dashboard/stream-type.enum";
 import {LoadingComponent} from "../../shared/loading/loading.component";
-import {ScrobbleProvider, ScrobblingService} from "../../_services/scrobbling.service";
-import {ToastrService} from "ngx-toastr";
+import {ScrobblingService} from "../../_services/scrobbling.service";
+import {ToastrService} from '@openng/ngx-toastr';
 import {SettingsTabId} from "../../sidenav/preference-nav/preference-nav.component";
 import {ReaderService} from "../../_services/reader.service";
 import {QueryContext} from "../../_models/metadata/v2/query-context";
@@ -51,6 +42,16 @@ import {FilterEntityType} from "../../_models/metadata/v2/filter-entity-type";
 import {ReadingListService} from "../../_services/reading-list.service";
 import {PersonService} from "../../_services/person.service";
 import {AnnotationService} from "../../_services/annotation.service";
+import {ScrobbleProviderNamePipe} from "../../_pipes/scrobble-provider-name.pipe";
+import {FilterUtilitiesService} from "../../shared/_services/filter-utilities.service";
+import {AccountService} from "../../_services/account.service";
+import {LibraryService} from "../../_services/library.service";
+import {SeriesService} from "../../_services/series.service";
+import {ImageService} from "../../_services/image.service";
+import {EVENTS, MessageHubService} from "../../_services/message-hub.service";
+import {RecentlyAddedItem} from "../../_models/recently-added-item";
+import {SeriesSortField} from "../../_models/metadata/series-filter";
+import {Library} from "../../_models/library/library";
 
 enum StreamId {
   OnDeck,
@@ -65,7 +66,8 @@ enum StreamId {
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SideNavCompanionBarComponent, RouterLink, CarouselReelComponent, AsyncPipe, TranslocoDirective, NgTemplateOutlet, LoadingComponent, EntityCardComponent, PromotedIconComponent]
+  imports: [SideNavCompanionBarComponent, RouterLink, CarouselReelComponent, AsyncPipe, TranslocoDirective,
+    NgTemplateOutlet, LoadingComponent, EntityCardComponent, PromotedIconComponent]
 })
 export class DashboardComponent {
 
@@ -80,7 +82,7 @@ export class DashboardComponent {
   private readonly personService = inject(PersonService);
   private readonly annotationService = inject(AnnotationService);
   private readonly router = inject(Router);
-  public readonly imageService = inject(ImageService);
+  protected readonly imageService = inject(ImageService);
   private readonly messageHub = inject(MessageHubService);
   private readonly cdRef = inject(ChangeDetectorRef);
   private readonly dashboardService = inject(DashboardService);
@@ -89,6 +91,8 @@ export class DashboardComponent {
   private readonly readerService = inject(ReaderService);
   private readonly licenseService = inject(LicenseService);
   private readonly cardConfigFactory = inject(CardConfigFactory);
+
+  private readonly scrobbleProviderNamePipe = new ScrobbleProviderNamePipe();
 
   libraries$: Observable<Library[]> = this.libraryService.getLibraries().pipe(take(1), takeUntilDestroyed(this.destroyRef))
   isLoadingDashboard = signal<boolean>(true);
@@ -146,15 +150,16 @@ export class DashboardComponent {
       }
     });
 
-    this.licenseService.hasAnyLicense()
-      .pipe(
-        filter((hasLic: boolean) => hasLic),
-        switchMap(_ => this.scrobblingService.hasTokenExpired(ScrobbleProvider.AniList)),
-      ).subscribe((hasExpired: boolean) => {
-      if (hasExpired) {
-        this.toastr.error(translate('toasts.anilist-token-expired'));
-      }
-    });
+    if (this.licenseService.hasActiveLicense()) {
+      this.scrobblingService.checkExpiredTokens()
+        .pipe(
+          takeUntilDestroyed(this.destroyRef),
+          filter(providers => providers.length > 0),
+          map(providers => providers.map(this.scrobbleProviderNamePipe.transform).join(', ')),
+          switchMap(providerNames => this.toastr.error(providerNames, translate('toasts.tokens-expired')).onTap),
+          tap(() => this.router.navigateByUrl('/settings#' + SettingsTabId.Connections).catch(console.error))
+        ).subscribe();
+    }
   }
 
   smartFilterNextPage(stream: DashboardStream) {

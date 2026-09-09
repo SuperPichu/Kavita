@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
+using Hangfire;
 using Kavita.API.Database;
 using Kavita.API.Services;
 using Kavita.Common;
@@ -13,6 +15,7 @@ using Kavita.Models.Constants;
 using Kavita.Models.DTOs;
 using Kavita.Models.DTOs.Email;
 using Kavita.Models.DTOs.KavitaPlus.Metadata;
+using Kavita.Models.DTOs.Metadata;
 using Kavita.Models.DTOs.Settings;
 using Kavita.Models.Entities.Enums;
 using Kavita.Server.Extensions;
@@ -21,6 +24,7 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using TaskScheduler = Kavita.Services.TaskScheduler;
 
 namespace Kavita.Server.Controllers;
 
@@ -116,11 +120,17 @@ public class SettingsController(
     /// <summary>
     /// Is the minimum information setup for Email to work
     /// </summary>
+    /// <param name="forDevice">Device send-to doesn't need full email setup (hostname)</param>
     /// <returns></returns>
     [HttpGet("is-email-setup")]
-    public async Task<ActionResult<bool>> IsEmailSetup()
+    public async Task<ActionResult<bool>> IsEmailSetup(bool forDevice = false)
     {
         var settings = await unitOfWork.SettingsRepository.GetSettingsDtoAsync();
+        if (forDevice)
+        {
+            return Ok(settings.IsEmailSetupForSendToDevice());
+        }
+
         return Ok(settings.IsEmailSetup());
     }
 
@@ -239,6 +249,30 @@ public class SettingsController(
             logger.LogError(ex, "There was an issue when updating metadata settings");
             return BadRequest(ex.Message);
         }
+    }
+
+    [Authorize(PolicyGroups.AdminPolicy)]
+    [HttpPost("run-metadata-mappings")]
+    public async Task<ActionResult> RunMetadataMappings([FromBody] RunMetadataMappingsRequestDto requestDto)
+    {
+        if (!requestDto.AllLibraries && requestDto.IncludedLibraries.Count == 0)
+        {
+            return BadRequest(await localizationService.TranslateAsync("mappings-re-run-no-libraries-selected"));
+        }
+
+        if (requestDto.ExcludedLibraries.Intersect(requestDto.IncludedLibraries).Any())
+        {
+            return BadRequest(await localizationService.TranslateAsync("mappings-re-run-libraries-overlap"));
+        }
+
+        if (TaskScheduler.IsMethodRunningOrEnqueued(nameof(IMetadataService.RunMetadataMappings), TaskSchedulerConstants.ScanQueue))
+        {
+            return BadRequest(await localizationService.TranslateAsync("mappings-re-run-in-progress"));
+        }
+
+        BackgroundJob.Enqueue<IMetadataService>(s => s.RunMetadataMappings(requestDto, CancellationToken.None));
+
+        return Ok();
     }
 
     /// <summary>

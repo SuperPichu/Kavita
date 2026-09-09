@@ -21,29 +21,9 @@ import {
 } from '@angular/core';
 import {DOCUMENT, NgClass, NgStyle, NgTemplateOutlet, PercentPipe} from '@angular/common';
 import {ActivatedRoute, Router} from '@angular/router';
-import {ToastrService} from 'ngx-toastr';
+import {ToastrService} from '@openng/ngx-toastr';
 import {firstValueFrom, forkJoin, fromEvent, merge, of, switchMap} from 'rxjs';
 import {catchError, debounceTime, distinctUntilChanged, filter, take, tap} from 'rxjs/operators';
-import {Chapter} from 'src/app/_models/chapter';
-import {NavService} from 'src/app/_services/nav.service';
-import {CHAPTER_ID_DOESNT_EXIST, CHAPTER_ID_NOT_FETCHED, ReaderService} from 'src/app/_services/reader.service';
-import {SeriesService} from 'src/app/_services/series.service';
-import {DomSanitizer, SafeHtml} from '@angular/platform-browser';
-import {BookService} from '../../_services/book.service';
-import {UtilityService} from 'src/app/shared/_services/utility.service';
-import {BookChapterItem} from '../../_models/book-chapter-item';
-import {Stack} from 'src/app/shared/data-structures/stack';
-import {ReadingDirection} from 'src/app/_models/preferences/reading-direction';
-import {WritingStyle} from "../../../_models/preferences/writing-style";
-import {MangaFormat} from 'src/app/_models/manga-format';
-import {LibraryService} from 'src/app/_services/library.service';
-import {LibraryType} from 'src/app/_models/library/library';
-import {BookTheme} from 'src/app/_models/preferences/book-theme';
-import {BookPageLayoutMode} from 'src/app/_models/readers/book-page-layout-mode';
-import {PageStyle} from '../reader-settings/reader-settings.component';
-import {ThemeService} from 'src/app/_services/theme.service';
-import {ScrollService} from 'src/app/_services/scroll.service';
-import {PAGING_DIRECTION} from 'src/app/manga-reader/_models/reader-enums';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import {NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
 import {BookLineOverlayComponent} from "../book-line-overlay/book-line-overlay.component";
@@ -72,6 +52,26 @@ import {KeyBindTarget} from "../../../_models/preferences/preferences";
 import {BreakpointService} from "../../../_services/breakpoint.service";
 import {KavitaTitleStrategy} from "../../../_services/kavita-title.strategy";
 import {EntityTitleService} from "../../../_services/entity-title.service";
+import {CHAPTER_ID_DOESNT_EXIST, CHAPTER_ID_NOT_FETCHED, ReaderService} from "../../../_services/reader.service";
+import {NavService} from "../../../_services/nav.service";
+import {Chapter} from "../../../_models/chapter";
+import {SeriesService} from "../../../_services/series.service";
+import {DomSanitizer, SafeHtml} from "@angular/platform-browser";
+import {BookService} from "../../_services/book.service";
+import {ScrollService} from "../../../_services/scroll.service";
+import {UtilityService} from "../../../shared/_services/utility.service";
+import {LibraryService} from "../../../_services/library.service";
+import {ThemeService} from "../../../_services/theme.service";
+import {BookChapterItem} from "../../_models/book-chapter-item";
+import {LibraryType} from "../../../_models/library/library";
+import {PAGING_DIRECTION} from "../../../manga-reader/_models/reader-enums";
+import {BookPageLayoutMode} from "../../../_models/readers/book-page-layout-mode";
+import {ReadingDirection} from "../../../_models/preferences/reading-direction";
+import {WritingStyle} from "../../../_models/preferences/writing-style";
+import {MangaFormat} from "../../../_models/manga-format";
+import {PageStyle} from "../reader-settings/reader-settings.component";
+import {BookTheme} from "../../../_models/preferences/book-theme";
+import {Stack} from "../../../shared/data-structures/stack";
 
 
 interface HistoryPoint {
@@ -324,10 +324,6 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
    * Library Type used for rendering chapter or issue
    */
    libraryType: LibraryType = LibraryType.Book;
-  /**
-   * If the web browser is in fullscreen mode
-   */
-  isFullscreen: boolean = false;
 
 
   /**
@@ -699,7 +695,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
             await this.goToPage();
             break;
           case KeyBindTarget.ToggleFullScreen:
-            this.applyFullscreen();
+            this.toggleFullscreen();
             break;
           case KeyBindTarget.ToggleMenu:
             this.actionBarVisible.update(x => !x);
@@ -866,12 +862,13 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.navService.showNavBar();
     this.navService.showSideNav();
+    this.readerService.exitFullscreen();
   }
 
   async ngOnInit() {
     this.fontService.getFonts().subscribe(fonts => {
       fonts.filter(f => f.name !== FontService.DefaultEpubFont).forEach(font => {
-        this.fontService.getFontFace(font).load().then(loadedFace => {
+        this.fontService.getFontFace(font, this.fontService.resolveCssFamily(font)).load().then(loadedFace => {
           (this.document as any).fonts.add(loadedFace);
         });
       });
@@ -2103,7 +2100,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.showPaginationOverlay(res.object as boolean);
         break;
       case "fullscreen":
-        this.applyFullscreen();
+        this.toggleFullscreen();
         break;
       case "writingStyle":
         this.applyWritingStyle();
@@ -2206,26 +2203,8 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.saveProgress();
   }
 
-  applyFullscreen() {
-    this.isFullscreen = this.readerService.checkFullscreenMode();
-    if (this.isFullscreen) {
-      this.readerService.toggleFullscreen(this.reader().nativeElement, () => {
-        this.isFullscreen = false;
-        this.cdRef.markForCheck();
-        this.renderer.removeStyle(this.reader().nativeElement, 'background');
-      });
-    } else {
-      this.readerService.toggleFullscreen(this.reader().nativeElement, () => {
-        this.isFullscreen = true;
-        this.cdRef.markForCheck();
-        // HACK: This is a bug with how browsers change the background color for fullscreen mode
-        const reader = this.reader();
-        this.renderer.setStyle(reader.nativeElement, 'background', this.themeService.getCssVariable('--bs-body-color'));
-        if (!this.darkMode()) {
-          this.renderer.setStyle(reader.nativeElement, 'background', 'white');
-        }
-      });
-    }
+  toggleFullscreen() {
+    this.readerService.toggleFullscreen();
   }
 
   applyWritingStyle() {
@@ -2439,7 +2418,7 @@ export class BookReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   openShortcutModal() {
-    this.readerService.openShortcutModal(KEYBIND_TARGETS);
+    this.readerService.openShortcutModal(KEYBIND_TARGETS, true);
   }
 
 

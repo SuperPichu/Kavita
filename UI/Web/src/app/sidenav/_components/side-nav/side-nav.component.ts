@@ -2,8 +2,6 @@ import {ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, effec
 import {NavigationEnd, Router} from '@angular/router';
 import {NgbTooltip} from '@ng-bootstrap/ng-bootstrap';
 import {distinctUntilChanged, filter, map, tap} from 'rxjs/operators';
-import {ImageService} from 'src/app/_services/image.service';
-import {EVENTS, MessageHubService} from 'src/app/_services/message-hub.service';
 import {UtilityService} from '../../../shared/_services/utility.service';
 import {Library, LibraryType} from '../../../_models/library/library';
 import {AccountService} from '../../../_services/account.service';
@@ -23,7 +21,7 @@ import {WikiLink} from "../../../_models/wiki";
 import {SettingsTabId} from "../../preference-nav/preference-nav.component";
 import {LicenseService} from "../../../_services/license.service";
 import {CdkDrag, CdkDragDrop, CdkDropList} from "@angular/cdk/drag-drop";
-import {ToastrService} from "ngx-toastr";
+import {ToastrService} from '@openng/ngx-toastr';
 import {KeyBindService} from "../../../_services/key-bind.service";
 import {KeyBindTarget} from "../../../_models/preferences/preferences";
 import {BreakpointService} from "../../../_services/breakpoint.service";
@@ -31,6 +29,8 @@ import {ActionItem} from "../../../_models/actionables/action-item";
 import {Action} from "../../../_models/actionables/action";
 import {ActionResult} from "../../../_models/actionables/action-result";
 import {FilterUtilitiesService} from "../../../shared/_services/filter-utilities.service";
+import {EVENTS, MessageHubService} from "../../../_services/message-hub.service";
+import {ImageService} from "../../../_services/image.service";
 
 @Component({
   selector: 'app-side-nav',
@@ -70,7 +70,7 @@ export class SideNavComponent {
   totalSize = 0;
   isReadOnly = this.accountService.hasReadOnlyRole;
 
-  readonly hasValidLicense$ = toObservable(this.licenseService.hasValidLicense);
+  readonly hasValidLicense$ = toObservable(this.licenseService.hasActiveLicense);
 
   private showAllSubject = new BehaviorSubject<boolean>(false);
   showAll$ = this.showAllSubject.asObservable();
@@ -153,7 +153,7 @@ export class SideNavComponent {
 
     this.keyBindService.registerListener(
       this.destroyRef,
-      (e) => this.router.navigate(['/settings'], { fragment: SettingsTabId.Scrobbling}),
+      (e) => this.router.navigate(['/settings'], { fragment: SettingsTabId.MyActivity}),
       [KeyBindTarget.NavigateToScrobbling],
       {condition$: this.hasValidLicense$},
     );

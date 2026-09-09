@@ -136,7 +136,7 @@ public class CollectionController(IUnitOfWork unitOfWork, ICollectionTagService 
 
         foreach (var collection in collections)
         {
-            if (collection.AppUserId != userId) continue;
+            if (collection.AppUserId != userId && !User.IsInRole(PolicyConstants.AdminRole)) continue;
             collection.Promoted = dto.Promoted;
             unitOfWork.CollectionTagRepository.Update(collection);
         }
@@ -229,6 +229,11 @@ public class CollectionController(IUnitOfWork unitOfWork, ICollectionTagService 
         {
             var tag = await unitOfWork.CollectionTagRepository.GetCollectionAsync(updateSeriesForTagDto.Tag.Id, CollectionIncludes.Series, ct);
             if (tag == null) return BadRequest(await localizationService.TranslateAsync(UserId, "collection-doesnt-exist"));
+
+            if (tag.AppUserId != UserId && !User.IsInRole(PolicyConstants.AdminRole))
+            {
+                return NotFound();
+            }
 
             if (await collectionService.RemoveTagFromSeries(tag, updateSeriesForTagDto.SeriesIdsToRemove, ct))
                 return Ok(await localizationService.TranslateAsync(UserId, "collection-updated"));

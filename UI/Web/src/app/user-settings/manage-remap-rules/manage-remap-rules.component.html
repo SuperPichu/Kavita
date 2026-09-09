@@ -1,7 +1,7 @@
 <ng-container *transloco="let t; prefix:'manage-remap-rules'">
 
   <div class="position-relative">
-    <button class="btn btn-outline-primary position-absolute custom-position" [disabled]="isReadOnly() || showForm()" (click)="openCreateForm()">
+    <button class="btn btn-primary position-absolute custom-position" [disabled]="isReadOnly() || showForm()" (click)="openCreateForm()">
       <i class="fa fa-plus" aria-hidden="true"></i><span class="phone-hidden ms-1">{{t('create-rule-title')}}</span>
     </button>
   </div>
@@ -10,9 +10,18 @@
     <app-edit-remap-rule [rule]="editingRule()" (saved)="onRuleSaved($event)" (cancelled)="onRuleCancelled()" />
   }
 
+  @if (isLoading()) {
+    <app-loading [loading]="true" />
+  } @else {
+
   <!-- My Rules Section -->
   <h3 class="my-3">{{t('my-rules-header')}}</h3>
 
+  @if (myRules().length === 0) {
+    <app-empty-state [titleKey]="'no-data'" [descriptionKey]="'no-data-description'" [i18nPrefix]="'manage-remap-rules'">
+      <i icon class="fa-solid fa-arrows-turn-right" aria-hidden="true"></i>
+    </app-empty-state>
+  } @else {
   <app-responsive-table [rows]="myRules()" [trackByFn]="trackBy">
     <ng-template #tableTemplate>
       <ngx-datatable
@@ -73,7 +82,7 @@
             {{t('created-col')}}
           </ng-template>
           <ng-template let-item="row" ngx-datatable-cell-template>
-            {{item.createdUtc | date:'shortDate'}}
+            {{item.createdUtc | utcToLocalTime:'shortDate'}}
           </ng-template>
         </ngx-datatable-column>
 
@@ -150,11 +159,17 @@
       </div>
     </ng-template>
   </app-responsive-table>
+  }
 
   <!-- Global Rules Section -->
   <div class="setting-section-break"></div>
   <h3 class="my-3">{{t('global-rules-header')}}</h3>
 
+  @if (globalRules().length === 0) {
+    <app-empty-state [titleKey]="'no-data'" [descriptionKey]="'no-data-description'" [i18nPrefix]="'manage-remap-rules'">
+      <i icon class="fa-solid fa-globe" aria-hidden="true"></i>
+    </app-empty-state>
+  } @else {
   <app-responsive-table [rows]="globalRules()" [trackByFn]="trackBy">
     <ng-template #tableTemplate>
       <ngx-datatable
@@ -224,7 +239,7 @@
             {{t('created-col')}}
           </ng-template>
           <ng-template let-item="row" ngx-datatable-cell-template>
-            {{item.createdUtc | date:'shortDate'}}
+            {{item.createdUtc | utcToLocalTime:'shortDate'}}
           </ng-template>
         </ngx-datatable-column>
 
@@ -284,6 +299,7 @@
       </div>
     </ng-template>
   </app-responsive-table>
+  }
 
   <!-- Other Users' Rules (Admin only) -->
   @if (isAdmin() && otherUserRules().length > 0) {
@@ -359,7 +375,7 @@
               {{t('created-col')}}
             </ng-template>
             <ng-template let-item="row" ngx-datatable-cell-template>
-              {{item.createdUtc | date:'shortDate'}}
+              {{item.createdUtc | utcToLocalTime:'shortDate'}}
             </ng-template>
           </ngx-datatable-column>
 
@@ -416,4 +432,5 @@
     </app-responsive-table>
   }
 
+  }
 </ng-container>

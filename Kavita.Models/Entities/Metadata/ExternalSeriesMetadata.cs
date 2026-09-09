@@ -1,14 +1,21 @@
 ﻿using System;
 using System.Collections.Generic;
+using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Interfaces;
 
 namespace Kavita.Models.Entities.Metadata;
 
 /// <summary>
 /// External Metadata from Kavita+ for a Series
 /// </summary>
-public class ExternalSeriesMetadata
+public class ExternalSeriesMetadata : IEntityDate
 {
     public int Id { get; set; }
+
+    /// <summary>
+    /// Where is this metadata coming from
+    /// </summary>
+    public MetadataProvider Provider { get; set; }
     /// <summary>
     /// External Reviews for the Series. Managed by Kavita for Kavita+ users
     /// </summary>
@@ -25,10 +32,18 @@ public class ExternalSeriesMetadata
     /// </summary>
     public int AverageExternalRating { get; set; } = -1;
 
+    [Obsolete("Use Series.AniListId")]
     public int AniListId { get; set; }
+    [Obsolete("Use Series.CbrId")]
     public int CbrId { get; set; }
+    [Obsolete("Use Series.MalId")]
     public long MalId { get; set; }
+    [Obsolete("Google Books isn't supported")]
     public string GoogleBooksId { get; set; }
+    [Obsolete("Use Series.MangaBakaId")]
+    public long MangabakaId { get; set; }
+    [Obsolete("Use Series.HardcoverId")]
+    public int HardcoverId { get; set; }
 
     /// <summary>
     /// Data is valid until this time
@@ -37,4 +52,8 @@ public class ExternalSeriesMetadata
 
     public Series Series { get; set; } = null!;
     public int SeriesId { get; set; }
+    public DateTime Created { get; set; }
+    public DateTime CreatedUtc { get; set; }
+    public DateTime LastModified { get; set; }
+    public DateTime LastModifiedUtc { get; set; }
 }

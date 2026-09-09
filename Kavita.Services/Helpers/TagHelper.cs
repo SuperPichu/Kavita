@@ -145,7 +145,7 @@ public static class TagHelper
         {
             var normalizedTitle = tagName.ToNormalized();
 
-            if (existingTagSet.Contains(normalizedTitle)) continue;
+            if (!existingTagSet.Add(normalizedTitle)) continue;
 
             if (allTagsDict.TryGetValue(normalizedTitle, out var existingTag))
             {
@@ -159,6 +159,7 @@ public static class TagHelper
                     NormalizedTitle = normalizedTitle
                 };
                 handleAdd(newTag);
+                allTagsDict[normalizedTitle] = newTag;
             }
             isModified = true;
         }
@@ -168,6 +169,7 @@ public static class TagHelper
             onModified();
         }
     }
+
     public static void UpdateTagList(ICollection<TagDto>? tags, Chapter chapter, IReadOnlyCollection<Tag> allTags, Action<Tag> handleAdd, Action onModified)
     {
         if (tags == null) return;
@@ -208,5 +210,19 @@ public static class TagHelper
         {
             onModified();
         }
+    }
+
+    /// <summary>
+    /// Return a list sorted alphabetically and with duplicates (normalized) removed.
+    /// </summary>
+    /// <param name="tags"></param>
+    /// <returns></returns>
+    public static List<string> SortAndCleanTagList(IEnumerable<string>? tags)
+    {
+        return (tags ?? [])
+            .Where(s => !string.IsNullOrWhiteSpace(s))
+            .DistinctBy(d => d.ToNormalized())
+            .Order()
+            .ToList();
     }
 }

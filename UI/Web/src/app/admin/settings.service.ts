@@ -1,13 +1,14 @@
 import {HttpClient, httpResource} from '@angular/common/http';
 import {inject, Injectable} from '@angular/core';
 import {map, of} from 'rxjs';
-import {environment} from 'src/environments/environment';
+import {environment} from '../../environments/environment';
 import {TextResonse} from '../_types/text-response';
 import {ServerSettings} from './_models/server-settings';
 import {MetadataSettings} from "./_models/metadata-settings";
 import {MetadataMappingsExport} from "./manage-metadata-mappings/manage-metadata-mappings.component";
 import {FieldMappingsImportResult, ImportSettings} from "../_models/import-field-mappings";
 import {AuthorityValidationResult, OidcPublicConfig} from "./_models/oidc-config";
+import {RunMetadataMappingsRequest} from "../_models/metadata/run-metadata-mappings-request";
 
 /**
  * Used only for the Test Email Service call
@@ -42,6 +43,10 @@ export class SettingsService {
     return this.http.post<MetadataSettings>(this.baseUrl + 'settings/metadata-settings', model);
   }
 
+  runMetadataMappings(request: RunMetadataMappingsRequest) {
+    return this.http.post(this.baseUrl + 'settings/run-metadata-mappings', request);
+  }
+
   importFieldMappings(data: MetadataMappingsExport, settings: ImportSettings) {
     const body = {
       data: data,
@@ -70,8 +75,8 @@ export class SettingsService {
     return this.http.post<EmailTestResult>(this.baseUrl + 'settings/test-email-url', {});
   }
 
-  isEmailSetup() {
-    return this.http.get<string>(this.baseUrl + 'settings/is-email-setup', TextResonse).pipe(map(d => d == "true"));
+  isEmailSetup(forDevice: boolean = false) {
+    return this.http.get<string>(this.baseUrl + 'settings/is-email-setup?forDevice=' + forDevice, TextResonse).pipe(map(d => d == "true"));
   }
 
   getTaskFrequencies() {

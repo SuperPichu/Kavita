@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Kavita.Models.Entities.Interfaces;
+using Kavita.Models.Entities.MetadataMatching;
 
 namespace Kavita.Models.Entities;
 
-public class Volume : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMetadataIds
+public class Volume : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMetadataIds, IHasKPlusMetadata
 {
     public int Id { get; set; }
     /// <summary>
@@ -60,8 +61,15 @@ public class Volume : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
     public int HardcoverId { get; set; }
     public long MetronId { get; set; }
     public string ComicVineId { get; set; }
-    public long MangaBakaId { get; set; }
+    public int MangaBakaId { get; set; }
+    public int CbrId { get; set; }
+
     #endregion
+
+    /// <summary>
+    /// Tracks which metadata has been set by K+
+    /// </summary>
+    public IList<MetadataSettingField> KPlusOverrides { get; set; } = [];
 
 
     // Relationships

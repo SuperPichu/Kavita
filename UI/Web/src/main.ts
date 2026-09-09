@@ -5,13 +5,11 @@ import {
   provideAppInitializer,
   provideZoneChangeDetection,
 } from '@angular/core';
-import {AppComponent} from './app/app.component';
-import {NgCircleProgressModule} from 'ng-circle-progress';
 import {routes} from './app/app-routing.module';
 import {bootstrapApplication, BrowserModule, Title} from '@angular/platform-browser';
 import {jwtInterceptor} from './app/_interceptors/jwt.interceptor';
 import {errorInterceptor} from './app/_interceptors/error.interceptor';
-import {provideHttpClient, withFetch, withInterceptors} from '@angular/common/http';
+import {provideHttpClient, withInterceptors} from '@angular/common/http';
 import {provideTransloco, TranslocoConfig, TranslocoService} from "@jsverse/transloco";
 import {environment} from "./environments/environment";
 import {AccountService} from "./app/_services/account.service";
@@ -36,10 +34,12 @@ import {KavitaTitleStrategy} from "./app/_services/kavita-title.strategy";
 import {routingErrorHandler} from "./app/_interceptors/routing-error.handler";
 import {NgbModalConfig, NgbRatingConfig} from "@ng-bootstrap/ng-bootstrap";
 import {DefaultModalOptions} from "./app/_models/modal/modal-options";
-import {ToastNoAnimationModule} from "ngx-toastr";
-import {MessageHubService} from "src/app/_services/message-hub.service";
+import {MessageHubService} from "./app/_services/message-hub.service";
 import {DownloadService} from "./app/shared/_services/download.service";
 import {LibraryService} from "./app/_services/library.service";
+import {translocoPrefixKey} from "./libs/transloco-util";
+import {ToastrModule} from "@openng/ngx-toastr";
+import {AppComponent} from "./app/app.component";
 
 const disableAnimations = !('animate' in document.documentElement);
 if (disableAnimations) {
@@ -164,14 +164,13 @@ bootstrapApplication(AppComponent, {
     providers: [
         importProvidersFrom(BrowserModule,
           LazyLoadImageModule,
-          ToastNoAnimationModule.forRoot({
+          ToastrModule.forRoot({
             positionClass: 'toast-bottom-right',
             preventDuplicates: true,
             timeOut: 6000,
             countDuplicates: true,
             autoDismiss: true
-          }),
-          NgCircleProgressModule.forRoot()
+          })
         ),
         provideRouter(routes,
           withComponentInputBinding(),
@@ -186,7 +185,8 @@ bootstrapApplication(AppComponent, {
         provideTranslocoPersistTranslations({
           loader: HttpLoader,
           storage: { useValue: localStorage },
-          ttl: environment.production ? 129600 : 0 // 1.5 days in seconds for prod
+          ttl: environment.production ? 129600 : 0, // 1.5 days in seconds for prod
+          storageKey: translocoPrefixKey
         }),
         Title,
         { provide: TitleStrategy, useClass: KavitaTitleStrategy },
@@ -196,7 +196,7 @@ bootstrapApplication(AppComponent, {
           useFactory: getBaseHref,
           deps: [PlatformLocation]
         },
-        provideHttpClient(withInterceptors([jwtInterceptor, errorInterceptor, clientInfoInterceptor]), withFetch()),
+        provideHttpClient(withInterceptors([jwtInterceptor, errorInterceptor, clientInfoInterceptor])),
         provideAppInitializer(() => bootstrapUser()),
         provideZoneChangeDetection(),
         {

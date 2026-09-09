@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import {FormControl, FormGroup, ReactiveFormsModule, Validators} from '@angular/forms';
 import {ActivatedRoute, Router, RouterLink} from '@angular/router';
-import {ToastrService} from 'ngx-toastr';
+import {ToastrService} from '@openng/ngx-toastr';
 import {AccountService} from '../../_services/account.service';
 import {MemberService} from '../../_services/member.service';
 import {NavService} from '../../_services/nav.service';
@@ -18,8 +18,10 @@ import {SplashContainerComponent} from '../_components/splash-container/splash-c
 import {translate, TranslocoDirective} from "@jsverse/transloco";
 import {environment} from "../../../environments/environment";
 import {ImageComponent} from "../../shared/image/image.component";
-import {SettingsService} from 'src/app/admin/settings.service';
 import {OidcPublicConfig} from "../../admin/_models/oidc-config";
+import {SettingsService} from "../../admin/settings.service";
+import {ValidationErrorsComponent} from "../../shared/_components/validation-errors/validation-errors.component";
+import {FormFieldDirective} from "../../_directives/form-field.directive";
 
 
 @Component({
@@ -27,7 +29,7 @@ import {OidcPublicConfig} from "../../admin/_models/oidc-config";
     templateUrl: './user-login.component.html',
     styleUrls: ['./user-login.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [SplashContainerComponent, ReactiveFormsModule, RouterLink, TranslocoDirective, ImageComponent]
+  imports: [SplashContainerComponent, ReactiveFormsModule, RouterLink, TranslocoDirective, ImageComponent, ValidationErrorsComponent, FormFieldDirective]
 })
 export class UserLoginComponent implements OnInit {
 
@@ -56,11 +58,6 @@ export class UserLoginComponent implements OnInit {
    * undefined until query params are read
    */
   skipAutoLogin = signal<boolean | undefined>(undefined);
-  /**
-   * Display the login form, regardless if the password authentication is disabled (admins can still log in)
-   * Set from query
-   */
-  forceShowPasswordLogin = signal(false);
   oidcConfig = signal<OidcPublicConfig | undefined>(undefined);
 
   /**
@@ -69,8 +66,6 @@ export class UserLoginComponent implements OnInit {
   showPasswordLogin = computed(() => {
     const loaded = this.isLoaded();
     const config = this.oidcConfig();
-    const force = this.forceShowPasswordLogin();
-    if (force) return true;
 
     return loaded && config && !(config.enabled && config.disablePasswordAuthentication);
   });
@@ -122,7 +117,6 @@ export class UserLoginComponent implements OnInit {
       }
 
       this.skipAutoLogin.set(params.get('skipAutoLogin') === 'true')
-      this.forceShowPasswordLogin.set(params.get('forceShowPassword') === 'true');
 
       const error = params.get('error');
       if (!error) return;

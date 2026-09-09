@@ -5,6 +5,7 @@ using Kavita.Models.Entities.Interfaces;
 using Kavita.Models.Entities.Metadata;
 using Kavita.Models.Entities.Progress;
 using Kavita.Models.Entities.User;
+using Kavita.Models.Parser;
 
 namespace Kavita.Models.Entities;
 
@@ -35,6 +36,11 @@ public class Series : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
     /// Original Name on disk. Not exposed to UI.
     /// </summary>
     public required string OriginalName { get; set; }
+    /// <summary>
+    /// Normalized form of <see cref="OriginalName"/>. Not exposed to UI. Used for folder-to-series
+    /// matching and rename uniqueness checks.
+    /// </summary>
+    public string NormalizedOriginalName { get; set; } = string.Empty;
     /// <summary>
     /// Time of creation
     /// </summary>
@@ -88,6 +94,11 @@ public class Series : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
 
     public bool SortNameLocked { get; set; }
     public bool LocalizedNameLocked { get; set; }
+    /// <summary>
+    /// Denotes if the <see cref="Name"/> has been overridden by the user. If so, Kavita+ will not
+    /// overwrite it during a metadata match
+    /// </summary>
+    public bool NameLocked { get; set; }
 
     /// <summary>
     /// When a Chapter was last added onto the Series
@@ -114,15 +125,26 @@ public class Series : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
     /// If the series was unable to match, it will be blacklisted until a manual metadata match overrides it
     /// </summary>
     public bool IsBlacklisted { get; set; }
+    /// <summary>
+    /// Overrides the parent <see cref="Library"/>'s <see cref="Library.MetadataProvider"/> for this Series only.
+    /// Null means this Series inherits the Library's default provider.
+    /// </summary>
+    public MetadataProvider? MetadataProviderOverride { get; set; }
     #endregion
 
     #region Metadata
     public int AniListId { get; set; }
     public long MalId { get; set; }
     public int HardcoverId { get; set; }
+    /// <summary>
+    /// True if <see cref="HardcoverId"/> points towards a book rather than a series. Must be set when matching externally
+    /// </summary>
+    public bool IsStandAlone { get; set; }
     public long MetronId { get; set; }
     public string ComicVineId { get; set; }
-    public long MangaBakaId { get; set; }
+    public int MangaBakaId { get; set; }
+    public string MangaBakaEditionId { get; set; }
+    public int CbrId { get; set; }
     #endregion
 
     public SeriesMetadata Metadata { get; set; } = null!;
@@ -166,6 +188,17 @@ public class Series : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
                (!string.IsNullOrEmpty(NormalizedLocalizedName) && (NormalizedLocalizedName == nameNormalized || NormalizedLocalizedName == localizedNameNormalized));
     }
 
+    /// <summary>
+    /// Does this Series correspond to the given folder-derived parsed series key (name and format)?
+    /// </summary>
+    public bool MatchesParsedSeries(ParsedSeries key)
+    {
+        return (NormalizedName.Equals(key.NormalizedName)
+                || NormalizedLocalizedName.Equals(key.NormalizedName)
+                || NormalizedOriginalName.Equals(key.NormalizedName))
+               && (Format == key.Format || Format == MangaFormat.Unknown);
+    }
+
     public void ResetColorScape()
     {
         PrimaryColor = string.Empty;
@@ -180,5 +213,22 @@ public class Series : IEntityDate, IHasReadTimeEstimate, IHasCoverImage, IHasMet
     public bool WillScrobble()
     {
         return !IsBlacklisted && !DontMatch;
+    }
+
+    /// <summary>
+    /// The <see cref="MetadataProvider"/> that should be used for this Series: <see cref="MetadataProviderOverride"/>
+    /// when set, otherwise the parent <see cref="Library"/>'s default.
+    /// </summary>
+    public MetadataProvider GetEffectiveMetadataProvider()
+    {
+        if (MetadataProviderOverride.HasValue) return MetadataProviderOverride.Value;
+        if (Library == null)
+        {
+            throw new InvalidOperationException(
+                $"{nameof(Library)} navigation property was not loaded. " +
+                $"Include it in the query before calling {nameof(GetEffectiveMetadataProvider)}().");
+        }
+
+        return Library.MetadataProvider;
     }
 }

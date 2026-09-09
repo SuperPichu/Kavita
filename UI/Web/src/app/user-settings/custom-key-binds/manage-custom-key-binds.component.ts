@@ -22,7 +22,7 @@ import {AccountService} from "../../_services/account.service";
 import {DefaultValuePipe} from "../../_pipes/default-value.pipe";
 import {LongClickDirective} from "../../_directives/long-click.directive";
 import {NgbTooltip} from "@ng-bootstrap/ng-bootstrap";
-import {ToastrService} from "ngx-toastr";
+import {ToastrService} from '@openng/ngx-toastr';
 import {LicenseService} from "../../_services/license.service";
 import {KeybindSettingDescriptionPipe} from "../../_pipes/keybind-setting-description.pipe";
 import {DOCUMENT} from "@angular/common";
@@ -68,7 +68,7 @@ export class ManageCustomKeyBindsComponent implements OnInit {
   protected duplicatedKeyBinds = signal<Partial<Record<KeyBindTarget, number[]>>>({});
   protected filteredKeyBindGroups = computed(() => {
     const roles = this.accountService.currentUser()!.roles;
-    const hasKPlus = this.licenseService.hasValidLicense();
+    const hasKPlus = this.licenseService.hasActiveLicense();
 
     return KeyBindGroups.map(g => {
       g.elements = g.elements.filter(e => {

@@ -1,12 +1,21 @@
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { environment } from 'src/environments/environment';
+import {HttpClient} from '@angular/common/http';
+import {inject, Injectable} from '@angular/core';
+import {environment} from '../../environments/environment';
 import {ServerInfoSlim} from '../admin/_models/server-info';
-import { UpdateVersionEvent } from '../_models/events/update-version-event';
-import { Job } from '../_models/job/job';
-import { KavitaMediaError } from '../admin/_models/media-error';
+import {UpdateVersionEvent} from '../_models/events/update-version-event';
+import {Job} from '../_models/job/job';
+import {KavitaMediaError} from '../admin/_models/media-error';
 import {TextResonse} from "../_types/text-response";
 import {map} from "rxjs/operators";
+
+export enum TaskMethodNames {
+  RunMetadataMappings = 'RunMetadataMappings'
+}
+
+export enum QueueNames {
+  Default = 'default',
+  Scan = 'scan',
+}
 
 @Injectable({
   providedIn: 'root'
@@ -71,10 +80,18 @@ export class ServerService {
   }
 
   getMediaErrors() {
-    return this.http.get<Array<KavitaMediaError>>(this.baseUrl + 'server/media-errors', {});
+    return this.http.get<KavitaMediaError[]>(this.baseUrl + 'server/media-errors');
   }
 
   clearMediaAlerts() {
     return this.http.post(this.baseUrl + 'server/clear-media-alerts', {});
+  }
+
+  isTaskRunning(methodName: string, queue?: string) {
+    const url = `${this.baseUrl}server/is-task-running?methodName=${methodName}` + (!!queue ? `&queue=${queue}` : '');
+
+    return this.http.get(url, { responseType: 'text' }).pipe(
+      map(response => response === 'true')
+    );
   }
 }

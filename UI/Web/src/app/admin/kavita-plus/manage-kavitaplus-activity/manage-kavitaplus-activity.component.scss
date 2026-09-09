@@ -1,0 +1,26 @@
+@use '../../../../stat-card-common';
+
+:host {
+  --filter-chip-active-bg: var(--btn-primary-bg-color);
+  --filter-chip-active-color: var(--btn-primary-text-color);
+  display: block;
+}
+
+
+.btn.active-filter {
+  background: var(--filter-chip-active-bg);
+  color: var(--filter-chip-active-color);
+  border-color: transparent;
+}
+
+@media (max-width: 575.98px) {
+  .stats-strip {
+    flex-wrap: wrap;
+
+    .stats-card { flex-basis: calc(50% - 0.75rem); }
+  }
+}
+
+@media (max-width: 991.98px) {
+  .form-select { width: 100% !important; }
+}

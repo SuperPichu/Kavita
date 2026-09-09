@@ -1,18 +1,23 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using Hangfire;
 using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
 using Kavita.API.Services.Plus;
+using Kavita.Common.Extensions;
 using Kavita.Common.Helpers;
 using Kavita.Models.Builders;
 using Kavita.Models.Constants;
-using Kavita.Models.DTOs.KavitaPlus.Account;
+using Kavita.Models.DTOs.KavitaPlus;
+using Kavita.Models.DTOs.KavitaPlus.Scrobble;
 using Kavita.Models.DTOs.Scrobbling;
 using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Enums.Audit;
 using Kavita.Models.Entities.Scrobble;
 using Kavita.Server.Attributes;
 using Kavita.Server.Extensions;
@@ -21,99 +26,151 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using TaskScheduler = Kavita.Services.TaskScheduler;
 
 namespace Kavita.Server.Controllers;
 
 public class ScrobblingController(
     IUnitOfWork unitOfWork,
     IScrobblingService scrobblingService,
+    IScrobbleRuleService ruleService,
     ILogger<ScrobblingController> logger,
-    ILocalizationService localizationService)
+    ILocalizationService localizationService,
+    IKavitaPlusAuditService kavitaPlusAuditService,
+    IMapper mapper)
     : BaseApiController
 {
+
     /// <summary>
-    /// Get the current user's AniList token
+    /// Returns all scrobble providers for a user. This list is guaranteed to contain an entry for each currently
+    /// valid scrobble provider. If the user has none setup, returns the empty default values.
     /// </summary>
     /// <returns></returns>
-    [HttpGet("anilist-token")]
-    public async Task<ActionResult<string>> GetAniListToken()
+    [HttpGet("scrobble-settings")]
+    public async Task<ActionResult<List<ScrobbleProviderDto>>> GetScrobbleSettings()
     {
-        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(Username!);
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId, AppUserIncludes.UserPreferences);
         if (user == null) return Unauthorized();
 
-        return Ok(user.AniListAccessToken);
+        var providers = user.ScrobbleProviders.Values
+            .Select(mapper.Map<ScrobbleProviderDto>)
+            .ToList();
+
+        return Ok(providers);
     }
 
     /// <summary>
-    /// Get the current user's MAL token and username
+    /// Updates the scrobble settings for a given provider. Libraries are filtered on supported types
     /// </summary>
+    /// <param name="provider"></param>
+    /// <param name="scrobbleSettings"></param>
     /// <returns></returns>
-    [HttpGet("mal-token")]
-    public async Task<ActionResult<MalUserInfoDto>> GetMalToken()
+    [HttpPost("update-scrobble-settings")]
+    public async Task<ActionResult> UpdateScrobbleSettings([FromQuery] ScrobbleProvider provider, [FromBody] ScrobbleProviderSettingsDto scrobbleSettings)
     {
-        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(Username!);
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId, AppUserIncludes.UserPreferences);
         if (user == null) return Unauthorized();
 
-        return Ok(new MalUserInfoDto()
+        var scrobbleProvider = user.ScrobbleProviders[provider];
+        scrobbleProvider.Settings = scrobbleSettings;
+
+        if (scrobbleProvider.Settings.AllLibraries)
         {
-            Username = user.MalUserName,
-            AccessToken = user.MalAccessToken
-        });
-    }
-
-    /// <summary>
-    /// Update the current user's AniList token
-    /// </summary>
-    /// <param name="dto"></param>
-    /// <returns>True if the token was new or not</returns>
-    [HttpPost("update-anilist-token")]
-    [DisallowRole(PolicyConstants.ReadOnlyRole)]
-    public async Task<ActionResult<bool>> UpdateAniListToken(AniListUpdateDto dto)
-    {
-        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(Username!);
-        if (user == null) return Unauthorized();
-
-        var isNewToken = string.IsNullOrEmpty(user.AniListAccessToken);
-        user.AniListAccessToken = dto.Token;
-        unitOfWork.UserRepository.Update(user);
-        await unitOfWork.CommitAsync();
-
-        return Ok(isNewToken);
-    }
-
-    /// <summary>
-    /// Update the current user's MAL token (Client ID) and Username
-    /// </summary>
-    /// <param name="dto"></param>
-    /// <returns>True if the token was new or not</returns>
-    [HttpPost("update-mal-token")]
-    [DisallowRole(PolicyConstants.ReadOnlyRole)]
-    public async Task<ActionResult<bool>> UpdateMalToken(MalUserInfoDto dto)
-    {
-        var user = await unitOfWork.UserRepository.GetUserByUsernameAsync(Username!);
-        if (user == null) return Unauthorized();
-
-        var isNewToken = string.IsNullOrEmpty(user.MalAccessToken);
-        user.MalAccessToken = dto.AccessToken;
-        user.MalUserName = dto.Username;
+            scrobbleProvider.Settings.Libraries = [];
+        }
+        else if (scrobbleProvider.Settings.Libraries.Count > 0)
+        {
+            scrobbleProvider.Settings.Libraries = await scrobblingService
+                .FilterLibrariesForProvider(provider, UserId, scrobbleProvider.Settings.Libraries);
+        }
 
         unitOfWork.UserRepository.Update(user);
         await unitOfWork.CommitAsync();
 
-        return Ok(isNewToken);
+        // We don't want this on a background thread to ensure clearance from quick updates
+        await ruleService.PurgeStaleForSettingsAsync(UserId, provider, scrobbleSettings);
+
+        return Ok();
     }
 
     /// <summary>
-    /// When a user request to generate scrobble events from history. Should only be ran once per user.
+    /// Update authentication details for the given provider
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns></returns>
+    /// <remarks>Kicks of a sync background job, listen on signalr for when it completes</remarks>
+    [HttpPost("update-user-scrobble-provider")]
+    public async Task<ActionResult> UpdateUserScrobbleProvider([FromBody] UpdateScrobbleProviderDto dto)
+    {
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId, ct: HttpContext.RequestAborted);
+        if (user == null) return Unauthorized();
+
+        var scrobbleProvider = user.ScrobbleProviders[dto.Provider];
+        var hadAuthToken = !string.IsNullOrEmpty(scrobbleProvider.AuthenticationToken);
+
+        scrobbleProvider.AuthenticationToken = (dto.AuthenticationToken ?? string.Empty).TrimPrefix("Bearer").Trim();
+        scrobbleProvider.RefreshToken = (dto.RefreshToken ?? string.Empty).TrimPrefix("Bearer").Trim();
+
+        // When adding a fresh token for hardcover; assume the K+ redirect wasn't usable
+        // and set the default 7-day expiry
+        if (scrobbleProvider.AuthenticationToken.StartsWith("hc_at") && !hadAuthToken &&
+            dto.Provider == ScrobbleProvider.Hardcover)
+        {
+            scrobbleProvider.ValidUntilUtc = DateTime.UtcNow.AddDays(7) - TimeSpan.FromMinutes(30);
+        }
+
+        unitOfWork.UserRepository.Update(user);
+        await unitOfWork.CommitAsync(HttpContext.RequestAborted);
+
+        if (string.IsNullOrEmpty(dto.AuthenticationToken))
+        {
+            await unitOfWork.ScrobbleRepository.ClearEventsForProvider(UserId, dto.Provider);
+            await ruleService.PurgeForProviderAsync(UserId, dto.Provider);
+        }
+
+        BackgroundJob.Enqueue(() => scrobblingService.SyncProviderInfo(UserId, dto.Provider, CancellationToken.None));
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Generate scrobble events from history. Should only be ran once per user.
     /// </summary>
     /// <returns></returns>
     [HttpPost("generate-scrobble-events")]
     [DisallowRole(PolicyConstants.ReadOnlyRole)]
-    public ActionResult GenerateScrobbleEvents()
+    public async Task<ActionResult> GenerateScrobbleEvents([FromQuery] ScrobbleProvider scrobbleProvider)
     {
-        BackgroundJob.Enqueue(() => scrobblingService.CreateEventsFromExistingHistory(UserId));
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId);
+        if (user == null) return Unauthorized();
+
+        BackgroundJob.Enqueue(() => scrobblingService.CreateEventsFromExistingHistory(scrobbleProvider, UserId));
 
         return Ok();
+    }
+
+    /// <summary>
+    /// Generate scrobble events from history for all valid providers.
+    /// </summary>
+    /// <returns></returns>
+    [HttpPost("generate-scrobble-events-all")]
+    [DisallowRole(PolicyConstants.ReadOnlyRole)]
+    public async Task<ActionResult<bool>> GenerateScrobbleEventsAll()
+    {
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId);
+        if (user == null) return Unauthorized();
+
+        var providers = user.ScrobbleProviders
+            .Where(kv => !string.IsNullOrEmpty(kv.Value.AuthenticationToken) && kv.Value.ValidUntilUtc > DateTime.UtcNow)
+            .Select(kv => kv.Key)
+            .ToList();
+
+        if (providers.Count > 0)
+        {
+            BackgroundJob.Enqueue(() => scrobblingService.CreateEventsFromExistingHistory(providers, UserId, CancellationToken.None));
+        }
+
+        return Ok(providers.Count > 0);
     }
 
     /// <summary>
@@ -125,6 +182,24 @@ public class ScrobblingController(
     public async Task<ActionResult<bool>> HasTokenExpired(ScrobbleProvider provider)
     {
         return Ok(await scrobblingService.HasTokenExpired(UserId, provider));
+    }
+
+    /// <summary>
+    /// Returns all expired tokens for the current user
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("expired-tokens")]
+    public async Task<ActionResult<List<ScrobbleProvider>>> GetExpiredTokens()
+    {
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId);
+        if (user == null) return Unauthorized();
+
+        // MAL doesn't have a validUntil, thus the date will be 1/1/0001. Just filter that out so it doesn't always proc
+        return Ok(user.ScrobbleProviders
+            .Where(kv => kv.Value.ValidUntilUtc.Year != 1 && kv.Value.ValidUntilUtc < DateTime.UtcNow && !string.IsNullOrEmpty(kv.Value.AuthenticationToken))
+            .Select(kv => kv.Key)
+            .ToList()
+        );
     }
 
     /// <summary>
@@ -224,6 +299,8 @@ public class ScrobblingController(
 
             // When a hold is placed on a series, clear any pre-existing Scrobble Events
             await scrobblingService.ClearEventsForSeries(user.Id, seriesId);
+            await kavitaPlusAuditService.LogScrobbleAsync(KavitaPlusEventType.ScrobbleHoldAdded, seriesId,
+                new AuditLogScrobbleParamsDto(), AuditStatus.Success, null, UserId, ct: HttpContext.RequestAborted);
             return Ok();
         }
         catch (DbUpdateConcurrencyException ex)
@@ -237,6 +314,8 @@ public class ScrobblingController(
             // Retry the update
             unitOfWork.UserRepository.Update(user);
             await unitOfWork.CommitAsync();
+            await kavitaPlusAuditService.LogScrobbleAsync(KavitaPlusEventType.ScrobbleHoldAdded, seriesId,
+                new AuditLogScrobbleParamsDto(), AuditStatus.Success, null, UserId, ct: HttpContext.RequestAborted);
             return Ok();
         }
         catch (Exception ex)
@@ -257,25 +336,18 @@ public class ScrobblingController(
     [DisallowRole(PolicyConstants.ReadOnlyRole)]
     public async Task<ActionResult> RemoveHold(int seriesId)
     {
-        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId, AppUserIncludes.ScrobbleHolds);
+        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId, AppUserIncludes.ScrobbleHolds, HttpContext.RequestAborted);
         if (user == null) return Unauthorized();
 
         user.ScrobbleHolds = user.ScrobbleHolds.Where(h => h.SeriesId != seriesId).ToList();
 
         unitOfWork.UserRepository.Update(user);
-        await unitOfWork.CommitAsync();
-        return Ok();
-    }
+        await unitOfWork.CommitAsync(HttpContext.RequestAborted);
 
-    /// <summary>
-    /// Has the logged in user ran scrobble generation
-    /// </summary>
-    /// <returns></returns>
-    [HttpGet("has-ran-scrobble-gen")]
-    public async Task<ActionResult<bool>> HasRanScrobbleGen()
-    {
-        var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId);
-        return Ok(user is {HasRunScrobbleEventGeneration: true});
+        await kavitaPlusAuditService.LogScrobbleAsync(KavitaPlusEventType.ScrobbleHoldRemoved, seriesId,
+            new AuditLogScrobbleParamsDto(), AuditStatus.Success, null, UserId, ct: HttpContext.RequestAborted);
+
+        return Ok();
     }
 
     /// <summary>
@@ -291,5 +363,44 @@ public class ScrobblingController(
         unitOfWork.ScrobbleRepository.Remove(events);
         await unitOfWork.CommitAsync();
         return Ok();
+    }
+
+    [HttpDelete("remove-error/{id:int}")]
+    [Authorize(Policy = PolicyGroups.AdminPolicy)]
+    public async Task<ActionResult> RemoveScrobbleError(int id)
+    {
+        var scrobbleError = await unitOfWork.ScrobbleRepository.GetScrobbleError(id, HttpContext.RequestAborted);
+        if (scrobbleError == null) return NotFound();
+
+        unitOfWork.ScrobbleRepository.Remove([scrobbleError]);
+        await unitOfWork.CommitAsync(HttpContext.RequestAborted);
+
+        return Ok();
+    }
+
+    /// <summary>
+    /// Attempts to retry Scrobble Events for the current authenticated user (or admin-allowed).
+    /// </summary>
+    /// <param name="dto"></param>
+    /// <returns>true if successful, false in all other cases (validation)</returns>
+    [HttpPost("retry-scrobble")]
+    [DisallowRole(PolicyConstants.ReadOnlyRole)]
+    public async Task<ActionResult<bool>> RetryScrobble(KavitaPlusAuditEntryDto dto)
+    {
+        if (!dto.UserId.HasValue) return Ok(false);
+        if (dto.UserId != UserId && !User.IsInRole(PolicyConstants.AdminRole)) return Ok(false);
+
+        // Locate the Scrobble event or replay the event
+        return Ok(await scrobblingService.RetryScrobbleAsync(UserId, dto, HttpContext.RequestAborted));
+    }
+
+    /// <summary>
+    /// Returns when Scrobbling upload will next execute
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("next-scrobble-time")]
+    public ActionResult<DateTime?> GetNextScrobbleTime()
+    {
+        return Ok(TaskScheduler.GetNextRun(TaskSchedulerConstants.ProcessScrobblingEventsId));
     }
 }

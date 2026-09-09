@@ -1,5 +1,6 @@
 <ng-container *transloco="let t">
   <div class="modal-header" [class.book-reader]="config.bookReader">
+    <i class="fa-solid {{typeIcon}} confirm-type-icon me-2" aria-hidden="true"></i>
     <h4 class="modal-title" id="modal-basic-title">{{config.header | confirmTranslate}}</h4>
     @if (!config.disableEscape) {
       <button type="button" class="btn-unstyled ms-auto" [attr.aria-label]="t('common.close')" (click)="close()">
@@ -12,7 +13,10 @@
     <div class="modal-body" style="overflow-x: auto" [class.book-reader]="config.bookReader">
       <form [formGroup]="formGroup">
         <div [innerHtml]="(config.content | confirmTranslate)! | safeHtml"></div>
-        <input type="text" class="form-control" aria-labelledby="modal-basic-title" formControlName="prompt" />
+        @if (formGroup.get('prompt'); as formControl) {
+          <input type="text" class="form-control" aria-labelledby="modal-basic-title" formControlName="prompt"
+                 [appFormField]="formControl" />
+        }
       </form>
     </div>
   } @else {

@@ -1,4 +1,4 @@
-import {Component, inject, OnInit} from '@angular/core';
+import {Component, inject, OnInit, ChangeDetectionStrategy} from '@angular/core';
 import {NgbActiveModal} from '@ng-bootstrap/ng-bootstrap';
 import {ConfirmButton} from './_models/confirm-button';
 import {ConfirmConfig} from './_models/confirm-config';
@@ -6,12 +6,17 @@ import {SafeHtmlPipe} from "../../_pipes/safe-html.pipe";
 import {TranslocoDirective} from "@jsverse/transloco";
 import {ConfirmTranslatePipe} from "../../_pipes/confirm-translate.pipe";
 import {FormControl, FormGroup, ReactiveFormsModule} from "@angular/forms";
+import {FormFieldDirective} from "../../_directives/form-field.directive";
 
 @Component({
     selector: 'app-confirm-dialog',
-  imports: [SafeHtmlPipe, TranslocoDirective, ConfirmTranslatePipe, ReactiveFormsModule],
+  imports: [SafeHtmlPipe, TranslocoDirective, ConfirmTranslatePipe, ReactiveFormsModule, FormFieldDirective],
     templateUrl: './confirm-dialog.component.html',
-    styleUrls: ['./confirm-dialog.component.scss']
+    styleUrls: ['./confirm-dialog.component.scss'],
+    changeDetection: ChangeDetectionStrategy.Eager,
+    host: {
+      '[class]': 'hostClass',
+    }
 })
 export class ConfirmDialogComponent implements OnInit {
 
@@ -21,6 +26,19 @@ export class ConfirmDialogComponent implements OnInit {
   formGroup = new FormGroup({
     'prompt': new FormControl('', []),
   })
+
+  get hostClass(): string {
+    return this.config ? `confirm-${this.config._type}` : '';
+  }
+
+  get typeIcon(): string {
+    switch (this.config?._type) {
+      case 'alert': return 'fa-triangle-exclamation';
+      case 'info': return 'fa-circle-info';
+      case 'prompt': return 'fa-pen-to-square';
+      default: return 'fa-circle-question';
+    }
+  }
 
   ngOnInit(): void {
     if (this.config) {
@@ -40,11 +58,12 @@ export class ConfirmDialogComponent implements OnInit {
   }
 
   clickButton(button: ConfirmButton) {
+    const isConfirming = button.type !== 'secondary';
     if (this.config._type === 'prompt') {
-      this.modal.close(button.type === 'primary' ? this.formGroup.get('prompt')?.value : '');
+      this.modal.close(isConfirming ? this.formGroup.get('prompt')?.value : '');
       return;
     }
-    this.modal.close(button.type === 'primary');
+    this.modal.close(isConfirming);
   }
 
   close() {

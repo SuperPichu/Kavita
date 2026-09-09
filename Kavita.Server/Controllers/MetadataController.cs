@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using Hangfire;
 using Kavita.API.Database;
 using Kavita.API.Repositories;
+using Kavita.API.Services;
 using Kavita.API.Services.Plus;
 using Kavita.Common.Extensions;
 using Kavita.Common.Helpers;
@@ -15,15 +18,19 @@ using Kavita.Models.DTOs.Metadata.Browse;
 using Kavita.Models.DTOs.Person;
 using Kavita.Models.DTOs.ReadingLists;
 using Kavita.Models.DTOs.SeriesDetail;
+using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Enums.Audit;
 using Kavita.Server.Extensions;
 using Kavita.Services.Helpers;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Kavita.Server.Controllers;
 
 public class MetadataController(IUnitOfWork unitOfWork, IExternalMetadataService metadataService) : BaseApiController
 {
+
     /// <summary>
     /// Fetches genres from the instance
     /// </summary>
@@ -205,7 +212,28 @@ public class MetadataController(IUnitOfWork unitOfWork, IExternalMetadataService
             {
                 Title = c.DisplayName,
                 IsoCode = c.IetfLanguageTag
-            }).Where(l => !string.IsNullOrEmpty(l.IsoCode));
+            })
+            .Where(l => !string.IsNullOrEmpty(l.IsoCode))
+            .OrderBy(name => name.Title);
+    }
+
+    /// <summary>
+    /// Returns a list of all BCP47 Languages. <c>IsoCode</c> stores the BCP47 code
+    /// </summary>
+    /// <returns></returns>
+    [HttpGet("all-bcp47-languages")]
+    [ResponseCache(CacheProfileName = ResponseCacheProfiles.Month)]
+    public IEnumerable<LanguageDto> GetAllBcp47Languages()
+    {
+        return CultureInfo.GetCultures(CultureTypes.AllCultures)
+            .Select(c =>
+                new LanguageDto()
+                {
+                    Title = c.DisplayName,
+                    IsoCode = c.Name
+                }).
+            Where(l => !string.IsNullOrEmpty(l.IsoCode))
+            .OrderBy(name => name.Title);
     }
 
     /// <summary>
@@ -240,36 +268,49 @@ public class MetadataController(IUnitOfWork unitOfWork, IExternalMetadataService
             .OrderByDescending(review => review.Username.Equals(Username!) ? 1 : 0)
             .ToList();
 
-        var ret = await metadataService.GetSeriesDetailPlus(seriesId, libraryType);
+        var ret = await metadataService.TryMatchAndLoadMetadataForSeries(seriesId, libraryType, MetadataFetchTrigger.OnDemand, HttpContext.RequestAborted);
+        if (ret == null)
+        {
+            return Ok(new SeriesDetailPlusDto
+            {
+                Reviews = userReviews,
+            });
+        }
 
         await PrepareSeriesDetail(userReviews, ret);
         return Ok(ret);
     }
 
-    private async Task PrepareSeriesDetail(List<UserReviewDto> userReviews, SeriesDetailPlusDto? ret)
+    private async Task PrepareSeriesDetail(List<UserReviewDto> userReviews, SeriesDetailPlusDto ret)
     {
         var user = await unitOfWork.UserRepository.GetUserByIdAsync(UserId)!;
 
-        if (ret != null)
-        {
-            userReviews.AddRange(ReviewHelper.SelectSpectrumOfReviews(ret.Reviews.ToList()));
-            ret.Reviews = userReviews;
-        }
+        userReviews.AddRange(ReviewHelper.SelectSpectrumOfReviews(ret.Reviews.ToList()));
+        ret.Reviews = userReviews;
 
-        if (ret?.Recommendations != null && user != null)
+        if (ret.Recommendations != null && user != null)
         {
             // Re-obtain owned series and take into account age restriction and include series progress
-            var seriesIds = ret.Recommendations.OwnedSeries.Select(s => s.Id);
-            ret.Recommendations.OwnedSeries =
-                await unitOfWork.SeriesRepository.GetSeriesDtoByIdsAsync(seriesIds, user);
+            var seriesIds = ret.Recommendations.OwnedSeries.Select(s => s.Series.Id).ToList();
+            var series = await unitOfWork.SeriesRepository.GetSeriesDtoByIdsAsync(seriesIds, user);
+            var seriesById = series.ToDictionary(s => s.Id);
 
-            if (!User.IsInRole(PolicyConstants.AdminRole))
+            ret.Recommendations.OwnedSeries = ret.Recommendations.OwnedSeries
+                .Where(s => seriesById.ContainsKey(s.Series.Id))
+                .Select(s => { s.Series = seriesById[s.Series.Id]; return s; })
+                .ToList();
+
+            // Ensure non-admin's don't see anything about their AgeRating RBS
+            var restriction = new AgeRestriction
             {
-                ret.Recommendations.ExternalSeries = [];
-            }
+                AgeRating = user.AgeRestriction,
+                IncludeUnknowns = user.AgeRestrictionIncludeUnknowns
+            };
+            ret.Recommendations.ExternalSeries =
+                RecommendationHelper.FilterExternalRecommendations(ret.Recommendations.ExternalSeries, restriction);
         }
 
-        if (ret?.Recommendations != null && user != null)
+        if (ret.Recommendations != null && user != null)
         {
             ret.Recommendations.OwnedSeries ??= [];
         }

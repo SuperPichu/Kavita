@@ -4,8 +4,9 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Threading.Channels;
+using System.Net;
 using System.Threading.Tasks;
+using Hangfire;
 using Kavita.API.Database;
 using Kavita.API.Repositories;
 using Kavita.API.Services;
@@ -23,6 +24,7 @@ using Kavita.Models.DTOs.KavitaPlus.Metadata;
 using Kavita.Models.DTOs.SignalR;
 using Kavita.Models.Entities;
 using Kavita.Models.Entities.Enums;
+using Kavita.Models.Entities.Enums.Audit;
 using Kavita.Models.Entities.Metadata;
 using Kavita.Models.Entities.Person;
 using Kavita.Models.Metadata;
@@ -127,6 +129,8 @@ public class ProcessSeries(
 
             series.NormalizedName = series.Name.ToNormalized();
             series.OriginalName ??= firstParsedInfo.Series;
+            series.NormalizedOriginalName = series.OriginalName.ToNormalized();
+
             if (series.Format == MangaFormat.Unknown)
             {
                 series.Format = firstParsedInfo.Format;
@@ -231,9 +235,15 @@ public class ProcessSeries(
             return null;
         }
 
-        if (seriesAdded)
+        if (seriesAdded && library.AllowMetadataMatching)
         {
-            await externalMetadataService.FetchSeriesMetadata(series.Id, series.Library.Type);
+            // I think we can spawn this in a background job? Do we need to enqueue on a specific queue?
+            // All changes to series after this should be page count etc
+            /*BackgroundJob.Enqueue<IExternalMetadataService>(s
+                => s.TryMatchAndLoadMetadataForSeries(series.Id, series.Library.Type, MetadataFetchTrigger.SeriesAdded));*/
+
+            await externalMetadataService.TryMatchAndLoadMetadataForSeries(series.Id, series.Library.Type,
+                MetadataFetchTrigger.SeriesAdded);
         }
 
         await eventHub.SendMessageAsync(MessageFactory.ScanSeries,
@@ -244,28 +254,79 @@ public class ProcessSeries(
 
     private async Task ReportDuplicateSeriesLookup(Library library, ParserInfo firstInfo, Exception ex)
     {
-        var seriesCollisions = await unitOfWork.SeriesRepository.GetAllSeriesByAnyNameAsync(firstInfo.LocalizedSeries, string.Empty, library.Id, firstInfo.Format);
+        // Re-run the same lookup args that GetFullSeriesByAnyName used so the report reflects the real collision set.
+        var seriesCollisions = await unitOfWork.SeriesRepository.GetAllSeriesByAnyNameAsync(
+            firstInfo.Series, firstInfo.LocalizedSeries, library.Id, firstInfo.Format);
 
-        seriesCollisions = seriesCollisions.Where(collision =>
-            collision.Name != firstInfo.Series || collision.LocalizedName != firstInfo.LocalizedSeries).ToList();
+        var normalizedSeries = firstInfo.Series.ToNormalized();
+        var normalizedLocalized = firstInfo.LocalizedSeries.ToNormalized();
 
-        if (seriesCollisions.Count > 1)
+        if (seriesCollisions.Count == 0)
         {
-            var firstCollision = seriesCollisions[0];
-            var secondCollision = seriesCollisions[1];
+            // The lookup threw but the collision can't be reproduced
+            logger.LogError(ex,
+                "[ScannerService] Series lookup for {SeriesName} (normalized: {NormalizedName}) in Library {LibraryName} returned multiple matches, but the collision could not be reproduced for reporting",
+                firstInfo.Series.Sanitize(), normalizedSeries.Sanitize(), library.Name.Sanitize());
+            return;
+        }
 
-            var tableRows = $"<tr><td>Name: {firstCollision.Name}</td><td>Name: {secondCollision.Name}</td></tr>" +
-                            $"<tr><td>Localized: {firstCollision.LocalizedName}</td><td>Localized: {secondCollision.LocalizedName}</td></tr>" +
-                            $"<tr><td>Filename: {Parser.NormalizePath(firstCollision.FolderPath)}</td><td>Filename: {Parser.NormalizePath(secondCollision.FolderPath)}</td></tr>";
+        var rows = string.Join(string.Empty, seriesCollisions.Select(collision =>
+        {
+            var matched = DescribeMatchedFields(collision, normalizedSeries, normalizedLocalized);
+            return "<tr>" +
+                   $"<td>{WebUtility.HtmlEncode(collision.Name)}</td>" +
+                   $"<td>{WebUtility.HtmlEncode(collision.LocalizedName)}</td>" +
+                   $"<td>{WebUtility.HtmlEncode(collision.OriginalName)}</td>" +
+                   $"<td>{WebUtility.HtmlEncode(Parser.NormalizePath(collision.FolderPath))}</td>" +
+                   $"<td>{WebUtility.HtmlEncode(matched)}</td>" +
+                   "</tr>";
+        }));
 
-            var htmlTable = $"<table class='table table-striped'><thead><tr><th>Series 1</th><th>Series 2</th></tr></thead><tbody>{string.Join(string.Empty, tableRows)}</tbody></table>";
+        var explanation =
+            $"<p>The folder parsed as series <strong>{WebUtility.HtmlEncode(firstInfo.Series)}</strong> " +
+            $"(normalized to <code>{WebUtility.HtmlEncode(normalizedSeries)}</code>) matches {seriesCollisions.Count} " +
+            $"existing series in library <strong>{WebUtility.HtmlEncode(library.Name)}</strong>. " +
+            "Kavita cannot tell which one to update, so this folder was skipped.</p>";
 
-            logger.LogError(ex, "[ScannerService] Scanner found a Series {SeriesName} which matched another Series {LocalizedName} in a different folder parallel to Library {LibraryName} root folder. This is not allowed. Please correct, scan will abort",
-                firstInfo.Series, firstInfo.LocalizedSeries, library.Name);
+        const string remedy = "<p>To fix this, make the series names unambiguous: rename one of the folders, set a distinct Series or " +
+                              "LocalizedSeries (e.g. via ComicInfo.xml), or lock the series name on the correct entry. Then rescan the library.</p>";
 
-            await eventHub.SendMessageAsync(MessageFactory.Error,
-                MessageFactory.ErrorEvent($"Library {library.Name} Series collision on {firstInfo.Series}",
-                    htmlTable));
+        var htmlTable =
+            "<table class='table table-striped'><thead><tr>" +
+            "<th>Name</th><th>Localized</th><th>Original</th><th>Folder</th><th>Matched On</th>" +
+            $"</tr></thead><tbody>{rows}</tbody></table>";
+
+        logger.LogError(ex,
+            "[ScannerService] Series {SeriesName} (normalized: {NormalizedName}) in Library {LibraryName} collides with {Count} existing series on the same normalized name. This folder was skipped; please disambiguate and rescan",
+            firstInfo.Series.Sanitize(), normalizedSeries.Sanitize(), library.Name.Sanitize(), seriesCollisions.Count);
+
+        await eventHub.SendMessageAsync(MessageFactory.Error,
+            MessageFactory.ErrorEvent($"Series collision on \"{firstInfo.Series}\" in library {library.Name}",
+                explanation + remedy + htmlTable));
+    }
+
+    /// <summary>
+    /// Describes which of a colliding series' normalized columns matched the parsed series/localized name, including
+    /// the normalized value that collided, so the user can see why Kavita treats the entries as the same series.
+    /// </summary>
+    private static string DescribeMatchedFields(Series collision, string normalizedSeries, string normalizedLocalized)
+    {
+        var matches = new List<string>();
+
+        Check("Name", collision.NormalizedName);
+        Check("Localized", collision.NormalizedLocalizedName);
+        Check("Original", collision.NormalizedOriginalName);
+
+        return matches.Count == 0 ? "(normalized variant)" : string.Join(", ", matches);
+
+        void Check(string columnLabel, string? normalizedValue)
+        {
+            if (string.IsNullOrEmpty(normalizedValue)) return;
+            if (normalizedValue == normalizedSeries ||
+                (!string.IsNullOrEmpty(normalizedLocalized) && normalizedValue == normalizedLocalized))
+            {
+                matches.Add($"{columnLabel} = \"{normalizedValue}\"");
+            }
         }
     }
 
@@ -322,67 +383,10 @@ public class ProcessSeries(
             series.Metadata.ReleaseYear = chapters.MinimumReleaseYear();
         }
 
-        // Set the AgeRating as highest in all the comicInfos
-        if (!series.Metadata.AgeRatingLocked)
-        {
-            series.Metadata.AgeRating = chapters.Max(chapter => chapter.AgeRating);
-
-            if (settings.EnableExtendedMetadataProcessing)
-            {
-                var allTags = series.Metadata.Tags.Select(t => t.Title).Concat(series.Metadata.Genres.Select(g => g.Title));
-                var updatedRating = ExternalMetadataService.DetermineAgeRating(allTags, settings.AgeRatingMappings);
-                if (updatedRating > series.Metadata.AgeRating)
-                {
-                    series.Metadata.AgeRating = updatedRating;
-                }
-            }
-
-        }
-
-        // Count (aka expected total number of chapters or volumes from metadata) across all chapters
-        series.Metadata.TotalCount = chapters.Max(chapter => chapter.TotalCount);
-        // The actual number of count's defined across all chapter's metadata
-        series.Metadata.MaxCount = chapters.Max(chapter => chapter.Count);
-
-        var maxVolume = (int)series.Volumes.Max(v => v.MaxNumber);
-        var maxChapter = (int)chapters.Max(c => c.MaxNumber);
-
-        // Single books usually don't have a number in their Range (filename)
-        if (series.Format == MangaFormat.Epub || series.Format == MangaFormat.Pdf && chapters.Count == 1)
-        {
-            series.Metadata.MaxCount = 1;
-        }
-        else if (series.Metadata.TotalCount <= 1 && chapters.Count == 1 && chapters[0].IsSpecial)
-        {
-            // If a series has a TotalCount of 1 (or no total count) and there is only a Special, mark it as Complete
-            series.Metadata.MaxCount = series.Metadata.TotalCount;
-        }
-        else if ((maxChapter == Parser.DefaultChapterNumber || maxChapter > series.Metadata.TotalCount) && maxVolume <= series.Metadata.TotalCount)
-        {
-            series.Metadata.MaxCount = maxVolume;
-        }
-        else if (maxVolume == series.Metadata.TotalCount)
-        {
-            series.Metadata.MaxCount = maxVolume;
-        }
-        else
-        {
-            series.Metadata.MaxCount = maxChapter;
-        }
-
         if (!series.Metadata.PublicationStatusLocked)
         {
-            series.Metadata.PublicationStatus = PublicationStatus.OnGoing;
-            if (series.Metadata.MaxCount == series.Metadata.TotalCount && series.Metadata.TotalCount > 0)
-            {
-                series.Metadata.PublicationStatus = PublicationStatus.Completed;
-            }
-            else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
-            {
-                series.Metadata.PublicationStatus = PublicationStatus.Ended;
-            }
+            DeterminePublicationStatus(series, chapters);
         }
-        DeterminePublicationStatus(series, chapters);
 
         if (!series.Metadata.SummaryLocked)
         {
@@ -405,10 +409,25 @@ public class ProcessSeries(
         {
             // TODO: Come back and clean this up, we call this code in DefaultParser AND ProcessSeries
             series.Metadata.WebLinks = firstChapter.WebLinks;
-            series.AniListId = WeblinkParser.GetAniListId(series.Metadata.WebLinks) ?? 0;
-            series.MalId = WeblinkParser.GetMalId(series.Metadata.WebLinks) ?? 0;
-            series.ComicVineId = WeblinkParser.GetComicVineId(series.Metadata.WebLinks).Item1;
-            series.MangaBakaId = WeblinkParser.GetMangaBakaId(series.Metadata.WebLinks);
+            var aniListId = ExternalIdParser.GetAniListId(series.Metadata.WebLinks);
+            if (aniListId.HasValue)
+                series.AniListId = aniListId.Value;
+
+            var malId = ExternalIdParser.GetMalId(series.Metadata.WebLinks);
+            if (malId.HasValue)
+                series.MalId = malId.Value;
+
+            var (comicVineId, _) = ExternalIdParser.GetComicVineId(series.Metadata.WebLinks);
+            if (comicVineId != null)
+                series.ComicVineId = comicVineId;
+
+            var mangaBakaId = ExternalIdParser.GetMangaBakaId(series.Metadata.WebLinks);
+            if (mangaBakaId > 0)
+                series.MangaBakaId = mangaBakaId;
+
+            var hardcoverId = ExternalIdParser.GetHardcoverSeriesId(series.Metadata.WebLinks);
+            if (hardcoverId > 0)
+                series.HardcoverId = hardcoverId;
         }
 
         if (!string.IsNullOrEmpty(firstChapter?.SeriesGroup) && library.ManageCollections)
@@ -456,6 +475,23 @@ public class ProcessSeries(
         series.Metadata.WebLinks = string.Join(',', weblinks);
 
         #endregion
+
+        // Set the AgeRating as highest in all the comicInfos
+        if (!series.Metadata.AgeRatingLocked)
+        {
+            series.Metadata.AgeRating = chapters.Max(chapter => chapter.AgeRating);
+
+            if (settings.EnableExtendedMetadataProcessing)
+            {
+                var allTags = series.Metadata.Tags.Select(t => t.Title).Concat(series.Metadata.Genres.Select(g => g.Title));
+                var updatedRating = ExternalMetadataService.DetermineAgeRating(allTags, settings.AgeRatingMappings);
+                if (updatedRating > series.Metadata.AgeRating)
+                {
+                    series.Metadata.AgeRating = updatedRating;
+                }
+            }
+
+        }
 
     }
 
@@ -532,7 +568,7 @@ public class ProcessSeries(
     }
 
 
-    private static void UpdateSeriesMetadataTags(ICollection<Tag> metadataTags, IList<Tag> chapterTags)
+    public static void UpdateSeriesMetadataTags(ICollection<Tag> metadataTags, IList<Tag> chapterTags)
     {
         // Create a HashSet of normalized titles for faster lookups
         var chapterTagTitles = new HashSet<string>(chapterTags.Select(t => t.NormalizedTitle));
@@ -560,7 +596,7 @@ public class ProcessSeries(
         }
     }
 
-    private static void UpdateSeriesMetadataGenres(ICollection<Genre> metadataGenres, IList<Genre> chapterGenres)
+    public static void UpdateSeriesMetadataGenres(ICollection<Genre> metadataGenres, IList<Genre> chapterGenres)
     {
         // Create a HashSet of normalized titles for chapterGenres for fast lookup
         var chapterGenreTitles = new HashSet<string>(chapterGenres.Select(g => g.NormalizedTitle));
@@ -585,8 +621,12 @@ public class ProcessSeries(
         }
     }
 
-
-
+    /// <summary>
+    /// Sets <see cref="SeriesMetadata.PublicationStatus"/>, <see cref="SeriesMetadata.MaxCount"/>, and <see cref="SeriesMetadata.TotalCount"/>
+    /// Only call if <see cref="SeriesMetadata.PublicationStatusLocked"/> is false
+    /// </summary>
+    /// <param name="series"></param>
+    /// <param name="chapters"></param>
     private void DeterminePublicationStatus(Series series, List<Chapter> chapters)
     {
         try
@@ -604,7 +644,7 @@ public class ProcessSeries(
             var maxChapter = (int)chapters.Max(c => c.MaxNumber);
 
             // Single books usually don't have a number in their Range (filename)
-            if (series.Format == MangaFormat.Epub || series.Format == MangaFormat.Pdf && chapters.Count == 1)
+            if (series.Format is MangaFormat.Epub or MangaFormat.Pdf && chapters.Count == 1)
             {
                 series.Metadata.MaxCount = 1;
             }
@@ -627,17 +667,14 @@ public class ProcessSeries(
                 series.Metadata.MaxCount = maxChapter;
             }
 
-            if (!series.Metadata.PublicationStatusLocked)
+            series.Metadata.PublicationStatus = PublicationStatus.OnGoing;
+            if (series.Metadata.MaxCount == series.Metadata.TotalCount && series.Metadata.TotalCount > 0)
             {
-                series.Metadata.PublicationStatus = PublicationStatus.OnGoing;
-                if (series.Metadata.MaxCount == series.Metadata.TotalCount && series.Metadata.TotalCount > 0)
-                {
-                    series.Metadata.PublicationStatus = PublicationStatus.Completed;
-                }
-                else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
-                {
-                    series.Metadata.PublicationStatus = PublicationStatus.Ended;
-                }
+                series.Metadata.PublicationStatus = PublicationStatus.Completed;
+            }
+            else if (series.Metadata.TotalCount > 0 && series.Metadata.MaxCount > 0)
+            {
+                series.Metadata.PublicationStatus = PublicationStatus.Ended;
             }
         }
         catch (Exception ex)
@@ -678,7 +715,12 @@ public class ProcessSeries(
             volume.LookupName = volumeNumber;
             volume.Name = volume.GetNumberTitle();
 
-            var infos = parsedInfos.Where(p => p.Volumes == volumeNumber).ToArray();
+            var minNumber = Parser.MinNumberFromRange(volumeNumber);
+            var maxNumber = Parser.MaxNumberFromRange(volumeNumber);
+            var infos = parsedInfos
+                .Where(p => Parser.MinNumberFromRange(p.Volumes).Is(minNumber)
+                            && Parser.MaxNumberFromRange(p.Volumes).Is(maxNumber))
+                .ToArray();
 
             await UpdateChapters(new UpdateChapterArgs
             {
@@ -803,12 +845,30 @@ public class ProcessSeries(
             }
 
             // Try to patch in any External Metadata Ids we've seen during parsing
-            chapter.AniListId = info.AniListId ?? 0;
-            chapter.MalId = info.MalId ?? 0;
-            chapter.MangaBakaId = info.MangaBakaId ?? 0;
-            chapter.MetronId = info.MetronId ?? 0;
-            chapter.ComicVineId = info.ComicVineId;
-            chapter.HardcoverId = info.HardcoverId ?? 0;
+            if (info.AniListId is > 0)
+            {
+                chapter.AniListId = info.AniListId ?? 0;
+            }
+            if (info.MalId is > 0)
+            {
+                chapter.MalId = info.MalId ?? 0;
+            }
+            if (info.MangaBakaId is > 0)
+            {
+                chapter.MangaBakaId = info.MangaBakaId ?? 0;
+            }
+            if (info.MetronId is > 0)
+            {
+                chapter.MetronId = info.MetronId ?? 0;
+            }
+            if (!string.IsNullOrEmpty(info.ComicVineId))
+            {
+                chapter.ComicVineId = info.ComicVineId;
+            }
+            if (info.HardcoverId is > 0)
+            {
+                chapter.HardcoverId = info.HardcoverId ?? 0;
+            }
         }
 
         RemoveChapters(args.Volume, args.ParsedInfos);
@@ -913,10 +973,6 @@ public class ProcessSeries(
             cacheHelper.IsFileUnmodifiedSinceCreationOrLastScan(chapter, args.ForceUpdate, firstFile)) return;
 
         var sw = Stopwatch.StartNew();
-        if (!chapter.AgeRatingLocked)
-        {
-            chapter.AgeRating = ComicInfo.ConvertAgeRatingToEnum(comicInfo.AgeRating);
-        }
 
         if (!chapter.TitleNameLocked)
         {
@@ -977,11 +1033,11 @@ public class ProcessSeries(
             PersonHelper.UpdateChapterPeople(args.DatabasePeople, chapter, comicInfoPeople, personRole);
         }
 
+        var genres = comicInfo.Genre.SplitBy(',');
+        var tags = comicInfo.Tags.SplitBy(',');
+
         if (!chapter.GenresLocked || !chapter.TagsLocked)
         {
-            var genres = comicInfo.Genre.SplitBy(',');
-            var tags = comicInfo.Tags.SplitBy(',');
-
             ExternalMetadataService.GenerateExternalGenreAndTagsList(genres, tags, args.Settings,
                 out var finalTags, out var finalGenres);
 
@@ -995,7 +1051,21 @@ public class ProcessSeries(
                 await UpdateChapterTags(chapter, finalTags);
             }
 
+        }
 
+        if (!chapter.AgeRatingLocked)
+        {
+            chapter.AgeRating = ComicInfo.ConvertAgeRatingToEnum(comicInfo.AgeRating);
+
+            if (args.Settings.EnableExtendedMetadataProcessing)
+            {
+                var allTags = genres.Concat(tags).Distinct().ToList();
+                var updatedRating = ExternalMetadataService.DetermineAgeRating(allTags, args.Settings.AgeRatingMappings);
+                if (updatedRating > chapter.AgeRating)
+                {
+                    chapter.AgeRating = updatedRating;
+                }
+            }
         }
 
         logger.LogTrace("[TIME] Kavita took {Time} ms to create/update Chapter: {File}", sw.ElapsedMilliseconds, chapter.Files.First().FileName);

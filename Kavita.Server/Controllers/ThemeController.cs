@@ -83,7 +83,7 @@ public class ThemeController(
     /// <param name="themeId"></param>
     /// <returns></returns>
     [HttpDelete]
-    [DisallowRole(PolicyConstants.ReadOnlyRole)]
+    [Authorize(PolicyGroups.AdminPolicy)]
     public async Task<ActionResult<IEnumerable<DownloadableSiteThemeDto>>> DeleteTheme(int themeId)
     {
         await themeService.DeleteTheme(themeId);
@@ -97,6 +97,7 @@ public class ThemeController(
     /// <param name="dto"></param>
     /// <returns></returns>
     [HttpPost("download-theme")]
+    [DisallowRole(PolicyConstants.ReadOnlyRole)]
     public async Task<ActionResult<SiteThemeDto>> DownloadTheme(DownloadableSiteThemeDto dto)
     {
         return Ok(mapper.Map<SiteThemeDto>(await themeService.DownloadRepoTheme(dto)));
@@ -108,25 +109,16 @@ public class ThemeController(
     /// <param name="formFile"></param>
     /// <returns></returns>
     [HttpPost("upload-theme")]
-    [DisallowRole(PolicyConstants.ReadOnlyRole)]
+    [Authorize(PolicyGroups.AdminPolicy)]
     public async Task<ActionResult<SiteThemeDto>> DownloadTheme(IFormFile formFile)
     {
         if (!formFile.FileName.EndsWith(".css")) return BadRequest("Invalid file");
-        if (formFile.FileName.Contains("..")) return BadRequest("Invalid file");
-        var tempFile = await UploadToTemp(formFile);
+        if (!IsPathWithinDirectory(directoryService.TempDirectory, formFile.FileName)) return BadRequest("Invalid file");
+        var tempFile = await UploadToTempAsync(formFile);
 
         // Set summary as "Uploaded by Username! on DATE"
         var theme = await themeService.CreateThemeFromFile(tempFile, Username!);
         return Ok(mapper.Map<SiteThemeDto>(theme));
-    }
-
-    private async Task<string> UploadToTemp(IFormFile file)
-    {
-        var outputFile = Path.Join(directoryService.TempDirectory, file.FileName);
-        await using var stream = System.IO.File.Create(outputFile);
-        await file.CopyToAsync(stream);
-        stream.Close();
-        return outputFile;
     }
 
 }

@@ -1,0 +1,3 @@
+@if(accountService.hasAdminRole()) {
+  <app-manage-scrobble-errors (scrobbleCount)="updateScrobbleErrorCount($event)" />
+}
